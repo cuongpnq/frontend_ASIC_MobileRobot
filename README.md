@@ -22,6 +22,7 @@ This guide explains how to create a GitHub Personal Access Token (PAT) and confi
 Set Git to remember your credentials:
 ```bash
 git config --global credential.helper store
+```
 
 The .git-credentials file stores tokens in plain text. Anyone with access to your home directory can read it.
 Clone the repository using **username** and **Personal Access Token**. The credential will be stored. You can access right on the next time.
