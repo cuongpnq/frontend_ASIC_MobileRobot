@@ -19,16 +19,21 @@ set(FRONTEND_INCLUDE_DIR ${FRONTEND_ROOT}/include)
 set(FRONTEND_SRC_DIR ${FRONTEND_ROOT}/src)
 set(FRONTEND_RESOURCE_DIR ${FRONTEND_ROOT}/resource)
 
-# Removed redundant definitions
+# Yakindu State Machine Directories
+set(YAKINDU_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../state_machine/src)
+set(YAKINDU_GEN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../state_machine/src-gen)
 
 # Fetch all Headers
 file(GLOB_RECURSE FRONTEND_HEADERS
     ${FRONTEND_INCLUDE_DIR}/*.hpp
+    ${YAKINDU_SRC_DIR}/*.h
+    ${YAKINDU_GEN_DIR}/*.h
 )
 
 # Fetch all Sources
 file(GLOB_RECURSE FRONTEND_SOURCES
     ${FRONTEND_SRC_DIR}/*.cpp
+    ${YAKINDU_GEN_DIR}/*.c
 )
 
 # Fetch Resources
@@ -44,6 +49,8 @@ add_executable(frontend_app
 
 target_include_directories(frontend_app PRIVATE
     ${FRONTEND_INCLUDE_DIR}
+    ${YAKINDU_SRC_DIR}
+    ${YAKINDU_GEN_DIR}
 )
 
 target_link_libraries(frontend_app PRIVATE
