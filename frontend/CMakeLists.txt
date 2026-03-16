@@ -24,7 +24,6 @@ set(FRONTEND_RESOURCE_DIR ${FRONTEND_ROOT}/resource)
 # Fetch all Headers
 file(GLOB_RECURSE FRONTEND_HEADERS
     ${FRONTEND_INCLUDE_DIR}/*.hpp
-    ${FRONTEND_INCLUDE_DIR}/*.h
 )
 
 # Fetch all Sources
@@ -53,8 +52,3 @@ target_link_libraries(frontend_app PRIVATE
     Qt5::Qml
     Qt5::Quick
 )
-
-# Organize in IDE
-source_group(TREE ${FRONTEND_INCLUDE_DIR} PREFIX "include" FILES ${FRONTEND_HEADERS})
-source_group(TREE ${FRONTEND_SRC_DIR} PREFIX "src" FILES ${FRONTEND_SOURCES})
-source_group(TREE ${FRONTEND_RESOURCE_DIR} PREFIX "resource" FILES ${FRONTEND_RESOURCES})
