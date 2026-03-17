@@ -26,3 +26,23 @@ git config --global credential.helper store
 
 The .git-credentials file stores tokens in plain text. Anyone with access to your home directory can read it.
 Clone the repository using **username** and **Personal Access Token**. The credential will be stored. You can access right on the next time.
+
+# Project
+
+Build native before run application
+
+## 1. Open IDE
+```bash
+make qtcreator
+```
+
+## 2. Build native
+```bash
+make debug_native
+```
+Flag CLEAN_BUILD=OFF by default
+
+## 3. Run application
+```bash
+make run_app
+```
