@@ -16,13 +16,21 @@ Item {
             font.bold: true
         }
 
-        Button {
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.margins: 40
-            text: "Return to Main View"
-            onClicked: {
-                RunningViewViewModel.requestMainView()
+        Image {
+            id: backButton
+            source: "qrc:/images/back_button.png"
+            width: 40
+            height: 40
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.margins: 20
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    console.log("Back button clicked")
+                    RunningViewViewModel.requestMainView()
+                }
             }
         }
     }

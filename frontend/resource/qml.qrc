@@ -3,5 +3,7 @@
         <file>main.qml</file>
         <file>MainView.qml</file>
         <file>RunningView.qml</file>
+        <file>images/UIT_logo.png</file>
+        <file>images/back_button.png</file>
     </qresource>
 </RCC>

@@ -16,6 +16,17 @@ Item {
             font.bold: true
         }
 
+        Image {
+            id: uitLogo
+            source: "qrc:/images/UIT_logo.png"
+            width: 150
+            height: 150
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: 20
+            fillMode: Image.PreserveAspectFit
+        }
+
         Button {
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
