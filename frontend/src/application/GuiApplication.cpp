@@ -34,8 +34,8 @@ GuiApplication::GuiApplication(int &argc, char **argv)
             return new RunningViewViewModel();
         });
 
-    // Provide the AppStateMachine singleton to QML as a context property to listen to state
-    engine->rootContext()->setContextProperty("AppStateMachine", &AppStateMachine::instance());
+    // Initialize the backend state machine (no QML exposure)
+    AppStateMachine::instance();
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     

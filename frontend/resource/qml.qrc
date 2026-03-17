@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>mainView.qml</file>
-        <file>runningView.qml</file>
+        <file>MainView.qml</file>
+        <file>RunningView.qml</file>
     </qresource>
 </RCC>

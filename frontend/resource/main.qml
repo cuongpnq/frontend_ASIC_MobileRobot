@@ -1,8 +1,7 @@
 import QtQuick 2.12
-import QtQuick.Window 2.12
 import QtQuick.Controls 2.12
 
-Window {
+ApplicationWindow {
     visible: true
     width: 800
     height: 600
@@ -11,7 +10,7 @@ Window {
     MainView {
         id: mainViewComponent
         anchors.fill: parent
-        visible: true // Default starting view
+        visible: true
     }
 
     RunningView {
@@ -19,20 +18,4 @@ Window {
         anchors.fill: parent
         visible: false
     }
-
-    // State machine controlled dynamically by Yakindu AppStateMachine
-    state: AppStateMachine.currentState
-    
-    states: [
-        State {
-            name: "MainView"
-            PropertyChanges { target: mainViewComponent; visible: true }
-            PropertyChanges { target: runningViewComponent; visible: false }
-        },
-        State {
-            name: "RunningView"
-            PropertyChanges { target: mainViewComponent; visible: false }
-            PropertyChanges { target: runningViewComponent; visible: true }
-        }
-    ]
 }

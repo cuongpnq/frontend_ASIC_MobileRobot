@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
+enable_language(C CXX)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -30,9 +32,13 @@ file(GLOB_RECURSE FRONTEND_HEADERS
     ${YAKINDU_GEN_DIR}/*.h
 )
 
-# Fetch all Sources
+# Fetch all C++ Sources
 file(GLOB_RECURSE FRONTEND_SOURCES
     ${FRONTEND_SRC_DIR}/*.cpp
+)
+
+# Fetch Yakindu generated C sources separately
+file(GLOB_RECURSE YAKINDU_C_SOURCES
     ${YAKINDU_GEN_DIR}/*.c
 )
 
@@ -44,6 +50,7 @@ set(FRONTEND_RESOURCES
 add_executable(frontend_app
     ${FRONTEND_HEADERS}
     ${FRONTEND_SOURCES}
+    ${YAKINDU_C_SOURCES}
     ${FRONTEND_RESOURCES}
 )
 

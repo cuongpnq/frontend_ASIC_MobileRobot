@@ -4,14 +4,11 @@ import com.asic.mobilerobot.viewmodels 1.0
 
 Item {
     id: root
-    
-    // Add a signal we can emit
-    signal changeViewRequested(string viewName)
-    
+
     Rectangle {
         anchors.fill: parent
         color: "#d0ffd0"
-        
+
         Text {
             anchors.centerIn: parent
             text: "RUNNING VIEW DASHBOARD"
@@ -25,7 +22,6 @@ Item {
             anchors.margins: 40
             text: "Return to Main View"
             onClicked: {
-                // Request state machine event from the correct view model
                 RunningViewViewModel.requestMainView()
             }
         }
