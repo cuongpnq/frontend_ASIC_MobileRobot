@@ -12,6 +12,17 @@ bool MainViewViewModel::isActive() const {
     return m_isActive;
 }
 
+bool MainViewViewModel::isTakeControl() const {
+    return m_isTakeControl;
+}
+
+void MainViewViewModel::setControlMode(bool takeControl) {
+    if (m_isTakeControl != takeControl) {
+        m_isTakeControl = takeControl;
+        emit controlModeChanged();
+    }
+}
+
 void MainViewViewModel::requestRunningView() {
     AppStateMachine::instance().goToRunning();
 }
