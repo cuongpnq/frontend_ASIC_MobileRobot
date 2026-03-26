@@ -1,7 +1,7 @@
 BUILD_DIR ?= build-output
 CLEAN_BUILD ?= OFF
 
-.PHONY: qtcreator debug_native run_app
+.PHONY: qtcreator debug_native run_app build_run
 
 qtcreator:
 	qtcreator CMakeLists.txt &
@@ -16,3 +16,6 @@ debug_native:
 
 run_app:
 	./$(BUILD_DIR)/frontend/frontend_app
+
+build_run:
+	make debug_native && ./$(BUILD_DIR)/frontend/frontend_app

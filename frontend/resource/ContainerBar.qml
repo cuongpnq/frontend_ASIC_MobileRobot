@@ -2,37 +2,53 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import com.asic.mobilerobot.viewmodels 1.0
+import QtGraphicalEffects 1.12
 
-Rectangle {
+Item {
     id: containerBar
     width: parent.width
-    height: 36
-    color: "#F8F7F3"
+    height: 80
+    z: 10
 
+    DropShadow {
+        anchors.fill: bgRect
+        horizontalOffset: 0
+        verticalOffset: 8
+        radius: 16
+        samples: 32
+        color: "#40000000"
+        source: bgRect
+    }
+
+    Rectangle {
+        id: bgRect
+        anchors.fill: parent
+        color: "#F8F7F3"
+    }
     // ── Time (centered) ──
     Text {
         id: timeText
         anchors.centerIn: parent
         text: ContainerBarViewModel.currentTime
-        font.pixelSize: 14
+        font.pixelSize: 35
         font.bold: true
-        font.family: "monospace"
-        color: "#1a1a1a"
+        font.family: "Inter"
+        color: "#000000"
     }
 
     // ── WiFi + Battery (right side) ──
     Row {
         id: statusRow
         anchors.right: parent.right
-        anchors.rightMargin: 16
+        anchors.rightMargin: 40
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 14
+        spacing: 24
 
         // WiFi icon (drawn with Canvas)
         Item {
             id: wifiIcon
-            width: 18
-            height: 18
+            width: 45
+            height: 35
             anchors.verticalCenter: parent.verticalCenter
 
             Canvas {
@@ -42,37 +58,34 @@ Rectangle {
                     ctx.clearRect(0, 0, width, height)
 
                     var connected = ContainerBarViewModel.wifiConnected
-                    var color = connected ? "#4caf50" : "#f44336"
+                    var color = connected ? "#000000" : '#757575'
 
                     ctx.strokeStyle = color
-                    ctx.lineWidth = 1.8
+                    ctx.lineWidth = 3
                     ctx.lineCap = "round"
 
-                    // Draw wifi arcs (3 arcs from bottom center)
+                    // Draw wifi arcs
                     var cx = width / 2
-                    var cy = height
+                    var cy = height - 4
 
-                    // Arc 1 (smallest)
                     if (connected) {
                         ctx.beginPath()
-                        ctx.arc(cx, cy, 4, Math.PI * 1.25, Math.PI * 1.75, false)
+                        ctx.arc(cx, cy, 9, Math.PI * 1.25, Math.PI * 1.75, false)
                         ctx.stroke()
 
-                        // Arc 2 (medium)
                         ctx.beginPath()
-                        ctx.arc(cx, cy, 8, Math.PI * 1.25, Math.PI * 1.75, false)
+                        ctx.arc(cx, cy, 18, Math.PI * 1.25, Math.PI * 1.75, false)
                         ctx.stroke()
 
-                        // Arc 3 (largest)
                         ctx.beginPath()
-                        ctx.arc(cx, cy, 12, Math.PI * 1.25, Math.PI * 1.75, false)
+                        ctx.arc(cx, cy, 27, Math.PI * 1.25, Math.PI * 1.75, false)
                         ctx.stroke()
                     }
 
                     // Center dot
                     ctx.fillStyle = color
                     ctx.beginPath()
-                    ctx.arc(cx, cy - 1, 1.8, 0, Math.PI * 2)
+                    ctx.arc(cx, cy, 3.5, 0, Math.PI * 2)
                     ctx.fill()
                 }
 
@@ -84,65 +97,71 @@ Rectangle {
             }
         }
 
-        // Battery icon (drawn with Canvas)
-        Item {
-            id: batteryIcon
-            width: 28
-            height: 14
+        // Battery group (Text and Icon)
+        Row {
+            spacing: 12
             anchors.verticalCenter: parent.verticalCenter
-
-            Canvas {
-                anchors.fill: parent
-                onPaint: {
-                    var ctx = getContext("2d")
-                    ctx.clearRect(0, 0, width, height)
-
-                    var level = ContainerBarViewModel.batteryLevel
-                    var bodyWidth = width - 4
-                    var bodyHeight = height
-                    var tipWidth = 3
-                    var tipHeight = 6
-
-                    // Battery body outline
-                    ctx.strokeStyle = "#1a1a1a"
-                    ctx.lineWidth = 1.5
-                    ctx.beginPath()
-                    ctx.roundedRect(0.5, 0.5, bodyWidth - 1, bodyHeight - 1, 2, 2)
-                    ctx.stroke()
-
-                    // Battery tip (positive terminal)
-                    ctx.fillStyle = "#1a1a1a"
-                    ctx.beginPath()
-                    ctx.roundedRect(bodyWidth, (bodyHeight - tipHeight) / 2, tipWidth, tipHeight, 1, 1)
-                    ctx.fill()
-
-                    // Battery fill level
-                    var fillWidth = (bodyWidth - 4) * (level / 100)
-                    var fillColor = "#4caf50"
-                    if (level <= 20) fillColor = "#f44336"
-                    else if (level <= 50) fillColor = "#ff9800"
-
-                    ctx.fillStyle = fillColor
-                    ctx.beginPath()
-                    ctx.roundedRect(2, 2, fillWidth, bodyHeight - 4, 1, 1)
-                    ctx.fill()
-                }
-
-                // Repaint when battery level changes
-                Connections {
-                    target: ContainerBarViewModel
-                    onBatteryLevelChanged: batteryIcon.children[0].requestPaint()
-                }
-            }
 
             // Battery percentage text
             Text {
-                anchors.left: parent.right
-                anchors.leftMargin: 4
                 anchors.verticalCenter: parent.verticalCenter
                 text: ContainerBarViewModel.batteryLevel + "%"
-                font.pixelSize: 11
-                color: "#1a1a1a"
+                font.pixelSize: 30
+                font.family: "Inter"
+                color: "#000000"
+            }
+
+            // Battery icon (drawn with Canvas)
+            Item {
+                id: batteryIcon
+                width: 60
+                height: 35
+                anchors.verticalCenter: parent.verticalCenter
+                
+                Canvas {
+                    id: batteryCanvas
+                    anchors.fill: parent
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.clearRect(0, 0, width, height)
+
+                        var level = ContainerBarViewModel.batteryLevel
+                        var bodyWidth = width - 6
+                        var bodyHeight = height
+                        var tipWidth = 6
+                        var tipHeight = 14
+
+                        // Battery body outline
+                        ctx.strokeStyle = "#1a1a1a"
+                        ctx.lineWidth = 3
+                        ctx.beginPath()
+                        ctx.roundedRect(1.5, 1.5, bodyWidth - 3, bodyHeight - 3, 4, 4)
+                        ctx.stroke()
+
+                        // Battery tip (positive terminal)
+                        ctx.fillStyle = "#1a1a1a"
+                        ctx.beginPath()
+                        ctx.roundedRect(bodyWidth, (bodyHeight - tipHeight) / 2, tipWidth, tipHeight, 2, 2)
+                        ctx.fill()
+
+                        // Battery fill level
+                        var fillWidth = (bodyWidth - 4) * (level / 100)
+                        var fillColor = "#4caf50"
+                        if (level <= 20) fillColor = "#f44336"
+                        else if (level <= 50) fillColor = "#ff9800"
+
+                        ctx.fillStyle = fillColor
+                        ctx.beginPath()
+                        ctx.roundedRect(4, 4, Math.max(0, fillWidth - 5), bodyHeight - 8, 2, 2)
+                        ctx.fill()
+                    }
+
+                    // Repaint when battery level changes
+                    Connections {
+                        target: ContainerBarViewModel
+                        onBatteryLevelChanged: batteryCanvas.requestPaint()
+                    }
+                }
             }
         }
     }

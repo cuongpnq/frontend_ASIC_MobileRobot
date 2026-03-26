@@ -6,7 +6,6 @@ ContainerBarViewModel::ContainerBarViewModel(QObject* parent)
       m_wifiConnected(true),
       m_batteryLevel(85)
 {
-    QTimer currentTime;
 }
 
 void ContainerBarViewModel::setBatteryPower(int power)
@@ -19,17 +18,35 @@ void ContainerBarViewModel::setBatteryPower(int power)
     Q_EMIT batteryPowerChanged();
 }
 
-const int &ContainerBarViewModel::batteryPower()
+const int &ContainerBarViewModel::batteryPower() const
 {
     return m_power;
 }
 
-void ContainerBarViewModel::setCurrentTime(QString time)
+void ContainerBarViewModel::setCurrentTime(const QString& time)
 {
-
+    if (m_currentTime == time) {
+        return;
+    }
+    m_currentTime = time;
+    Q_EMIT currentTimeChanged();
 }
 
-const QString &ContainerBarViewModel::currentTime()
+const QString &ContainerBarViewModel::currentTime() const
 {
+    return m_currentTime;
+}
 
+bool ContainerBarViewModel::wifiConnected() const
+{
+    return m_wifiConnected;
+}
+
+int ContainerBarViewModel::batteryLevel() const
+{
+    return m_batteryLevel;
+}
+
+void ContainerBarViewModel::updateTime()
+{
 }

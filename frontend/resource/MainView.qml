@@ -25,104 +25,11 @@ Item {
         }
 
         // ── Mode Switch Pill ────────────────────────────────────────
-        Rectangle {
+        ModeSwitch {
             id: modeSwitchContainer
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.topMargin: 320
-            width: 840
-            height: 180
-            radius: 99
-            color: "#33D8FFFF"
-            border.color: "#c0b8b0"
-            border.width: 1.5
-
-            // ── Sliding track (highlight) — moves left or right ───
-            Rectangle {
-                id: switchTrack
-                width: 465
-                height: 140
-                radius: 99
-                anchors.verticalCenter: parent.verticalCenter
-                x: MainViewViewModel.isTakeControl ? parent.width - 465 - 20 : 20
-                color: "#FFFFFF"
-                border.color: "#4caf50"
-                border.width: 2
-
-                Behavior on x {
-                    NumberAnimation {
-                        duration: 220
-                        easing.type: Easing.InOutCubic
-                    }
-                }
-            }
-            DropShadow {
-                anchors.fill: switchTrack
-                source: switchTrack
-                horizontalOffset: 0
-                verticalOffset: 2
-                radius: 24
-                samples: 32
-                spread: 0.16
-                color: "#32A323"
-            }
-
-            // "Self Discovery" label — left side
-            Text {
-                id: selfDiscoveryLabel
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: 30
-                text: "Self Discovery"
-                font.pixelSize: 36
-                font.family: "Inter"
-                font.bold: true
-                color: !MainViewViewModel.isTakeControl ? "#2d7d32" : "#6E6E6E"
-                z: 2
-
-                Behavior on color { ColorAnimation { duration: 200 } }
-            }
-
-            // "Take Control" label — right side
-            Text {
-                id: takeControlLabel
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: 30
-                text: "Take Control"
-                font.pixelSize: 36
-                font.family: "Inter"
-                font.bold: true
-                color: MainViewViewModel.isTakeControl ? "#2d7d32" : "#6E6E6E"
-                z: 2
-
-                Behavior on color { ColorAnimation { duration: 200 } }
-            }
-
-            // ── Fixed green knob — always centered ─────────────────
-            Rectangle {
-                id: switchKnob
-                width: 110
-                height: 110
-                radius: 55
-                anchors.centerIn: parent
-                color: "#4caf50"
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0.5; color: "#4caf50" }
-                    GradientStop { position: !MainViewViewModel.isTakeControl? 1.0 : 0.0; color: "#4EC490" }
-                }
-                z: 3
-            }
-
-            // Click anywhere on the pill to toggle
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    MainViewViewModel.setControlMode(!MainViewViewModel.isTakeControl)
-                }
-            }
         }
 
         // ── Three Panels Row ────────────────────────────────────────
@@ -234,7 +141,7 @@ Item {
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: MainViewViewModel.isTakeControl ? "Manual Control" : "Exploring..."
+                        text: ModeSwitchViewModel.isTakeControl ? "Manual Control" : "Exploring..."
                         font.pixelSize: 20
                         font.bold: true
                         color: "#1a73e8"

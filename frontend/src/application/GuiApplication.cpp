@@ -3,6 +3,7 @@
 #include "mainView/MainViewViewModel.hpp"
 #include "containerBar/ContainerBarViewModel.hpp"
 #include "runningView/RunningViewViewModel.hpp"
+#include "modeSwitch/ModeSwitchViewModel.hpp"
 #include <QQmlContext>
 #include <QQmlEngine>
 
@@ -12,6 +13,13 @@ GuiApplication::GuiApplication(int &argc, char **argv)
 
     app = std::make_unique<QGuiApplication>(argc, argv);
     engine = std::make_unique<QQmlApplicationEngine>();
+
+    qmlRegisterSingletonType<ModeSwitchViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "ModeSwitchViewModel",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            return new ModeSwitchViewModel();
+        });
 
     qmlRegisterSingletonType<MainViewViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "MainViewViewModel",
         [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
