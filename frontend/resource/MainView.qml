@@ -35,9 +35,9 @@ Item {
         interactive: true
 
         model: ListModel {
-            ListElement { name: "Direction View"; viewType: "direction" }
-            ListElement { name: "Control Center"; viewType: "controlCenter" }
-            ListElement { name: "Settings View"; viewType: "settings" }
+            ListElement { name: "Direction View"; viewType: "direction"; icon: "images/direction.png" }
+            ListElement { name: "Control Center"; viewType: "controlCenter"; icon: "images/control_center.png" }
+            ListElement { name: "Settings View"; viewType: "settings"; icon: "images/settings.png" }
         }
 
         delegate: Rectangle {
@@ -48,13 +48,10 @@ Item {
             border.width: 1
             radius: 35
 
-            Text {
-                anchors.centerIn: parent
-                text: model.name
-                font.pixelSize: 40
-                font.bold: true
-                color: "#2C2C2C"
-                horizontalAlignment: Text.AlignHCenter
+            Image {
+                source: model.icon
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectFit
             }
 
             MouseArea {
