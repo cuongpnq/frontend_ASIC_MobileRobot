@@ -1,4 +1,5 @@
 #include "modeSwitch/ModeSwitchViewModel.hpp"
+#include "application/AppStateMachine.hpp"
 
 ModeSwitchViewModel::ModeSwitchViewModel(QObject* parent) 
     : QObject(parent), m_isTakeControl(false)

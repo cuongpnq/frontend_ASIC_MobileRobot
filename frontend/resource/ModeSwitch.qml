@@ -22,7 +22,7 @@ Item {
         id: bgRect
         anchors.fill: parent
         radius: 99
-        color: "#33D8FFFF"
+        color: "#F2FEFE"
         border.color: "#c0b8b0"
         border.width: 1.5
     }

@@ -12,8 +12,8 @@ bool RunningViewViewModel::isActive() const {
     return m_isActive;
 }
 
-void RunningViewViewModel::requestMainView() {
-    AppStateMachine::instance().returnToMain();
+void RunningViewViewModel::requestControlCenterView() {
+    AppStateMachine::instance().returnToControlCenter();
 }
 
 void RunningViewViewModel::onStateMachineChanged() {

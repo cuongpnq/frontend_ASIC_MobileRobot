@@ -34,12 +34,34 @@ void AppStateMachine::returnToMain()
     updateState();
 }
 
+void AppStateMachine::goToControlCenter()
+{
+    statechart_raise_goToControlCenter(&m_statechart);
+    updateState();
+}
+
+void AppStateMachine::goToDirection()
+{
+    statechart_raise_goToDirection(&m_statechart);
+    updateState();
+}
+
+void AppStateMachine::returnToControlCenter()
+{
+    statechart_raise_returnToControlCenter(&m_statechart);
+    updateState();
+}
+
 void AppStateMachine::updateState()
 {
     QString newState = m_currentState;
 
     if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_MainView)) {
         newState = "MainView";
+    } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_ControlCenterView)) {
+        newState = "ControlCenterView";
+    } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_DirectionView)) {
+        newState = "DirectionView";
     } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_RunningView)) {
         newState = "RunningView";
     }

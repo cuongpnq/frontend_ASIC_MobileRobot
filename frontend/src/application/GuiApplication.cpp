@@ -4,6 +4,8 @@
 #include "containerBar/ContainerBarViewModel.hpp"
 #include "runningView/RunningViewViewModel.hpp"
 #include "modeSwitch/ModeSwitchViewModel.hpp"
+#include "controlCenterView/ControlCenterViewViewModel.hpp"
+#include "directionView/DirectionViewViewModel.hpp"
 #include <QQmlContext>
 #include <QQmlEngine>
 
@@ -42,8 +44,28 @@ GuiApplication::GuiApplication(int &argc, char **argv)
             return new RunningViewViewModel();
         });
 
-    // Initialize the backend state machine (no QML exposure)
-    AppStateMachine::instance();
+    qmlRegisterSingletonType<ControlCenterViewViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "ControlCenterViewViewModel",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            return new ControlCenterViewViewModel();
+        });
+
+    qmlRegisterSingletonType<DirectionViewViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "DirectionViewViewModel",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            return new DirectionViewViewModel();
+        });
+
+    qmlRegisterSingletonType<AppStateMachine>("com.asic.mobilerobot.viewmodels", 1, 0, "AppStateMachine",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            return &AppStateMachine::instance();
+        });
+
+    // Initialize the backend state machine
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     

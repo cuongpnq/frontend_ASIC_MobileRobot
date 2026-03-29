@@ -13,7 +13,15 @@ bool MainViewViewModel::isActive() const {
 }
 
 void MainViewViewModel::requestRunningView() {
-    AppStateMachine::instance().goToRunning();
+    AppStateMachine::instance().goToControlCenter();
+}
+
+void MainViewViewModel::requestDirectionView() {
+    AppStateMachine::instance().goToDirection();
+}
+
+void MainViewViewModel::requestSettingsView() {
+    // No state for this yet, so maybe we just return to main for now or do nothing.
 }
 
 void MainViewViewModel::onStateMachineChanged() {

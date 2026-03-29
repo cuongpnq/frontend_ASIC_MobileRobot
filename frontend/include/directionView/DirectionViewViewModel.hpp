@@ -2,16 +2,16 @@
 
 #include <QObject>
 
-class RunningViewViewModel : public QObject {
+class DirectionViewViewModel : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool isActive READ isActive NOTIFY isActiveChanged)
 
 public:
-    explicit RunningViewViewModel(QObject* parent = nullptr);
-    ~RunningViewViewModel() override = default;
+    explicit DirectionViewViewModel(QObject* parent = nullptr);
+    ~DirectionViewViewModel() override = default;
 
     bool isActive() const;
-    Q_INVOKABLE void requestControlCenterView();
+    Q_INVOKABLE void requestMainView();
 
 signals:
     void isActiveChanged();

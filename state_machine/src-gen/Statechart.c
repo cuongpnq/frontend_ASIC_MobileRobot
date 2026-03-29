@@ -15,15 +15,25 @@ Implementation of the state machine 'Statechart'
 
 /* prototypes of all internal functions */
 static void enseq_frontend_app_MainView_default(Statechart* handle);
+static void enseq_frontend_app_ControlCenterView_default(Statechart* handle);
+static void enseq_frontend_app_DirectionView_default(Statechart* handle);
 static void enseq_frontend_app_RunningView_default(Statechart* handle);
 static void enseq_frontend_app_default(Statechart* handle);
 static void exseq_frontend_app_MainView(Statechart* handle);
+static void exseq_frontend_app_ControlCenterView(Statechart* handle);
+static void exseq_frontend_app_DirectionView(Statechart* handle);
 static void exseq_frontend_app_RunningView(Statechart* handle);
 static void exseq_frontend_app(Statechart* handle);
 static void react_frontend_app__entry_Default(Statechart* handle);
 
 /*! The reactions of state MainView. */
 static sc_integer frontend_app_MainView_react(Statechart* handle, const sc_integer transitioned_before);
+
+/*! The reactions of state ControlCenterView. */
+static sc_integer frontend_app_ControlCenterView_react(Statechart* handle, const sc_integer transitioned_before);
+
+/*! The reactions of state DirectionView. */
+static sc_integer frontend_app_DirectionView_react(Statechart* handle, const sc_integer transitioned_before);
 
 /*! The reactions of state RunningView. */
 static sc_integer frontend_app_RunningView_react(Statechart* handle, const sc_integer transitioned_before);
@@ -138,6 +148,14 @@ sc_boolean statechart_is_state_active(const Statechart* handle, StatechartStates
 			result = (sc_boolean) (handle->stateConfVector[SCVI_STATECHART_FRONTEND_APP_MAINVIEW] == Statechart_frontend_app_MainView
 			);
 				break;
+		case Statechart_frontend_app_ControlCenterView :
+			result = (sc_boolean) (handle->stateConfVector[SCVI_STATECHART_FRONTEND_APP_CONTROLCENTERVIEW] == Statechart_frontend_app_ControlCenterView
+			);
+				break;
+		case Statechart_frontend_app_DirectionView :
+			result = (sc_boolean) (handle->stateConfVector[SCVI_STATECHART_FRONTEND_APP_DIRECTIONVIEW] == Statechart_frontend_app_DirectionView
+			);
+				break;
 		case Statechart_frontend_app_RunningView :
 			result = (sc_boolean) (handle->stateConfVector[SCVI_STATECHART_FRONTEND_APP_RUNNINGVIEW] == Statechart_frontend_app_RunningView
 			);
@@ -153,6 +171,9 @@ static void clear_in_events(Statechart* handle)
 {
 	handle->iface.returnToMain_raised = bool_false;
 	handle->iface.goToRunning_raised = bool_false;
+	handle->iface.goToControlCenter_raised = bool_false;
+	handle->iface.goToDirection_raised = bool_false;
+	handle->iface.returnToControlCenter_raised = bool_false;
 }
 
 static void micro_step(Statechart* handle)
@@ -162,6 +183,16 @@ static void micro_step(Statechart* handle)
 		case Statechart_frontend_app_MainView :
 		{
 			frontend_app_MainView_react(handle,-1);
+			break;
+		}
+		case Statechart_frontend_app_ControlCenterView :
+		{
+			frontend_app_ControlCenterView_react(handle,-1);
+			break;
+		}
+		case Statechart_frontend_app_DirectionView :
+		{
+			frontend_app_DirectionView_react(handle,-1);
 			break;
 		}
 		case Statechart_frontend_app_RunningView :
@@ -205,6 +236,24 @@ void statechart_raise_goToRunning(Statechart* handle)
 	run_cycle(handle);
 }
 
+void statechart_raise_goToControlCenter(Statechart* handle)
+{
+	statechart_add_event_to_queue(&(handle->in_event_queue), Statechart_goToControlCenter);
+	run_cycle(handle);
+}
+
+void statechart_raise_goToDirection(Statechart* handle)
+{
+	statechart_add_event_to_queue(&(handle->in_event_queue), Statechart_goToDirection);
+	run_cycle(handle);
+}
+
+void statechart_raise_returnToControlCenter(Statechart* handle)
+{
+	statechart_add_event_to_queue(&(handle->in_event_queue), Statechart_returnToControlCenter);
+	run_cycle(handle);
+}
+
 
 
 
@@ -217,6 +266,20 @@ static void enseq_frontend_app_MainView_default(Statechart* handle)
 {
 	/* 'default' enter sequence for state MainView */
 	handle->stateConfVector[0] = Statechart_frontend_app_MainView;
+}
+
+/* 'default' enter sequence for state ControlCenterView */
+static void enseq_frontend_app_ControlCenterView_default(Statechart* handle)
+{
+	/* 'default' enter sequence for state ControlCenterView */
+	handle->stateConfVector[0] = Statechart_frontend_app_ControlCenterView;
+}
+
+/* 'default' enter sequence for state DirectionView */
+static void enseq_frontend_app_DirectionView_default(Statechart* handle)
+{
+	/* 'default' enter sequence for state DirectionView */
+	handle->stateConfVector[0] = Statechart_frontend_app_DirectionView;
 }
 
 /* 'default' enter sequence for state RunningView */
@@ -240,6 +303,20 @@ static void exseq_frontend_app_MainView(Statechart* handle)
 	handle->stateConfVector[0] = Statechart_last_state;
 }
 
+/* Default exit sequence for state ControlCenterView */
+static void exseq_frontend_app_ControlCenterView(Statechart* handle)
+{
+	/* Default exit sequence for state ControlCenterView */
+	handle->stateConfVector[0] = Statechart_last_state;
+}
+
+/* Default exit sequence for state DirectionView */
+static void exseq_frontend_app_DirectionView(Statechart* handle)
+{
+	/* Default exit sequence for state DirectionView */
+	handle->stateConfVector[0] = Statechart_last_state;
+}
+
 /* Default exit sequence for state RunningView */
 static void exseq_frontend_app_RunningView(Statechart* handle)
 {
@@ -257,6 +334,16 @@ static void exseq_frontend_app(Statechart* handle)
 		case Statechart_frontend_app_MainView :
 		{
 			exseq_frontend_app_MainView(handle);
+			break;
+		}
+		case Statechart_frontend_app_ControlCenterView :
+		{
+			exseq_frontend_app_ControlCenterView(handle);
+			break;
+		}
+		case Statechart_frontend_app_DirectionView :
+		{
+			exseq_frontend_app_DirectionView(handle);
 			break;
 		}
 		case Statechart_frontend_app_RunningView :
@@ -284,10 +371,70 @@ static sc_integer frontend_app_MainView_react(Statechart* handle, const sc_integ
  			sc_integer transitioned_after = transitioned_before;
 	if ((transitioned_after) < (0))
 	{ 
-		if (handle->iface.goToRunning_raised == bool_true)
+		if (handle->iface.goToDirection_raised == bool_true)
 		{ 
 			exseq_frontend_app_MainView(handle);
-			enseq_frontend_app_RunningView_default(handle);
+			enseq_frontend_app_DirectionView_default(handle);
+			transitioned_after = 0;
+		}  else
+		{
+			if (handle->iface.goToControlCenter_raised == bool_true)
+			{ 
+				exseq_frontend_app_MainView(handle);
+				enseq_frontend_app_ControlCenterView_default(handle);
+				transitioned_after = 0;
+			} 
+		}
+	} 
+	/* If no transition was taken */
+	if ((transitioned_after) == (transitioned_before))
+	{ 
+		/* then execute local reactions. */
+		transitioned_after = transitioned_before;
+	} 
+	return transitioned_after;
+}
+
+static sc_integer frontend_app_ControlCenterView_react(Statechart* handle, const sc_integer transitioned_before)
+{
+	/* The reactions of state ControlCenterView. */
+ 			sc_integer transitioned_after = transitioned_before;
+	if ((transitioned_after) < (0))
+	{ 
+		if (handle->iface.returnToMain_raised == bool_true)
+		{ 
+			exseq_frontend_app_ControlCenterView(handle);
+			enseq_frontend_app_MainView_default(handle);
+			transitioned_after = 0;
+		}  else
+		{
+			if (handle->iface.goToRunning_raised == bool_true)
+			{ 
+				exseq_frontend_app_ControlCenterView(handle);
+				enseq_frontend_app_RunningView_default(handle);
+				transitioned_after = 0;
+			} 
+		}
+	} 
+	/* If no transition was taken */
+	if ((transitioned_after) == (transitioned_before))
+	{ 
+		/* then execute local reactions. */
+		transitioned_after = transitioned_before;
+	} 
+	return transitioned_after;
+}
+
+static sc_integer frontend_app_DirectionView_react(Statechart* handle, const sc_integer transitioned_before)
+{
+	/* The reactions of state DirectionView. */
+ 			sc_integer transitioned_after = transitioned_before;
+	if ((transitioned_after) < (0))
+	{ 
+		if (handle->iface.returnToMain_raised == bool_true)
+		{ 
+			exseq_frontend_app_DirectionView(handle);
+			enseq_frontend_app_MainView_default(handle);
 			transitioned_after = 0;
 		} 
 	} 
@@ -306,10 +453,10 @@ static sc_integer frontend_app_RunningView_react(Statechart* handle, const sc_in
  			sc_integer transitioned_after = transitioned_before;
 	if ((transitioned_after) < (0))
 	{ 
-		if (handle->iface.returnToMain_raised == bool_true)
+		if (handle->iface.returnToControlCenter_raised == bool_true)
 		{ 
 			exseq_frontend_app_RunningView(handle);
-			enseq_frontend_app_MainView_default(handle);
+			enseq_frontend_app_ControlCenterView_default(handle);
 			transitioned_after = 0;
 		} 
 	} 
@@ -399,6 +546,21 @@ static sc_boolean statechart_dispatch_event(Statechart* handle, const statechart
 		case Statechart_goToRunning:
 		{
 			handle->iface.goToRunning_raised = bool_true;
+			return bool_true;
+		}
+		case Statechart_goToControlCenter:
+		{
+			handle->iface.goToControlCenter_raised = bool_true;
+			return bool_true;
+		}
+		case Statechart_goToDirection:
+		{
+			handle->iface.goToDirection_raised = bool_true;
+			return bool_true;
+		}
+		case Statechart_returnToControlCenter:
+		{
+			handle->iface.returnToControlCenter_raised = bool_true;
 			return bool_true;
 		}
 		default:

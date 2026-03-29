@@ -10,6 +10,8 @@ Item {
     height: 80
     z: 10
 
+    signal backClicked()
+
     DropShadow {
         anchors.fill: bgRect
         horizontalOffset: 0
@@ -25,6 +27,25 @@ Item {
         anchors.fill: parent
         color: "#F8F7F3"
     }
+
+    Image {
+        id: backButton
+        source: "qrc:/images/back_button.png"
+        width: 60
+        height: 60
+        anchors.left: parent.left
+        anchors.leftMargin: 30
+        anchors.verticalCenter: parent.verticalCenter
+        visible: !MainViewViewModel.isActive
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                containerBar.backClicked()
+            }
+        }
+    }
+    
     // ── Time (centered) ──
     Text {
         id: timeText

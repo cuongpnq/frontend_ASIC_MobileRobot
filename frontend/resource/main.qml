@@ -8,32 +8,18 @@ ApplicationWindow {
     height: 960
     title: qsTr("Mobile Robot Application")
 
-    // Container Bar at the top (always visible)
-    ContainerBar {
-        id: containerBar
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-    }
-
-    // Content area below the container bar
-    Item {
-        id: contentArea
-        anchors.top: containerBar.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-
-        MainView {
-            id: mainViewComponent
-            anchors.fill: parent
-            visible: MainViewViewModel.isActive
-        }
-
-        RunningView {
-            id: runningViewComponent
-            anchors.fill: parent
-            visible: RunningViewViewModel.isActive
+    // Dynamic View Loader (State-Driven)
+    Loader {
+        id: viewLoader
+        anchors.fill: parent
+        source: {
+            switch (AppStateMachine.currentState) {
+                case "MainView":          return "MainView.qml"
+                case "ControlCenterView": return "ControlCenterView.qml"
+                case "RunningView":       return "RunningView.qml"
+                case "DirectionView":     return "DirectionView.qml"
+                default:                  return "MainView.qml"
+            }
         }
     }
 }

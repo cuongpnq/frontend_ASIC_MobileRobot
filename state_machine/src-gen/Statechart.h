@@ -41,13 +41,15 @@ Header of the state machine 'Statechart'.
 #define SC_INVALID_EVENT_VALUE 0
 #endif
 /*! Define number of states in the state enum */
-#define STATECHART_STATE_COUNT 2
+#define STATECHART_STATE_COUNT 4
 
 /*! Define dimension of the state configuration vector for orthogonal states. */
 #define STATECHART_MAX_ORTHOGONAL_STATES 1
 
 /*! Define indices of states in the StateConfVector */
 #define SCVI_STATECHART_FRONTEND_APP_MAINVIEW 0
+#define SCVI_STATECHART_FRONTEND_APP_CONTROLCENTERVIEW 0
+#define SCVI_STATECHART_FRONTEND_APP_DIRECTIONVIEW 0
 #define SCVI_STATECHART_FRONTEND_APP_RUNNINGVIEW 0
 
 
@@ -57,7 +59,10 @@ Header of the state machine 'Statechart'.
 typedef enum  {
 	Statechart_invalid_event = SC_INVALID_EVENT_VALUE,
 	Statechart_returnToMain,
-	Statechart_goToRunning
+	Statechart_goToRunning,
+	Statechart_goToControlCenter,
+	Statechart_goToDirection,
+	Statechart_returnToControlCenter
 } StatechartEventID;
 
 /*
@@ -83,6 +88,8 @@ typedef enum
 {
 	Statechart_last_state,
 	Statechart_frontend_app_MainView,
+	Statechart_frontend_app_ControlCenterView,
+	Statechart_frontend_app_DirectionView,
 	Statechart_frontend_app_RunningView
 } StatechartStates;
 
@@ -92,6 +99,9 @@ struct StatechartIface
 {
 	sc_boolean returnToMain_raised;
 	sc_boolean goToRunning_raised;
+	sc_boolean goToControlCenter_raised;
+	sc_boolean goToDirection_raised;
+	sc_boolean returnToControlCenter_raised;
 };
 
 
@@ -135,6 +145,12 @@ extern void statechart_trigger_without_event(Statechart* handle);
 extern void statechart_raise_returnToMain(Statechart* handle);
 /*! Raises the in event 'goToRunning' that is defined in the default interface scope. */ 
 extern void statechart_raise_goToRunning(Statechart* handle);
+/*! Raises the in event 'goToControlCenter' that is defined in the default interface scope. */ 
+extern void statechart_raise_goToControlCenter(Statechart* handle);
+/*! Raises the in event 'goToDirection' that is defined in the default interface scope. */ 
+extern void statechart_raise_goToDirection(Statechart* handle);
+/*! Raises the in event 'returnToControlCenter' that is defined in the default interface scope. */ 
+extern void statechart_raise_returnToControlCenter(Statechart* handle);
 
 /*!
  * Checks whether the state machine is active (until 2.4.1 this method was used for states).

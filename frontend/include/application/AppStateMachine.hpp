@@ -23,6 +23,9 @@ public:
     // Direct C++ methods to trigger state machine events
     void goToRunning();
     void returnToMain();
+    void goToControlCenter();
+    void goToDirection();
+    void returnToControlCenter();
 
 signals:
     void currentStateChanged();
