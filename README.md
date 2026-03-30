@@ -46,3 +46,8 @@ Flag CLEAN_BUILD=OFF by default
 ```bash
 make run_app
 ```
+
+## 4. Build & run application
+```bash
+make build_run
+```
