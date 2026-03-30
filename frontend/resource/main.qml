@@ -18,6 +18,7 @@ ApplicationWindow {
                 case "ControlCenterView": return "ControlCenterView.qml"
                 case "RunningView":       return "RunningView.qml"
                 case "DirectionView":     return "DirectionView.qml"
+                case "SettingsView":      return "SettingsView.qml"
                 default:                  return "MainView.qml"
             }
         }

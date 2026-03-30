@@ -46,6 +46,12 @@ void AppStateMachine::goToDirection()
     updateState();
 }
 
+void AppStateMachine::goToSettings()
+{
+    statechart_raise_goToSettings(&m_statechart);
+    updateState();
+}
+
 void AppStateMachine::returnToControlCenter()
 {
     statechart_raise_returnToControlCenter(&m_statechart);
@@ -64,6 +70,8 @@ void AppStateMachine::updateState()
         newState = "DirectionView";
     } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_RunningView)) {
         newState = "RunningView";
+    } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_SettingsView)) {
+        newState = "SettingsView";
     }
 
     if (m_currentState != newState) {
