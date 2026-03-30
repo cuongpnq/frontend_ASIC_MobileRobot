@@ -33,9 +33,6 @@ Item {
         height: 600
         spacing: 100
         orientation: ListView.Horizontal
-        leftMargin: 50
-        rightMargin: 50
-        clip: true
         interactive: true
 
         model: ListModel {
