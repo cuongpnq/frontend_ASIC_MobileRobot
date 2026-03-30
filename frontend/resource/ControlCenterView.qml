@@ -22,9 +22,6 @@ Item {
             x: 220
             y: 110
             source: "images/UIT_logo.png"
-            width: 1000
-            height: 1000
-            fillMode: Image.PreserveAspectFit
             opacity: 0.15
         }
 
@@ -64,20 +61,23 @@ Item {
                 radius: 32
                 color: "#DAD8D8"
                 opacity: 0.8
+                Text {
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.margins: 20
+                    text: "Diagnostics"
+                    font.pixelSize: 30
+                    font.bold: true
+                    font.family: "Inter"
+                    color: "#000000"
+                }
 
                 Column {
                     anchors.top: parent.top
                     anchors.left: parent.left
-                    anchors.margins: 16
+                    anchors.topMargin: 85
+                    anchors.leftMargin: 20
                     spacing: 8
-
-                    Text {
-                        text: "Diagnostics"
-                        font.pixelSize: 30
-                        font.bold: true
-                        font.family: "Inter"
-                        color: "#000000"
-                    }
 
                     Text {
                         text: "Battery Health: <b>Good</b>"
@@ -197,13 +197,12 @@ Item {
                         font.pixelSize: 30
                         color: "#000000"
                     }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            ControlCenterViewViewModel.requestMapPanelView()
-                        }
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        ControlCenterViewViewModel.requestMapPanelView()
                     }
                 }
             }

@@ -3,7 +3,6 @@ import com.asic.mobilerobot.viewmodels 1.0
 
 Item {
     id: root
-    anchors.fill: parent
 
     ContainerBar {
         id: containerBar
@@ -22,9 +21,6 @@ Item {
             x: 220
             y: 110
             source: "images/UIT_logo.png"
-            width: 1000
-            height: 1000
-            fillMode: Image.PreserveAspectFit
             opacity: 0.15
         }
     }
