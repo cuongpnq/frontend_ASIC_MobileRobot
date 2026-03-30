@@ -4,6 +4,7 @@ import com.asic.mobilerobot.viewmodels 1.0
 
 ApplicationWindow {
     visible: true
+    flags: Qt.FramelessWindowHint
     width: 1440
     height: 960
     title: qsTr("Mobile Robot Application")
