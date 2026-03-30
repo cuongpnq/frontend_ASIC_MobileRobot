@@ -20,6 +20,14 @@ void ControlCenterViewViewModel::requestMainView() {
     AppStateMachine::instance().returnToMain();
 }
 
+void ControlCenterViewViewModel::requestMapPanelView() {
+    AppStateMachine::instance().goToMapPanel();
+}
+
+void ControlCenterViewViewModel::requestDiagnosticsView() {
+    AppStateMachine::instance().goToDiagnostics();
+}
+
 void ControlCenterViewViewModel::onStateMachineChanged() {
     bool active = (AppStateMachine::instance().currentState() == "ControlCenterView");
     if (m_isActive != active) {

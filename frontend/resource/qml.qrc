@@ -6,6 +6,8 @@
         <file>RunningView.qml</file>
         <file>DirectionView.qml</file>
         <file>SettingsView.qml</file>
+        <file>MapPanelView.qml</file>
+        <file>DiagnosticsView.qml</file>
         <file>ContainerBar.qml</file>
         <file>ModeSwitch.qml</file>
         <file>images/UIT_logo.png</file>

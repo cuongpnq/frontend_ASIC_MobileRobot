@@ -8,6 +8,7 @@ ApplicationWindow {
     height: 960
     title: qsTr("Mobile Robot Application")
 
+
     // Dynamic View Loader (State-Driven)
     Loader {
         id: viewLoader
@@ -18,6 +19,8 @@ ApplicationWindow {
                 case "ControlCenterView": return "ControlCenterView.qml"
                 case "RunningView":       return "RunningView.qml"
                 case "DirectionView":     return "DirectionView.qml"
+                case "MapPanelView":      return "MapPanelView.qml"
+                case "DiagnosticsView":   return "DiagnosticsView.qml"
                 default:                  return "MainView.qml"
             }
         }

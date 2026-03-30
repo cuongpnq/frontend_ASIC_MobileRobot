@@ -26,6 +26,8 @@ public:
     void goToControlCenter();
     void goToDirection();
     void returnToControlCenter();
+    void goToMapPanel();
+    void goToDiagnostics();
 
 signals:
     void currentStateChanged();

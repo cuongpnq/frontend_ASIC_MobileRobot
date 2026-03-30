@@ -14,12 +14,30 @@ Item {
     }
 
     Rectangle {
+        anchors.fill: parent
+        color: "#F5F4EF"
+        z: -1
+
+        Image {
+            x: 220
+            y: 110
+            source: "images/UIT_logo.png"
+            width: 1000
+            height: 1000
+            fillMode: Image.PreserveAspectFit
+            opacity: 0.15
+        }
+    }
+
+    MouseArea {
         anchors.top: containerBar.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        color: "#F5F4EF"
-        z: -1
+        cursorShape: Qt.PointingHandCursor
+        onClicked: {
+            MainViewViewModel.requestRunningView()
+        }
     }
 
     Text {

@@ -10,7 +10,7 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        onBackClicked: RunningViewViewModel.requestControlCenterView()
+        onBackClicked: DiagnosticsViewViewModel.requestControlCenterView()
     }
 
     Rectangle {
@@ -29,9 +29,10 @@ Item {
 
         Text {
             anchors.centerIn: parent
-            text: "RUNNING VIEW DASHBOARD"
+            text: "DIAGNOSTICS VIEW"
             font.pixelSize: 24
             font.bold: true
+            color: "#2C2C2C"
         }
     }
 }

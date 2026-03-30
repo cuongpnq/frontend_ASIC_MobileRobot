@@ -52,6 +52,18 @@ void AppStateMachine::returnToControlCenter()
     updateState();
 }
 
+void AppStateMachine::goToMapPanel()
+{
+    statechart_raise_goToMapPanel(&m_statechart);
+    updateState();
+}
+
+void AppStateMachine::goToDiagnostics()
+{
+    statechart_raise_goToDiagnostics(&m_statechart);
+    updateState();
+}
+
 void AppStateMachine::updateState()
 {
     QString newState = m_currentState;
@@ -64,6 +76,10 @@ void AppStateMachine::updateState()
         newState = "DirectionView";
     } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_RunningView)) {
         newState = "RunningView";
+    } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_MapPanelView)) {
+        newState = "MapPanelView";
+    } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_DiagnosticsView)) {
+        newState = "DiagnosticsView";
     }
 
     if (m_currentState != newState) {

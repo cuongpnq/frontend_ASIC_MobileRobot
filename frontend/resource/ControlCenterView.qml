@@ -10,24 +10,29 @@ Item {
     ContainerBar {
         id: containerBar
         anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
         onBackClicked: ControlCenterViewViewModel.requestMainView()
     }
 
     Rectangle {
-        anchors.top: containerBar.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
+        anchors.fill: parent
         color: "#F5F4EF" // warm beige background
+
+        // Background watermark
+        Image {
+            x: 220
+            y: 110
+            source: "images/UIT_logo.png"
+            width: 1000
+            height: 1000
+            fillMode: Image.PreserveAspectFit
+            opacity: 0.15
+        }
 
         // ── Title ──────────────────────────────────────────────────
         Text {
             id: titleText
-            anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.topMargin: 160
+            y: 160
             text: "ROBOT CONTROL CENTER"
             font.pixelSize: 50
             font.bold: true
@@ -38,29 +43,27 @@ Item {
         // ── Mode Switch Pill ────────────────────────────────────────
         ModeSwitch {
             id: modeSwitchContainer
-            anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.topMargin: 320
+            y: 320
         }
 
         // ── Three Panels Row ────────────────────────────────────────
         Row {
             id: panelsRow
-            anchors.top: modeSwitchContainer.bottom
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.topMargin: 32
-            anchors.leftMargin: 32
-            anchors.rightMargin: 32
-            spacing: 16
+            anchors.leftMargin: 50
+            y: 580
+            spacing: 45
 
             // ── Diagnostics Panel ───────────────────────────────────
             Rectangle {
                 id: diagnosticsPanel
-                width: (panelsRow.width - 2 * panelsRow.spacing) / 3
-                height: 160
-                radius: 12
-                color: "#ddd8d0"
+                width: 381
+                height: 202
+                radius: 32
+                color: "#DAD8D8"
+                opacity: 0.8
 
                 Column {
                     anchors.top: parent.top
@@ -70,64 +73,34 @@ Item {
 
                     Text {
                         text: "Diagnostics"
-                        font.pixelSize: 15
+                        font.pixelSize: 30
                         font.bold: true
-                        color: "#1a1a1a"
+                        font.family: "Inter"
+                        color: "#000000"
                     }
 
                     Text {
                         text: "Battery Health: <b>Good</b>"
-                        font.pixelSize: 13
+                        font.pixelSize: 30
+                        font.family: "Inter"
                         color: "#333333"
                         textFormat: Text.RichText
                     }
 
                     Text {
                         text: "Motors: <b>Stable</b>"
-                        font.pixelSize: 13
+                        font.pixelSize: 30
+                        font.family: "Inter"
                         color: "#333333"
                         textFormat: Text.RichText
                     }
                 }
 
-                // Settings button
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    anchors.left: parent.left
-                    anchors.margins: 12
-                    width: settingsBtnRow.width + 20
-                    height: 32
-                    radius: 16
-                    color: "#c8c0b8"
-                    border.color: "#aaa098"
-                    border.width: 1
-
-                    Row {
-                        id: settingsBtnRow
-                        anchors.centerIn: parent
-                        spacing: 6
-
-                        Text {
-                            text: "⚙"
-                            font.pixelSize: 14
-                            color: "#333333"
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Text {
-                            text: "Settings"
-                            font.pixelSize: 13
-                            color: "#333333"
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                             ControlCenterViewViewModel.requestRunningView()
-                        }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        ControlCenterViewViewModel.requestDiagnosticsView()
                     }
                 }
             }
@@ -135,34 +108,53 @@ Item {
             // ── Current Status Panel ────────────────────────────────
             Rectangle {
                 id: statusPanel
-                width: (panelsRow.width - 2 * panelsRow.spacing) / 3
-                height: 160
-                radius: 12
-                color: "#ddd8d0"
+                width: 450
+                height: 202
+                radius: 32
+                color: "#DAD8D8"
+                opacity: 0.8
 
                 Column {
                     anchors.centerIn: parent
-                    spacing: 8
+                    spacing: 20
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "CURRENT STATUS:"
-                        font.pixelSize: 13
+                        font.pixelSize: 30
+                        font.family: "Inter"
                         font.bold: true
                         font.letterSpacing: 1
-                        color: "#555555"
+                        color: "#594A4A"
                     }
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: ModeSwitchViewModel.isTakeControl ? "Manual Control" : "Exploring..."
-                        font.pixelSize: 20
+                        text: ModeSwitchViewModel.isTakeControl ? "Controlling..." : "Exploring..."
+                        font.pixelSize: 40
+                        font.family: "Inter"
                         font.bold: true
-                        color: "#1a73e8"
+                        color: ModeSwitchViewModel.isTakeControl ? "#007339" : "#107DB3"
 
                         Behavior on color {
                             ColorAnimation { duration: 200 }
                         }
+                    }
+
+                    Text {
+                        text: "Tap to go to running view"
+                        font.pixelSize: 25
+                        font.family: "Inter"
+                        color: "#2C2C2C"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        ControlCenterViewViewModel.requestRunningView()
                     }
                 }
             }
@@ -170,44 +162,47 @@ Item {
             // ── Map Panel ───────────────────────────────────────────
             Rectangle {
                 id: mapPanel
-                width: (panelsRow.width - 2 * panelsRow.spacing) / 3
-                height: 160
-                radius: 12
-                color: "#ddd8d0"
+                width: 400
+                height: 292
+                radius: 32
+                color: "#DAD8D8"
+                opacity: 0.8
 
                 Text {
                     anchors.top: parent.top
                     anchors.left: parent.left
-                    anchors.margins: 12
+                    anchors.margins: 20
                     text: "Map"
-                    font.pixelSize: 15
+                    font.pixelSize: 30
+                    font.family: "Inter"
                     font.bold: true
-                    color: "#1a1a1a"
+                    color: "#000000"
                 }
 
                 // Map image placeholder
                 Rectangle {
                     anchors.centerIn: parent
                     anchors.verticalCenterOffset: 8
-                    width: parent.width - 32
-                    height: parent.height - 52
+                    width: 300
+                    height: 160
                     radius: 8
-                    color: "#c8c0b8"
-                    border.color: "#aaa098"
+                    color: "#D9D9D9"
+                    border.color: "#2C2C2C"
                     border.width: 1
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Direction View"
-                        font.pixelSize: 13
-                        color: "#666666"
+                        text: "Map"
+                        font.family: "Inter"
+                        font.pixelSize: 30
+                        color: "#000000"
                     }
 
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            // ControlCenterViewViewModel.requestMainView() // Changed from MainViewViewModel.requestDirectionView() ???
+                            ControlCenterViewViewModel.requestMapPanelView()
                         }
                     }
                 }
