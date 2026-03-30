@@ -10,7 +10,7 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        onBackClicked: MainViewViewModel.requestMainView()
+        onBackClicked: SettingsViewViewModel.requestMainView()
     }
 
     Rectangle {

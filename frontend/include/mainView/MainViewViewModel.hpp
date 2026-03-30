@@ -11,7 +11,7 @@ public:
     ~MainViewViewModel() override = default;
 
     bool isActive() const;
-    Q_INVOKABLE void requestRunningView();
+    Q_INVOKABLE void requestControlCenterView();
     Q_INVOKABLE void requestDirectionView();
     Q_INVOKABLE void requestSettingsView();
 

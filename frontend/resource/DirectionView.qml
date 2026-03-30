@@ -28,12 +28,54 @@ Item {
             opacity: 0.15
         }
     }
+    
+    Rectangle {
+        id: mapBackground
+        x: 50
+        y: 120
+        width: 1150
+        height: 770
+        radius: 32
+        color: '#80dad8d8'
+    }
 
     Text {
-        anchors.centerIn: parent
-        text: "Direction View (Blank)"
-        font.pixelSize: 40
-        color: "#2C2C2C"
+        x: mapBackground.x+35
+        y: mapBackground.y+25
+        text: "Map"
+        font.pixelSize: 30
+        font.bold: true
+        color: '#000000'
+    }
+
+    Image {
+        id: mapButton
+        x: mapBackground.x + 1030
+        y: mapBackground.y + 650
+        width: 100
+        height: 100
+        source: "qrc:/images/map_button.png"
+        fillMode: Image.PreserveAspectFit
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {}
+        }
+    }
+
+    Image {
+        id: chatboxButton
+        x: 1250
+        y: 750
+        width: 150
+        height: 150
+        source: "qrc:/images/chatbox_button.png"
+        fillMode: Image.PreserveAspectFit
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {}
+        }
     }
 
     // Back button logic is in ContainerBar, but we could add a local one if needed.

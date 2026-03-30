@@ -67,7 +67,7 @@ Item {
                     if (model.viewType === "direction") {
                         MainViewViewModel.requestDirectionView()
                     } else if (model.viewType === "controlCenter") {
-                        MainViewViewModel.requestRunningView()
+                        MainViewViewModel.requestControlCenterView()
                     } else if (model.viewType === "settings") {
                         MainViewViewModel.requestSettingsView()
                     }

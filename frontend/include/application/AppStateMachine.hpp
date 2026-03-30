@@ -25,6 +25,7 @@ public:
     void returnToMain();
     void goToControlCenter();
     void goToDirection();
+    void goToSettings();
     void returnToControlCenter();
     void goToMapPanel();
     void goToDiagnostics();
