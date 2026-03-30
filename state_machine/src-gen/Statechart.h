@@ -51,6 +51,9 @@ Header of the state machine 'Statechart'.
 #define SCVI_STATECHART_FRONTEND_APP_CONTROLCENTERVIEW 0
 #define SCVI_STATECHART_FRONTEND_APP_DIRECTIONVIEW 0
 #define SCVI_STATECHART_FRONTEND_APP_RUNNINGVIEW 0
+#define SCVI_STATECHART_FRONTEND_APP_SETTINGSVIEW 0
+#define SCVI_STATECHART_FRONTEND_APP_DIAGNOSTICSVIEW 0
+#define SCVI_STATECHART_FRONTEND_APP_MAPPANELVIEW 0
 
 
 /* 
@@ -62,7 +65,10 @@ typedef enum  {
 	Statechart_goToRunning,
 	Statechart_goToControlCenter,
 	Statechart_goToDirection,
-	Statechart_returnToControlCenter
+	Statechart_returnToControlCenter,
+	Statechart_goToSettings,
+	Statechart_goToDiagnostics,
+	Statechart_goToMapPanel
 } StatechartEventID;
 
 /*
@@ -90,7 +96,10 @@ typedef enum
 	Statechart_frontend_app_MainView,
 	Statechart_frontend_app_ControlCenterView,
 	Statechart_frontend_app_DirectionView,
-	Statechart_frontend_app_RunningView
+	Statechart_frontend_app_RunningView,
+	Statechart_frontend_app_SettingsView,
+	Statechart_frontend_app_DiagnosticsView,
+	Statechart_frontend_app_MapPanelView
 } StatechartStates;
 
 
@@ -102,6 +111,9 @@ struct StatechartIface
 	sc_boolean goToControlCenter_raised;
 	sc_boolean goToDirection_raised;
 	sc_boolean returnToControlCenter_raised;
+	sc_boolean goToSettings_raised;
+	sc_boolean goToDiagnostics_raised;
+	sc_boolean goToMapPanel_raised;
 };
 
 
@@ -151,6 +163,12 @@ extern void statechart_raise_goToControlCenter(Statechart* handle);
 extern void statechart_raise_goToDirection(Statechart* handle);
 /*! Raises the in event 'returnToControlCenter' that is defined in the default interface scope. */ 
 extern void statechart_raise_returnToControlCenter(Statechart* handle);
+/*! Raises the in event 'goToSettings' that is defined in the default interface scope. */ 
+extern void statechart_raise_goToSettings(Statechart* handle);
+/*! Raises the in event 'goToDiagnostics' that is defined in the default interface scope. */ 
+extern void statechart_raise_goToDiagnostics(Statechart* handle);
+/*! Raises the in event 'goToMapPanel' that is defined in the default interface scope. */ 
+extern void statechart_raise_goToMapPanel(Statechart* handle);
 
 /*!
  * Checks whether the state machine is active (until 2.4.1 this method was used for states).

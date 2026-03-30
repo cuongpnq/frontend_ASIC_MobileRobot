@@ -6,6 +6,9 @@
 #include "modeSwitch/ModeSwitchViewModel.hpp"
 #include "controlCenterView/ControlCenterViewViewModel.hpp"
 #include "directionView/DirectionViewViewModel.hpp"
+#include "settingsView/SettingsViewViewModel.hpp"
+#include "diagnosticsView/DiagnosticsViewViewModel.hpp"
+#include "mapPanelView/MapPanelViewViewModel.hpp"
 #include <QQmlContext>
 #include <QQmlEngine>
 
@@ -65,18 +68,18 @@ GuiApplication::GuiApplication(int &argc, char **argv)
             return new SettingsViewViewModel();
         });
 
-    qmlRegisterSingletonType<MapPanelViewViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "MapPanelViewViewModel",
-        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
-            Q_UNUSED(engine)
-            Q_UNUSED(scriptEngine)
-            return new MapPanelViewViewModel();
-        });
-
     qmlRegisterSingletonType<DiagnosticsViewViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "DiagnosticsViewViewModel",
         [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
             Q_UNUSED(engine)
             Q_UNUSED(scriptEngine)
             return new DiagnosticsViewViewModel();
+        });
+
+    qmlRegisterSingletonType<MapPanelViewViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "MapPanelViewViewModel",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            return new MapPanelViewViewModel();
         });
 
     qmlRegisterSingletonType<AppStateMachine>("com.asic.mobilerobot.viewmodels", 1, 0, "AppStateMachine",

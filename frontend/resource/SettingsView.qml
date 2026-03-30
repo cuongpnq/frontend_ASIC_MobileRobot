@@ -29,17 +29,6 @@ Item {
         }
     }
 
-    MouseArea {
-        anchors.top: containerBar.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            MainViewViewModel.requestRunningView()
-        }
-    }
-
     Text {
         anchors.centerIn: parent
         text: "Settings View (Blank)"

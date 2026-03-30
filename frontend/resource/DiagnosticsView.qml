@@ -16,6 +16,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: "#F5F4EF"
+        z: -1
 
         Image {
             x: 220
@@ -26,13 +27,13 @@ Item {
             fillMode: Image.PreserveAspectFit
             opacity: 0.15
         }
+    }
 
-        Text {
-            anchors.centerIn: parent
-            text: "DIAGNOSTICS VIEW"
-            font.pixelSize: 24
-            font.bold: true
-            color: "#2C2C2C"
-        }
+    Text {
+        anchors.centerIn: parent
+        text: "DIAGNOSTICS VIEW"
+        font.pixelSize: 24
+        font.bold: true
+        color: "#2C2C2C"
     }
 }

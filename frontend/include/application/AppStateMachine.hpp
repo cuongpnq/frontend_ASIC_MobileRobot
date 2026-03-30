@@ -25,10 +25,10 @@ public:
     void returnToMain();
     void goToControlCenter();
     void goToDirection();
-    void goToSettings();
     void returnToControlCenter();
-    void goToMapPanel();
+    void goToSettings();
     void goToDiagnostics();
+    void goToMapPanel();
 
 signals:
     void currentStateChanged();
