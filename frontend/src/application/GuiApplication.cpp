@@ -9,6 +9,7 @@
 #include "settingsView/SettingsViewViewModel.hpp"
 #include "diagnosticsView/DiagnosticsViewViewModel.hpp"
 #include "mapPanelView/MapPanelViewViewModel.hpp"
+#include "chatView/ChatViewViewModel.hpp"
 #include <QQmlContext>
 #include <QQmlEngine>
 
@@ -18,6 +19,12 @@ GuiApplication::GuiApplication(int &argc, char **argv)
 
     app = std::make_unique<QGuiApplication>(argc, argv);
     engine = std::make_unique<QQmlApplicationEngine>();
+
+#ifdef HAS_VIRTUAL_KEYBOARD
+    engine->rootContext()->setContextProperty("HAS_VIRTUAL_KEYBOARD", true);
+#else
+    engine->rootContext()->setContextProperty("HAS_VIRTUAL_KEYBOARD", false);
+#endif
 
     qmlRegisterSingletonType<ModeSwitchViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "ModeSwitchViewModel",
         [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
@@ -80,6 +87,13 @@ GuiApplication::GuiApplication(int &argc, char **argv)
             Q_UNUSED(engine)
             Q_UNUSED(scriptEngine)
             return new MapPanelViewViewModel();
+        });
+
+    qmlRegisterSingletonType<ChatViewViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "ChatViewViewModel",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            return new ChatViewViewModel();
         });
 
     qmlRegisterSingletonType<AppStateMachine>("com.asic.mobilerobot.viewmodels", 1, 0, "AppStateMachine",

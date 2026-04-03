@@ -24,6 +24,10 @@ void MainViewViewModel::requestSettingsView() {
     AppStateMachine::instance().goToSettings();
 }
 
+void MainViewViewModel::requestChatView() {
+    AppStateMachine::instance().goToChatView();
+}
+
 void MainViewViewModel::onStateMachineChanged() {
     bool active = (AppStateMachine::instance().currentState() == "MainView");
     if (m_isActive != active) {

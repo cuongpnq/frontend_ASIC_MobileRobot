@@ -8,6 +8,7 @@
         <file>SettingsView.qml</file>
         <file>MapPanelView.qml</file>
         <file>DiagnosticsView.qml</file>
+        <file>ChatView.qml</file>
         <file>ContainerBar.qml</file>
         <file>ModeSwitch.qml</file>
         <file>images/UIT_logo.png</file>
@@ -16,6 +17,6 @@
         <file>images/direction.png</file>
         <file>images/settings.png</file>
         <file>images/map_button.png</file>
-        <file>images/chatbox_button.png</file>
+        <file>images/chatbot.png</file>
     </qresource>
 </RCC>

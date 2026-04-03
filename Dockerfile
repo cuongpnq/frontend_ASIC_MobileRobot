@@ -19,6 +19,11 @@ RUN apt-get update && apt-get install -y \
     libxcb-xinerama0 \
     libwayland-client0 \
     libwayland-egl1 \
+    libqt5virtualkeyboard5-dev \
+    qml-module-qtquick-virtualkeyboard \
+    qtvirtualkeyboard-plugin \
+    qml-module-qt-labs-folderlistmodel \
+    qml-module-qt-labs-settings \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

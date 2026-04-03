@@ -16,6 +16,11 @@ find_package(Qt5 REQUIRED COMPONENTS
     Quick
 )
 
+find_package(Qt5VirtualKeyboard QUIET)
+if (Qt5VirtualKeyboard_FOUND)
+    add_compile_definitions(HAS_VIRTUAL_KEYBOARD)
+endif()
+
 set(FRONTEND_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(FRONTEND_INCLUDE_DIR ${FRONTEND_ROOT}/include)
 set(FRONTEND_SRC_DIR ${FRONTEND_ROOT}/src)
@@ -66,3 +71,7 @@ target_link_libraries(frontend_app PRIVATE
     Qt5::Qml
     Qt5::Quick
 )
+
+if (Qt5VirtualKeyboard_FOUND)
+    target_link_libraries(frontend_app PRIVATE Qt5::VirtualKeyboard)
+endif()

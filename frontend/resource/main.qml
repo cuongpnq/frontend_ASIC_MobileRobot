@@ -23,6 +23,7 @@ ApplicationWindow {
                 case "SettingsView":      return "SettingsView.qml"
                 case "MapPanelView":      return "MapPanelView.qml"
                 case "DiagnosticsView":   return "DiagnosticsView.qml"
+                case "ChatView":          return "ChatView.qml"
                 default:                  return "MainView.qml"
             }
         }

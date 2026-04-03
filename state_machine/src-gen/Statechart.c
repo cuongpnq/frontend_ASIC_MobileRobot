@@ -21,6 +21,7 @@ static void enseq_frontend_app_RunningView_default(Statechart* handle);
 static void enseq_frontend_app_SettingsView_default(Statechart* handle);
 static void enseq_frontend_app_DiagnosticsView_default(Statechart* handle);
 static void enseq_frontend_app_MapPanelView_default(Statechart* handle);
+static void enseq_frontend_app_ChatView_default(Statechart* handle);
 static void enseq_frontend_app_default(Statechart* handle);
 static void exseq_frontend_app_MainView(Statechart* handle);
 static void exseq_frontend_app_ControlCenterView(Statechart* handle);
@@ -29,6 +30,7 @@ static void exseq_frontend_app_RunningView(Statechart* handle);
 static void exseq_frontend_app_SettingsView(Statechart* handle);
 static void exseq_frontend_app_DiagnosticsView(Statechart* handle);
 static void exseq_frontend_app_MapPanelView(Statechart* handle);
+static void exseq_frontend_app_ChatView(Statechart* handle);
 static void exseq_frontend_app(Statechart* handle);
 static void react_frontend_app__entry_Default(Statechart* handle);
 
@@ -52,6 +54,9 @@ static sc_integer frontend_app_DiagnosticsView_react(Statechart* handle, const s
 
 /*! The reactions of state MapPanelView. */
 static sc_integer frontend_app_MapPanelView_react(Statechart* handle, const sc_integer transitioned_before);
+
+/*! The reactions of state ChatView. */
+static sc_integer frontend_app_ChatView_react(Statechart* handle, const sc_integer transitioned_before);
 
 
 static void clear_in_events(Statechart* handle);
@@ -187,6 +192,10 @@ sc_boolean statechart_is_state_active(const Statechart* handle, StatechartStates
 			result = (sc_boolean) (handle->stateConfVector[SCVI_STATECHART_FRONTEND_APP_MAPPANELVIEW] == Statechart_frontend_app_MapPanelView
 			);
 				break;
+		case Statechart_frontend_app_ChatView :
+			result = (sc_boolean) (handle->stateConfVector[SCVI_STATECHART_FRONTEND_APP_CHATVIEW] == Statechart_frontend_app_ChatView
+			);
+				break;
 			default:
 				result = bool_false;
 				break;
@@ -204,6 +213,7 @@ static void clear_in_events(Statechart* handle)
 	handle->iface.goToSettings_raised = bool_false;
 	handle->iface.goToDiagnostics_raised = bool_false;
 	handle->iface.goToMapPanel_raised = bool_false;
+	handle->iface.goToChatView_raised = bool_false;
 }
 
 static void micro_step(Statechart* handle)
@@ -243,6 +253,11 @@ static void micro_step(Statechart* handle)
 		case Statechart_frontend_app_MapPanelView :
 		{
 			frontend_app_MapPanelView_react(handle,-1);
+			break;
+		}
+		case Statechart_frontend_app_ChatView :
+		{
+			frontend_app_ChatView_react(handle,-1);
 			break;
 		}
 		default: 
@@ -317,6 +332,12 @@ void statechart_raise_goToMapPanel(Statechart* handle)
 	run_cycle(handle);
 }
 
+void statechart_raise_goToChatView(Statechart* handle)
+{
+	statechart_add_event_to_queue(&(handle->in_event_queue), Statechart_goToChatView);
+	run_cycle(handle);
+}
+
 
 
 
@@ -371,6 +392,13 @@ static void enseq_frontend_app_MapPanelView_default(Statechart* handle)
 {
 	/* 'default' enter sequence for state MapPanelView */
 	handle->stateConfVector[0] = Statechart_frontend_app_MapPanelView;
+}
+
+/* 'default' enter sequence for state ChatView */
+static void enseq_frontend_app_ChatView_default(Statechart* handle)
+{
+	/* 'default' enter sequence for state ChatView */
+	handle->stateConfVector[0] = Statechart_frontend_app_ChatView;
 }
 
 /* 'default' enter sequence for region frontend_app */
@@ -429,6 +457,13 @@ static void exseq_frontend_app_MapPanelView(Statechart* handle)
 	handle->stateConfVector[0] = Statechart_last_state;
 }
 
+/* Default exit sequence for state ChatView */
+static void exseq_frontend_app_ChatView(Statechart* handle)
+{
+	/* Default exit sequence for state ChatView */
+	handle->stateConfVector[0] = Statechart_last_state;
+}
+
 /* Default exit sequence for region frontend_app */
 static void exseq_frontend_app(Statechart* handle)
 {
@@ -471,6 +506,11 @@ static void exseq_frontend_app(Statechart* handle)
 			exseq_frontend_app_MapPanelView(handle);
 			break;
 		}
+		case Statechart_frontend_app_ChatView :
+		{
+			exseq_frontend_app_ChatView(handle);
+			break;
+		}
 		default: 
 			/* do nothing */
 			break;
@@ -510,7 +550,15 @@ static sc_integer frontend_app_MainView_react(Statechart* handle, const sc_integ
 					exseq_frontend_app_MainView(handle);
 					enseq_frontend_app_SettingsView_default(handle);
 					transitioned_after = 0;
-				} 
+				}  else
+				{
+					if (handle->iface.goToChatView_raised == bool_true)
+					{ 
+						exseq_frontend_app_MainView(handle);
+						enseq_frontend_app_ChatView_default(handle);
+						transitioned_after = 0;
+					} 
+				}
 			}
 		}
 	} 
@@ -679,6 +727,28 @@ static sc_integer frontend_app_MapPanelView_react(Statechart* handle, const sc_i
 	return transitioned_after;
 }
 
+static sc_integer frontend_app_ChatView_react(Statechart* handle, const sc_integer transitioned_before)
+{
+	/* The reactions of state ChatView. */
+ 			sc_integer transitioned_after = transitioned_before;
+	if ((transitioned_after) < (0))
+	{ 
+		if (handle->iface.returnToMain_raised == bool_true)
+		{ 
+			exseq_frontend_app_ChatView(handle);
+			enseq_frontend_app_MainView_default(handle);
+			transitioned_after = 0;
+		} 
+	} 
+	/* If no transition was taken */
+	if ((transitioned_after) == (transitioned_before))
+	{ 
+		/* then execute local reactions. */
+		transitioned_after = transitioned_before;
+	} 
+	return transitioned_after;
+}
+
 
 
 
@@ -786,6 +856,11 @@ static sc_boolean statechart_dispatch_event(Statechart* handle, const statechart
 		case Statechart_goToMapPanel:
 		{
 			handle->iface.goToMapPanel_raised = bool_true;
+			return bool_true;
+		}
+		case Statechart_goToChatView:
+		{
+			handle->iface.goToChatView_raised = bool_true;
 			return bool_true;
 		}
 		default:

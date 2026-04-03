@@ -70,6 +70,12 @@ void AppStateMachine::goToMapPanel()
     updateState();
 }
 
+void AppStateMachine::goToChatView()
+{
+    statechart_raise_goToChatView(&m_statechart);
+    updateState();
+}
+
 void AppStateMachine::updateState()
 {
     QString newState = m_currentState;
@@ -88,6 +94,8 @@ void AppStateMachine::updateState()
         newState = "DiagnosticsView";
     } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_MapPanelView)) {
         newState = "MapPanelView";
+    } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_ChatView)) {
+        newState = "ChatView";
     }
 
     if (m_currentState != newState) {

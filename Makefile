@@ -1,7 +1,10 @@
 BUILD_DIR ?= build-output
 CLEAN_BUILD ?= OFF
 
-.PHONY: qtcreator debug_native run_app build_run
+.PHONY: qtcreator debug_native run_app build_run get_virtualkeyboard
+
+get_virtualkeyboard:
+	sudo apt-get install -y libqt5virtualkeyboard5-dev qml-module-qtquick-virtualkeyboard qtvirtualkeyboard-plugin qml-module-qt-labs-folderlistmodel qml-module-qt-labs-settings
 
 qtcreator:
 	qtcreator CMakeLists.txt &

@@ -29,6 +29,7 @@ public:
     void goToSettings();
     void goToDiagnostics();
     void goToMapPanel();
+    void goToChatView();
 
 signals:
     void currentStateChanged();
