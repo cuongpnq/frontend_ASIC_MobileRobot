@@ -7,25 +7,25 @@ import QtGraphicalEffects 1.12
 Item {
     id: containerBar
     width: parent.width
-    height: 80
+    height: 100
     z: 10
 
     signal backClicked()
-
-    DropShadow {
-        anchors.fill: bgRect
-        horizontalOffset: 0
-        verticalOffset: 8
-        radius: 16
-        samples: 32
-        color: "#40000000"
-        source: bgRect
-    }
 
     Rectangle {
         id: bgRect
         anchors.fill: parent
         color: "#F8F7F3"
+    }
+
+    DropShadow {
+        anchors.fill: bgRect
+        horizontalOffset: 0
+        verticalOffset: 10
+        radius: 16
+        samples: 32
+        color: "#40000000"
+        source: bgRect
     }
 
     Image {
@@ -51,7 +51,7 @@ Item {
         id: timeText
         anchors.centerIn: parent
         text: ContainerBarViewModel.currentTime
-        font.pixelSize: 35
+        font.pixelSize: 48
         font.bold: true
         font.family: "Inter"
         color: "#000000"
@@ -127,7 +127,7 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: ContainerBarViewModel.batteryLevel + "%"
-                font.pixelSize: 30
+                font.pixelSize: 48
                 font.family: "Inter"
                 color: "#000000"
             }
@@ -135,8 +135,8 @@ Item {
             // Battery icon (drawn with Canvas)
             Item {
                 id: batteryIcon
-                width: 60
-                height: 35
+                width: 100
+                height: 50
                 anchors.verticalCenter: parent.verticalCenter
                 
                 Canvas {

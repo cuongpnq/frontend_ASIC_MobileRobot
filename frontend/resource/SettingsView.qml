@@ -19,8 +19,10 @@ Item {
         z: -1
 
         Image {
-            x: 220
-            y: 110
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 120
+            width: 1300
+            height: 1105
             source: "images/UIT_logo.png"
             opacity: 0.15
         }

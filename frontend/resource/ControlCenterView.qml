@@ -16,11 +16,14 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: "#F5F4EF" // warm beige background
+        z: -1
 
         // Background watermark
         Image {
-            x: 220
-            y: 110
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 120
+            width: 1300
+            height: 1105
             source: "images/UIT_logo.png"
             opacity: 0.15
         }
@@ -29,9 +32,10 @@ Item {
         Text {
             id: titleText
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 160
+            anchors.top: parent.top
+            anchors.topMargin: containerBar.height + 150
             text: "ROBOT CONTROL CENTER"
-            font.pixelSize: 50
+            font.pixelSize: 96
             font.bold: true
             font.family: "Inter"
             color: "#1a1a1a"
@@ -41,47 +45,51 @@ Item {
         ModeSwitch {
             id: modeSwitchContainer
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 320
+            anchors.top: titleText.bottom
+            anchors.topMargin: 100
         }
 
         // ── Three Panels Row ────────────────────────────────────────
         Row {
             id: panelsRow
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.leftMargin: 50
-            y: 580
-            spacing: 45
+            height: 380
+            width: parent.width
+            leftPadding: 80
+            rightPadding: 80
+            anchors.top: modeSwitchContainer.bottom
+            anchors.topMargin: 100
+            spacing: 100
 
             // ── Diagnostics Panel ───────────────────────────────────
             Rectangle {
                 id: diagnosticsPanel
-                width: 381
-                height: 202
+                width: (parent.width - 80 * 2 - 100 * 2) / 3
+                height: 320
                 radius: 32
                 color: "#DAD8D8"
                 opacity: 0.8
                 Text {
+                    id: diagnosticsTitle
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.margins: 20
                     text: "Diagnostics"
-                    font.pixelSize: 30
+                    font.pixelSize: 48
                     font.bold: true
                     font.family: "Inter"
                     color: "#000000"
                 }
 
                 Column {
-                    anchors.top: parent.top
+                    anchors.top: diagnosticsTitle.bottom
                     anchors.left: parent.left
-                    anchors.topMargin: 85
+                    anchors.topMargin: 50
                     anchors.leftMargin: 20
                     spacing: 8
 
                     Text {
                         text: "Battery Health: <b>Good</b>"
-                        font.pixelSize: 30
+                        font.pixelSize: 40
                         font.family: "Inter"
                         color: "#333333"
                         textFormat: Text.RichText
@@ -89,7 +97,7 @@ Item {
 
                     Text {
                         text: "Motors: <b>Stable</b>"
-                        font.pixelSize: 30
+                        font.pixelSize: 40
                         font.family: "Inter"
                         color: "#333333"
                         textFormat: Text.RichText
@@ -108,30 +116,29 @@ Item {
             // ── Current Status Panel ────────────────────────────────
             Rectangle {
                 id: statusPanel
-                width: 450
-                height: 202
+                width: (parent.width - 80 * 2 - 100 * 2) / 3
+                height: 320
                 radius: 32
                 color: "#DAD8D8"
                 opacity: 0.8
 
                 Column {
                     anchors.centerIn: parent
-                    spacing: 20
+                    spacing: 40
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "CURRENT STATUS:"
-                        font.pixelSize: 30
+                        font.pixelSize: 48
                         font.family: "Inter"
                         font.bold: true
-                        font.letterSpacing: 1
                         color: "#594A4A"
                     }
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: ModeSwitchViewModel.isTakeControl ? "Controlling..." : "Exploring..."
-                        font.pixelSize: 40
+                        font.pixelSize: 46
                         font.family: "Inter"
                         font.bold: true
                         color: ModeSwitchViewModel.isTakeControl ? "#007339" : "#107DB3"
@@ -162,18 +169,19 @@ Item {
             // ── Map Panel ───────────────────────────────────────────
             Rectangle {
                 id: mapPanel
-                width: 400
-                height: 292
+                width: (parent.width - 80 * 2 - 100 * 2) / 3
+                height: 320
                 radius: 32
                 color: "#DAD8D8"
                 opacity: 0.8
 
                 Text {
+                    id: mapTitle
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.margins: 20
                     text: "Map"
-                    font.pixelSize: 30
+                    font.pixelSize: 48
                     font.family: "Inter"
                     font.bold: true
                     color: "#000000"
@@ -183,8 +191,8 @@ Item {
                 Rectangle {
                     anchors.centerIn: parent
                     anchors.verticalCenterOffset: 8
-                    width: 300
-                    height: 160
+                    width: parent.width - 40
+                    height: parent.height - 120
                     radius: 8
                     color: "#D9D9D9"
                     border.color: "#2C2C2C"

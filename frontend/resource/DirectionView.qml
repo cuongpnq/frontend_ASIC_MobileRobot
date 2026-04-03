@@ -18,8 +18,10 @@ Item {
         z: -1
 
         Image {
-            x: 220
-            y: 110
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 120
+            width: 1300
+            height: 1105
             source: "images/UIT_logo.png"
             opacity: 0.15
         }
@@ -27,10 +29,12 @@ Item {
     
     Rectangle {
         id: mapBackground
-        x: 50
-        y: 120
-        width: 1150
-        height: 770
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: containerBar.bottom
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        anchors.left: parent.left
+        anchors.margins: 50
         radius: 32
         color: '#80dad8d8'
     }
@@ -39,15 +43,17 @@ Item {
         x: mapBackground.x+35
         y: mapBackground.y+25
         text: "Map"
-        font.pixelSize: 30
+        font.pixelSize: 48
         font.bold: true
         color: '#000000'
     }
 
     Image {
         id: mapButton
-        x: mapBackground.x + 1030
-        y: mapBackground.y + 650
+        anchors.bottom: mapBackground.bottom
+        anchors.right: mapBackground.right
+        anchors.bottomMargin: 50
+        anchors.rightMargin: 50
         width: 100
         height: 100
         source: "qrc:/images/map_button.png"
@@ -58,22 +64,6 @@ Item {
             onClicked: {}
         }
     }
-
-    Image {
-        id: chatboxButton
-        x: 1250
-        y: 750
-        width: 150
-        height: 150
-        source: "qrc:/images/chatbox_button.png"
-        fillMode: Image.PreserveAspectFit
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {}
-        }
-    }
-
     // Back button logic is in ContainerBar, but we could add a local one if needed.
     // For now, it's blank as requested.
 }

@@ -1,14 +1,14 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtQuick.Window 2.12
 import com.asic.mobilerobot.viewmodels 1.0
 
 ApplicationWindow {
     visible: true
     flags: Qt.FramelessWindowHint
-    width: 1440
-    height: 960
-    title: qsTr("Mobile Robot Application")
-
+    visibility: Window.FullScreen
+    width: 1920
+    height: 1200
 
     // Dynamic View Loader (State-Driven)
     Loader {
