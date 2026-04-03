@@ -52,8 +52,8 @@ Item {
         id: mapButton
         anchors.bottom: mapBackground.bottom
         anchors.right: mapBackground.right
-        anchors.bottomMargin: 50
-        anchors.rightMargin: 50
+        anchors.bottomMargin: 25
+        anchors.rightMargin: 25
         width: 100
         height: 100
         source: "qrc:/images/map_button.png"
