@@ -1,0 +1,8 @@
+hello, hi, hey, greetings, good morning:Hello! I am your robot assistant. How can I help you today?
+where, location, position, find, place:I am currently in the ASIC laboratory, performing routine checks.
+battery, power, energy, charge, fuel:My battery level is at 92%. I am fully operational.
+status, condition, health, working:All systems are nominal. I'm ready for assignments.
+tasks, mission, job, doing, activity:I am currently assigned to monitor the hallway and assist users with questions.
+creator, built, developed, made:I was created by the talented engineers at ASIC.
+name, call, identity:You can call me ASIC Bot.
+clear, reset, restart:You can use the 'Clear' button in the header to reset our conversation.

@@ -1,24 +1,50 @@
+# --- Robot AI Frontend Makefile ---
 BUILD_DIR ?= build-output
-CLEAN_BUILD ?= OFF
 
-.PHONY: qtcreator debug_native run_app build_run get_virtualkeyboard
+.PHONY: help setup build run clean distclean
 
-get_virtualkeyboard:
-	sudo apt-get install -y libqt5virtualkeyboard5-dev qml-module-qtquick-virtualkeyboard qtvirtualkeyboard-plugin qml-module-qt-labs-folderlistmodel qml-module-qt-labs-settings
+# Default: Show help
+help:
+	@echo "===================================================="
+	@echo "      ASIC MOBILE ROBOT AI SYSTEM CONTROL"
+	@echo "===================================================="
+	@echo "  make setup     - Install system deps & AI core"
+	@echo "  make build     - Compile the entire system (GUI + AI)"
+	@echo "  make run       - Build and Launch (AI Server + QML GUI)"
+	@echo "  make clean     - Remove build folders and logs"
+	@echo "  make distclean - Reset project (Deletes AI source code)"
+	@echo "===================================================="
 
-qtcreator:
-	qtcreator CMakeLists.txt &
+# 1. System Setup
+setup:
+	@echo "[SETUP] Installing Jetson dependencies..."
+	sudo apt-get update && sudo apt-get install -y \
+		libqt5virtualkeyboard5-dev \
+		qml-module-qtquick-virtualkeyboard \
+		qtvirtualkeyboard-plugin \
+		qml-module-qt-labs-folderlistmodel \
+		qml-module-qt-labs-settings \
+		wget git cmake build-essential curl
+	@echo "[SETUP] Cloning AI inference core..."
+	chmod +x ./frontend/setup_llama.sh && ./frontend/setup_llama.sh
 
-debug_native:
-	@if [ "$(CLEAN_BUILD)" = "ON" ]; then \
-		echo "Removing previous builds..."; \
-		rm -rf $(BUILD_DIR); \
-	fi
+# 2. Build GUI & AI Server
+build:
+	@echo "[BUILD] Compiling AI System..."
 	cmake -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Debug
 	cmake --build $(BUILD_DIR) -j$$(nproc)
 
-run_app:
-	./$(BUILD_DIR)/frontend/frontend_app
+# 3. Launch System Orchestrator
+run: build
+	@chmod +x ./start_robot_system.sh
+	@./start_robot_system.sh
 
-build_run:
-	make debug_native && ./$(BUILD_DIR)/frontend/frontend_app
+# 4. Cleanup
+clean:
+	@echo "[CLEAN] Removing build files and logs..."
+	rm -rf $(BUILD_DIR)
+	rm -f llama_server.log
+
+distclean: clean
+	@echo "[DISTCLEAN] Removing AI source code..."
+	rm -rf frontend/3rdparty/llama.cpp

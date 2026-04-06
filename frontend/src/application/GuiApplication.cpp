@@ -116,7 +116,7 @@ GuiApplication::GuiApplication(int &argc, char **argv)
         [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
             Q_UNUSED(engine)
             Q_UNUSED(scriptEngine)
-            AppStateMachine* instance = &AppStateMachine::instance();
+            auto instance = &AppStateMachine::instance();
             QQmlEngine::setObjectOwnership(instance, QQmlEngine::CppOwnership);
             return instance;
         });
