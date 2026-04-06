@@ -12,6 +12,7 @@ public:
 
     bool isActive() const;
     Q_INVOKABLE void requestMainView();
+    Q_INVOKABLE void requestWifiSettingsView();
 
 signals:
     void isActiveChanged();

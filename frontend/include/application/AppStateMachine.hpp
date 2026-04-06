@@ -30,6 +30,8 @@ public:
     void goToDiagnostics();
     void goToMapPanel();
     void goToChatView();
+    void goToWiFiSettings();
+    void returnToSettings();
 
 signals:
     void currentStateChanged();

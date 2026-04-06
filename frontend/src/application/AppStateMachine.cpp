@@ -76,6 +76,18 @@ void AppStateMachine::goToChatView()
     updateState();
 }
 
+void AppStateMachine::goToWiFiSettings()
+{
+    statechart_raise_goToWiFiSettings(&m_statechart);
+    updateState();
+}
+
+void AppStateMachine::returnToSettings()
+{
+    statechart_raise_returnToSettings(&m_statechart);
+    updateState();
+}
+
 void AppStateMachine::updateState()
 {
     QString newState = m_currentState;
@@ -96,6 +108,8 @@ void AppStateMachine::updateState()
         newState = "MapPanelView";
     } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_ChatView)) {
         newState = "ChatView";
+    } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_WiFiSettingView)) {
+        newState = "WiFiSettingView";
     }
 
     if (m_currentState != newState) {

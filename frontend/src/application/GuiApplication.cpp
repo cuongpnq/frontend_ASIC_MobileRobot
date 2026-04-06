@@ -10,6 +10,8 @@
 #include "diagnosticsView/DiagnosticsViewViewModel.hpp"
 #include "mapPanelView/MapPanelViewViewModel.hpp"
 #include "chatView/ChatViewViewModel.hpp"
+#include "wifiSettingView/WifiSettingViewViewModel.hpp"
+#include "wifiManager/WifiManager.hpp"
 #include <QQmlContext>
 #include <QQmlEngine>
 
@@ -96,11 +98,27 @@ GuiApplication::GuiApplication(int &argc, char **argv)
             return new ChatViewViewModel();
         });
 
+    qmlRegisterSingletonType<WifiSettingViewViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "WifiSettingViewViewModel",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            return new WifiSettingViewViewModel();
+        });
+
+    qmlRegisterSingletonType<WifiManager>("com.asic.mobilerobot.viewmodels", 1, 0, "WifiManager",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            return new WifiManager();
+        });
+
     qmlRegisterSingletonType<AppStateMachine>("com.asic.mobilerobot.viewmodels", 1, 0, "AppStateMachine",
         [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
             Q_UNUSED(engine)
             Q_UNUSED(scriptEngine)
-            return &AppStateMachine::instance();
+            AppStateMachine* instance = &AppStateMachine::instance();
+            QQmlEngine::setObjectOwnership(instance, QQmlEngine::CppOwnership);
+            return instance;
         });
 
     // Initialize the backend state machine

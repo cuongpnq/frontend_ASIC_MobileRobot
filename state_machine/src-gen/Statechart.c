@@ -22,6 +22,7 @@ static void enseq_frontend_app_SettingsView_default(Statechart* handle);
 static void enseq_frontend_app_DiagnosticsView_default(Statechart* handle);
 static void enseq_frontend_app_MapPanelView_default(Statechart* handle);
 static void enseq_frontend_app_ChatView_default(Statechart* handle);
+static void enseq_frontend_app_WiFiSettingView_default(Statechart* handle);
 static void enseq_frontend_app_default(Statechart* handle);
 static void exseq_frontend_app_MainView(Statechart* handle);
 static void exseq_frontend_app_ControlCenterView(Statechart* handle);
@@ -31,6 +32,7 @@ static void exseq_frontend_app_SettingsView(Statechart* handle);
 static void exseq_frontend_app_DiagnosticsView(Statechart* handle);
 static void exseq_frontend_app_MapPanelView(Statechart* handle);
 static void exseq_frontend_app_ChatView(Statechart* handle);
+static void exseq_frontend_app_WiFiSettingView(Statechart* handle);
 static void exseq_frontend_app(Statechart* handle);
 static void react_frontend_app__entry_Default(Statechart* handle);
 
@@ -57,6 +59,9 @@ static sc_integer frontend_app_MapPanelView_react(Statechart* handle, const sc_i
 
 /*! The reactions of state ChatView. */
 static sc_integer frontend_app_ChatView_react(Statechart* handle, const sc_integer transitioned_before);
+
+/*! The reactions of state WiFiSettingView. */
+static sc_integer frontend_app_WiFiSettingView_react(Statechart* handle, const sc_integer transitioned_before);
 
 
 static void clear_in_events(Statechart* handle);
@@ -196,6 +201,10 @@ sc_boolean statechart_is_state_active(const Statechart* handle, StatechartStates
 			result = (sc_boolean) (handle->stateConfVector[SCVI_STATECHART_FRONTEND_APP_CHATVIEW] == Statechart_frontend_app_ChatView
 			);
 				break;
+		case Statechart_frontend_app_WiFiSettingView :
+			result = (sc_boolean) (handle->stateConfVector[SCVI_STATECHART_FRONTEND_APP_WIFISETTINGVIEW] == Statechart_frontend_app_WiFiSettingView
+			);
+				break;
 			default:
 				result = bool_false;
 				break;
@@ -214,6 +223,8 @@ static void clear_in_events(Statechart* handle)
 	handle->iface.goToDiagnostics_raised = bool_false;
 	handle->iface.goToMapPanel_raised = bool_false;
 	handle->iface.goToChatView_raised = bool_false;
+	handle->iface.goToWiFiSettings_raised = bool_false;
+	handle->iface.returnToSettings_raised = bool_false;
 }
 
 static void micro_step(Statechart* handle)
@@ -258,6 +269,11 @@ static void micro_step(Statechart* handle)
 		case Statechart_frontend_app_ChatView :
 		{
 			frontend_app_ChatView_react(handle,-1);
+			break;
+		}
+		case Statechart_frontend_app_WiFiSettingView :
+		{
+			frontend_app_WiFiSettingView_react(handle,-1);
 			break;
 		}
 		default: 
@@ -338,6 +354,18 @@ void statechart_raise_goToChatView(Statechart* handle)
 	run_cycle(handle);
 }
 
+void statechart_raise_goToWiFiSettings(Statechart* handle)
+{
+	statechart_add_event_to_queue(&(handle->in_event_queue), Statechart_goToWiFiSettings);
+	run_cycle(handle);
+}
+
+void statechart_raise_returnToSettings(Statechart* handle)
+{
+	statechart_add_event_to_queue(&(handle->in_event_queue), Statechart_returnToSettings);
+	run_cycle(handle);
+}
+
 
 
 
@@ -399,6 +427,13 @@ static void enseq_frontend_app_ChatView_default(Statechart* handle)
 {
 	/* 'default' enter sequence for state ChatView */
 	handle->stateConfVector[0] = Statechart_frontend_app_ChatView;
+}
+
+/* 'default' enter sequence for state WiFiSettingView */
+static void enseq_frontend_app_WiFiSettingView_default(Statechart* handle)
+{
+	/* 'default' enter sequence for state WiFiSettingView */
+	handle->stateConfVector[0] = Statechart_frontend_app_WiFiSettingView;
 }
 
 /* 'default' enter sequence for region frontend_app */
@@ -464,6 +499,13 @@ static void exseq_frontend_app_ChatView(Statechart* handle)
 	handle->stateConfVector[0] = Statechart_last_state;
 }
 
+/* Default exit sequence for state WiFiSettingView */
+static void exseq_frontend_app_WiFiSettingView(Statechart* handle)
+{
+	/* Default exit sequence for state WiFiSettingView */
+	handle->stateConfVector[0] = Statechart_last_state;
+}
+
 /* Default exit sequence for region frontend_app */
 static void exseq_frontend_app(Statechart* handle)
 {
@@ -509,6 +551,11 @@ static void exseq_frontend_app(Statechart* handle)
 		case Statechart_frontend_app_ChatView :
 		{
 			exseq_frontend_app_ChatView(handle);
+			break;
+		}
+		case Statechart_frontend_app_WiFiSettingView :
+		{
+			exseq_frontend_app_WiFiSettingView(handle);
 			break;
 		}
 		default: 
@@ -672,7 +719,15 @@ static sc_integer frontend_app_SettingsView_react(Statechart* handle, const sc_i
 			exseq_frontend_app_SettingsView(handle);
 			enseq_frontend_app_MainView_default(handle);
 			transitioned_after = 0;
-		} 
+		}  else
+		{
+			if (handle->iface.goToWiFiSettings_raised == bool_true)
+			{ 
+				exseq_frontend_app_SettingsView(handle);
+				enseq_frontend_app_WiFiSettingView_default(handle);
+				transitioned_after = 0;
+			} 
+		}
 	} 
 	/* If no transition was taken */
 	if ((transitioned_after) == (transitioned_before))
@@ -737,6 +792,28 @@ static sc_integer frontend_app_ChatView_react(Statechart* handle, const sc_integ
 		{ 
 			exseq_frontend_app_ChatView(handle);
 			enseq_frontend_app_MainView_default(handle);
+			transitioned_after = 0;
+		} 
+	} 
+	/* If no transition was taken */
+	if ((transitioned_after) == (transitioned_before))
+	{ 
+		/* then execute local reactions. */
+		transitioned_after = transitioned_before;
+	} 
+	return transitioned_after;
+}
+
+static sc_integer frontend_app_WiFiSettingView_react(Statechart* handle, const sc_integer transitioned_before)
+{
+	/* The reactions of state WiFiSettingView. */
+ 			sc_integer transitioned_after = transitioned_before;
+	if ((transitioned_after) < (0))
+	{ 
+		if (handle->iface.returnToSettings_raised == bool_true)
+		{ 
+			exseq_frontend_app_WiFiSettingView(handle);
+			enseq_frontend_app_SettingsView_default(handle);
 			transitioned_after = 0;
 		} 
 	} 
@@ -861,6 +938,16 @@ static sc_boolean statechart_dispatch_event(Statechart* handle, const statechart
 		case Statechart_goToChatView:
 		{
 			handle->iface.goToChatView_raised = bool_true;
+			return bool_true;
+		}
+		case Statechart_goToWiFiSettings:
+		{
+			handle->iface.goToWiFiSettings_raised = bool_true;
+			return bool_true;
+		}
+		case Statechart_returnToSettings:
+		{
+			handle->iface.returnToSettings_raised = bool_true;
 			return bool_true;
 		}
 		default:

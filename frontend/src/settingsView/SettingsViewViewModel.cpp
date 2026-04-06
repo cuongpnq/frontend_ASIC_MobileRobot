@@ -16,6 +16,10 @@ void SettingsViewViewModel::requestMainView() {
     AppStateMachine::instance().returnToMain();
 }
 
+void SettingsViewViewModel::requestWifiSettingsView() {
+    AppStateMachine::instance().goToWiFiSettings();
+}
+
 void SettingsViewViewModel::onStateMachineChanged() {
     bool active = (AppStateMachine::instance().currentState() == "SettingsView");
     if (m_isActive != active) {

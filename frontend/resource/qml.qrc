@@ -9,6 +9,7 @@
         <file>MapPanelView.qml</file>
         <file>DiagnosticsView.qml</file>
         <file>ChatView.qml</file>
+        <file>WiFiSettingView.qml</file>
         <file>ContainerBar.qml</file>
         <file>ModeSwitch.qml</file>
         <file>images/UIT_logo.png</file>
@@ -18,5 +19,7 @@
         <file>images/settings.png</file>
         <file>images/map_button.png</file>
         <file>images/chatbot.png</file>
+        <file>images/wifi_icon.png</file>
+        <file>images/forward_button.png</file>
     </qresource>
 </RCC>

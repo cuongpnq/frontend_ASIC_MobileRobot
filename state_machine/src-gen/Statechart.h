@@ -41,7 +41,7 @@ Header of the state machine 'Statechart'.
 #define SC_INVALID_EVENT_VALUE 0
 #endif
 /*! Define number of states in the state enum */
-#define STATECHART_STATE_COUNT 8
+#define STATECHART_STATE_COUNT 9
 
 /*! Define dimension of the state configuration vector for orthogonal states. */
 #define STATECHART_MAX_ORTHOGONAL_STATES 1
@@ -55,6 +55,7 @@ Header of the state machine 'Statechart'.
 #define SCVI_STATECHART_FRONTEND_APP_DIAGNOSTICSVIEW 0
 #define SCVI_STATECHART_FRONTEND_APP_MAPPANELVIEW 0
 #define SCVI_STATECHART_FRONTEND_APP_CHATVIEW 0
+#define SCVI_STATECHART_FRONTEND_APP_WIFISETTINGVIEW 0
 
 
 /* 
@@ -70,7 +71,9 @@ typedef enum  {
 	Statechart_goToSettings,
 	Statechart_goToDiagnostics,
 	Statechart_goToMapPanel,
-	Statechart_goToChatView
+	Statechart_goToChatView,
+	Statechart_goToWiFiSettings,
+	Statechart_returnToSettings
 } StatechartEventID;
 
 /*
@@ -102,7 +105,8 @@ typedef enum
 	Statechart_frontend_app_SettingsView,
 	Statechart_frontend_app_DiagnosticsView,
 	Statechart_frontend_app_MapPanelView,
-	Statechart_frontend_app_ChatView
+	Statechart_frontend_app_ChatView,
+	Statechart_frontend_app_WiFiSettingView
 } StatechartStates;
 
 
@@ -118,6 +122,8 @@ struct StatechartIface
 	sc_boolean goToDiagnostics_raised;
 	sc_boolean goToMapPanel_raised;
 	sc_boolean goToChatView_raised;
+	sc_boolean goToWiFiSettings_raised;
+	sc_boolean returnToSettings_raised;
 };
 
 
@@ -175,6 +181,10 @@ extern void statechart_raise_goToDiagnostics(Statechart* handle);
 extern void statechart_raise_goToMapPanel(Statechart* handle);
 /*! Raises the in event 'goToChatView' that is defined in the default interface scope. */ 
 extern void statechart_raise_goToChatView(Statechart* handle);
+/*! Raises the in event 'goToWiFiSettings' that is defined in the default interface scope. */ 
+extern void statechart_raise_goToWiFiSettings(Statechart* handle);
+/*! Raises the in event 'returnToSettings' that is defined in the default interface scope. */ 
+extern void statechart_raise_returnToSettings(Statechart* handle);
 
 /*!
  * Checks whether the state machine is active (until 2.4.1 this method was used for states).

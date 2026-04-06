@@ -14,6 +14,7 @@ find_package(Qt5 REQUIRED COMPONENTS
     Gui
     Qml
     Quick
+    DBus
 )
 
 find_package(Qt5VirtualKeyboard QUIET)
@@ -70,6 +71,7 @@ target_link_libraries(frontend_app PRIVATE
     Qt5::Gui
     Qt5::Qml
     Qt5::Quick
+    Qt5::DBus
 )
 
 if (Qt5VirtualKeyboard_FOUND)
