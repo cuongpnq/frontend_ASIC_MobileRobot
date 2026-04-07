@@ -164,24 +164,48 @@ Item {
         }
     }
 
-    Dialog {
+    // Dim overlay — sits BELOW the keyboard (z:99999) so keyboard events pass through.
+    // Tapping the dim area dismisses the password popup.
+    Rectangle {
+        id: dimOverlay
+        anchors.fill: parent
+        color: "#80000000"
+        visible: passwordDialog.visible
+        z: 9000
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: passwordDialog.close()
+        }
+    }
+
+    // Non-modal Popup — avoids the window-level Overlay that blocks the virtual keyboard.
+    Popup {
         id: passwordDialog
-        modal: true
-        focus: true
+        // non-modal: no Qt-level Overlay is created, so keyboard events reach CustomKeyboard
+        modal: false
+        focus: false          // let TextField own the focus
+        closePolicy: Popup.NoAutoClose   // we close manually
         x: (root.width - width) / 2
         y: WifiSettingViewViewModel.keyboardVisible ? 30 : (root.height - height) / 2
         width: 780
         height: 420
+        z: 9001               // above dim overlay, below keyboard
 
-        // Animate dialog position when keyboard appears
+        // Animate position when keyboard appears/disappears
         Behavior on y { NumberAnimation { duration: 200 } }
 
         property string selectedSsid: ""
 
-        // Ensure password field always gets focus when dialog opens
-        onOpened: {
-            passwordField.forceActiveFocus()
+        // Small delay so the Popup enter animation settles before we grab focus.
+        Timer {
+            id: focusTimer
+            interval: 150
+            repeat: false
+            onTriggered: passwordField.forceActiveFocus()
         }
+
+        onOpened: focusTimer.restart()
         onClosed: {
             WifiSettingViewViewModel.dismissKeyboard()
             passwordField.text = ""
@@ -214,33 +238,33 @@ Item {
                 font.pixelSize: 32
                 echoMode: TextInput.Password
                 placeholderText: "Password..."
-                // Make this field the active focus item so the VK responds.
                 activeFocusOnPress: true
                 background: Rectangle {
                     color: "#f0f0f0"
                     radius: 10
                     border.color: passwordField.activeFocus ? "#007AFF" : "#cccccc"
                 }
-                // Pressing Return/Enter connects immediately.
                 Keys.onReturnPressed: {
+                    showToast("Connecting to '" + passwordDialog.selectedSsid + "'...", "info")
                     WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
                     passwordDialog.close()
                 }
                 Keys.onEnterPressed: {
+                    showToast("Connecting to '" + passwordDialog.selectedSsid + "'...", "info")
                     WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
                     passwordDialog.close()
                 }
-                // Also keep old onAccepted for compatibility.
                 onAccepted: {
+                    showToast("Connecting to '" + passwordDialog.selectedSsid + "'...", "info")
                     WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
                     passwordDialog.close()
                 }
-                // Explicitly request focus (triggers virtual keyboard) on press.
+                // Tap on field: (re-)grab focus to keep keyboard visible
                 MouseArea {
                     anchors.fill: parent
                     onPressed: {
                         passwordField.forceActiveFocus()
-                        mouse.accepted = false  // let the TextField handle the press too
+                        mouse.accepted = false
                     }
                 }
             }
@@ -287,6 +311,7 @@ Item {
             }
         }
     }
+
 
     // ── Toast notification ────────────────────────────────────────────────────
     // Usage: call showToast("message", "success" | "error" | "info")
