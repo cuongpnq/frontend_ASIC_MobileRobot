@@ -4,6 +4,7 @@
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusMessage>
+#include <QDBusMetaType>
 #include <QDBusPendingCall>
 #include <QDBusPendingCallWatcher>
 #include <QDBusReply>
@@ -12,6 +13,11 @@
 #include <QTimer>
 #include <QUuid>
 #include <algorithm>
+
+// NM AddAndActivateConnection expects: a{sa{sv}} oo
+// QMap<QString, QVariantMap> marshals as a{sa{sv}} when registered with qDBusRegisterMetaType.
+typedef QMap<QString, QVariantMap> NMConnectionSettings;
+Q_DECLARE_METATYPE(NMConnectionSettings)
 
 namespace {
 const char *NM_SERVICE = "org.freedesktop.NetworkManager";
@@ -52,6 +58,9 @@ QByteArray extractByteArraySafely(const QVariant &var) {
 WifiManager::WifiManager(QObject *parent)
     : QAbstractListModel(parent)
 {
+    // Register the a{sa{sv}} type so Qt D-Bus marshals it correctly.
+    qDBusRegisterMetaType<NMConnectionSettings>();
+    qDBusRegisterMetaType<QVariantMap>();
     refreshConnectedSsid();
 }
 
@@ -277,54 +286,46 @@ void WifiManager::scanNetworks()
     });
 }
 
-// Helper: wrap a plain QVariantMap into QVariantMap<QString, QDBusVariant>
-// so that Qt D-Bus marshals it as a{sv} instead of a{ss}.
-static QVariantMap wrapInnerMap(const QVariantMap &src)
+NMConnectionSettings WifiManager::makeConnectionSettings(const QString &ssid, const QString &password) const
 {
-    QVariantMap dst;
-    for (auto it = src.constBegin(); it != src.constEnd(); ++it) {
-        dst[it.key()] = QVariant::fromValue(QDBusVariant(it.value()));
-    }
-    return dst;
-}
+    // NMConnectionSettings = QMap<QString, QVariantMap>
+    // Qt D-Bus marshals this as a{sa{sv}} — exactly what NetworkManager expects.
+    // DO NOT use QVariantMap for the outer map; it marshals as a{sv} which is wrong.
 
-QVariantMap WifiManager::makeConnectionSettings(const QString &ssid, const QString &password) const
-{
-    // D-Bus type wanted by AddAndActivateConnection:
-    // a{sa{sv}}  -> map<string, map<string, variant>>
+    NMConnectionSettings settings;
 
+    // [connection] section
     QVariantMap connectionSection;
-    connectionSection["id"] = ssid + " (Robot)";
-    connectionSection["type"] = "802-11-wireless";
+    connectionSection["id"]   = ssid;
+    connectionSection["type"] = QString("802-11-wireless");
     connectionSection["uuid"] = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    connectionSection["autoconnect"] = true;
-    connectionSection["autoconnect-priority"] = 100;
+    settings["connection"] = connectionSection;
 
+    // [802-11-wireless] section  — ssid is a byte-array (ay)
     QVariantMap wifi;
-    // SSID must be a byte-array variant (ay)
-    wifi["ssid"] = QVariant::fromValue(QDBusVariant(QVariant(ssid.toUtf8())));
-    wifi["mode"] = QVariant::fromValue(QDBusVariant(QVariant(QString("infrastructure"))));
+    wifi["ssid"] = ssid.toUtf8();      // QByteArray -> ay
+    wifi["mode"] = QString("infrastructure");
+    settings["802-11-wireless"] = wifi;
 
+    // [ipv4] section
     QVariantMap ipv4;
-    ipv4["method"] = QVariant::fromValue(QDBusVariant(QVariant(QString("auto"))));
+    ipv4["method"] = QString("auto");
+    settings["ipv4"] = ipv4;
 
+    // [ipv6] section
     QVariantMap ipv6;
-    ipv6["method"] = QVariant::fromValue(QDBusVariant(QVariant(QString("ignore"))));
+    ipv6["method"] = QString("ignore");
+    settings["ipv6"] = ipv6;
 
-    QVariantMap connection;
-    connection["connection"]        = QVariant::fromValue(wrapInnerMap(connectionSection));
-    connection["802-11-wireless"]   = QVariant::fromValue(wifi);
-    connection["ipv4"]              = QVariant::fromValue(ipv4);
-    connection["ipv6"]              = QVariant::fromValue(ipv6);
-
+    // [802-11-wireless-security] section (only when a password is provided)
     if (!password.isEmpty()) {
         QVariantMap wifiSec;
-        wifiSec["key-mgmt"] = QVariant::fromValue(QDBusVariant(QVariant(QString("wpa-psk"))));
-        wifiSec["psk"]      = QVariant::fromValue(QDBusVariant(QVariant(password)));
-        connection["802-11-wireless-security"] = QVariant::fromValue(wifiSec);
+        wifiSec["key-mgmt"] = QString("wpa-psk");
+        wifiSec["psk"]      = password;
+        settings["802-11-wireless-security"] = wifiSec;
     }
 
-    return connection;
+    return settings;
 }
 
 void WifiManager::connectToNetwork(const QString &ssid, const QString &password)
@@ -350,10 +351,10 @@ void WifiManager::connectToNetwork(const QString &ssid, const QString &password)
         return;
     }
 
-    const QVariantMap connection = makeConnectionSettings(ssid, password);
+    const NMConnectionSettings connection = makeConnectionSettings(ssid, password);
 
     QDBusPendingCall call = nm.asyncCall("AddAndActivateConnection",
-                                         connection,
+                                         QVariant::fromValue(connection),
                                          QVariant::fromValue(QDBusObjectPath(devicePath)),
                                          QVariant::fromValue(QDBusObjectPath(apPath)));
 
@@ -397,14 +398,14 @@ void WifiManager::disconnectCurrent()
         return;
     }
 
-    setConnectedSsid(QString());
+    setConnectedSsid(QString(), 0);
 }
 
 void WifiManager::refreshConnectedSsid()
 {
     const QString devicePath = findWirelessDevicePath();
     if (devicePath.isEmpty()) {
-        setConnectedSsid(QString());
+        setConnectedSsid(QString(), 0);
         return;
     }
 
@@ -413,14 +414,14 @@ void WifiManager::refreshConnectedSsid()
         props.call("Get", NM_WIRELESS_DEVICE_IFACE, "ActiveAccessPoint");
 
     if (!activeApReply.isValid()) {
-        setConnectedSsid(QString());
+        setConnectedSsid(QString(), 0);
         return;
     }
 
     QVariant activeApVar = unwrapDBusVariant(activeApReply.value());
     QDBusObjectPath apPath = qdbus_cast<QDBusObjectPath>(activeApVar);
     if (apPath.path().isEmpty() || apPath.path() == "/") {
-        setConnectedSsid(QString());
+        setConnectedSsid(QString(), 0);
         return;
     }
 

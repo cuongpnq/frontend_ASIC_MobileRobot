@@ -146,12 +146,14 @@ Item {
                         anchors.fill: parent
                         onClicked: {
                             if (WifiManager.connectedSsid === ssid) {
+                                showToast("Disconnecting from '" + ssid + "'...", "info")
                                 WifiManager.disconnectCurrent()
                             } else {
                                 if (secure) {
                                     passwordDialog.selectedSsid = ssid
                                     passwordDialog.open()
                                 } else {
+                                    showToast("Connecting to '" + ssid + "'...", "info")
                                     WifiManager.connectToNetwork(ssid, "")
                                 }
                             }
@@ -277,6 +279,7 @@ Item {
                     width: 200
                     height: 70
                     onClicked: {
+                        showToast("Connecting to '" + passwordDialog.selectedSsid + "'...", "info")
                         WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
                         passwordDialog.close()
                     }
@@ -285,10 +288,109 @@ Item {
         }
     }
 
+    // ── Toast notification ────────────────────────────────────────────────────
+    // Usage: call showToast("message", "success" | "error" | "info")
+    function showToast(message, type) {
+        toastMessage.text = message
+        if (type === "success") {
+            toastBg.color = "#2ECC71"       // green
+            toastIcon.text = "✔"
+        } else if (type === "error") {
+            toastBg.color = "#E74C3C"       // red
+            toastIcon.text = "✖"
+        } else {
+            toastBg.color = "#5B93C5"       // blue-info
+            toastIcon.text = "ℹ"
+        }
+        toastItem.opacity = 1
+        toastTimer.restart()
+    }
+
+    Item {
+        id: toastItem
+        anchors.top: parent.top
+        anchors.topMargin: 30
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: toastRow.implicitWidth + 60
+        height: 90
+        opacity: 0
+        z: 199998          // just below the keyboard
+
+        Behavior on opacity { NumberAnimation { duration: 220 } }
+
+        Rectangle {
+            id: toastBg
+            anchors.fill: parent
+            radius: 45
+            color: "#2ECC71"
+
+            // soft drop-shadow via layering
+            layer.enabled: true
+        }
+
+        Row {
+            id: toastRow
+            anchors.centerIn: parent
+            spacing: 18
+
+            Text {
+                id: toastIcon
+                text: "✔"
+                font.pixelSize: 40
+                color: "white"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                id: toastMessage
+                text: ""
+                font.pixelSize: 34
+                font.family: "Inter"
+                font.bold: true
+                color: "white"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        Timer {
+            id: toastTimer
+            interval: 3000
+            repeat: false
+            onTriggered: toastItem.opacity = 0
+        }
+    }
+
+    // ── WiFiManager event connections ─────────────────────────────────────────
     Connections {
         target: WifiManager
-        function onConnectionSucceeded(ssid) { console.log("Connected to", ssid) }
-        function onConnectionFailed(ssid, reason) { console.log("Connect failed:", ssid, reason) }
+
+        function onConnectionSucceeded(ssid) {
+            console.log("Connected to", ssid)
+            showToast("Connected to '" + ssid + "'", "success")
+        }
+
+        function onConnectionFailed(ssid, reason) {
+            console.log("Connect failed:", ssid, reason)
+            // Detect wrong-password clue from NM error string
+            var isPwdWrong = reason.indexOf("secrets") !== -1
+                          || reason.indexOf("password") !== -1
+                          || reason.indexOf("psk") !== -1
+                          || reason.indexOf("Invalid") !== -1
+            if (isPwdWrong) {
+                showToast("Wrong password for '" + ssid + "'", "error")
+            } else if (ssid === "") {
+                showToast("Disconnected", "info")
+            } else {
+                showToast("Failed: " + reason, "error")
+            }
+        }
+
+        function onConnectedSsidChanged() {
+            // When ssid becomes empty it means we just disconnected successfully.
+            if (WifiManager.connectedSsid === "") {
+                showToast("Wi-Fi disconnected", "info")
+            }
+        }
     }
 
     // The CustomKeyboard MUST be declared last so it appears above all children,
