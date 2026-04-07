@@ -37,10 +37,10 @@ QByteArray extractByteArraySafely(const QVariant &var) {
         return unwrapped.toByteArray();
     }
     if (unwrapped.userType() == qMetaTypeId<QDBusArgument>()) {
-        const QDBusArgument *arg = static_cast<const QDBusArgument *>(unwrapped.constData());
-        if (arg->currentType() == QDBusArgument::ByteArrayType) {
+        QDBusArgument arg = unwrapped.value<QDBusArgument>();
+        if (arg.currentType() == QDBusArgument::ArrayType) {
             QByteArray ba;
-            *arg >> ba;
+            arg >> ba;
             return ba;
         }
     }
