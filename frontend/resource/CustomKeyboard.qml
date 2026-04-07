@@ -9,8 +9,8 @@ InputPanel {
     property bool hasVirtualKeyboard: true
 
     width: parent.width
+    z: 2147483647 
     y: keyboardVisible ? parent.height - height : parent.height
-    z: 10000
     visible: hasVirtualKeyboard
     
     Component.onCompleted: {

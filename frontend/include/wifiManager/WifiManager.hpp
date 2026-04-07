@@ -17,6 +17,7 @@ class WifiManager : public QAbstractListModel
     Q_OBJECT
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
     Q_PROPERTY(QString connectedSsid READ connectedSsid NOTIFY connectedSsidChanged)
+    Q_PROPERTY(int connectedStrength READ connectedStrength NOTIFY connectedStrengthChanged)
 
 public:
     enum Roles {
@@ -34,6 +35,7 @@ public:
 
     bool busy() const;
     QString connectedSsid() const;
+    int connectedStrength() const;
 
     Q_INVOKABLE void scanNetworks();
     Q_INVOKABLE void connectToNetwork(const QString &ssid, const QString &password);
@@ -42,6 +44,7 @@ public:
 signals:
     void busyChanged();
     void connectedSsidChanged();
+    void connectedStrengthChanged();
     void scanFinished();
     void connectionSucceeded(const QString &ssid);
     void connectionFailed(const QString &ssid, const QString &reason);
@@ -50,7 +53,7 @@ private:
     QString findWirelessDevicePath() const;
     QString decodeSsid(const QByteArray &ssidBytes) const;
     void setBusy(bool value);
-    void setConnectedSsid(const QString &ssid);
+    void setConnectedSsid(const QString &ssid, int strength = 0);
     void refreshConnectedSsid();
     QVariantMap makeConnectionSettings(const QString &ssid, const QString &password) const;
     QString findApPathBySsid(const QString &ssid) const;
@@ -59,4 +62,5 @@ private:
     QVector<WifiNetwork> m_networks;
     bool m_busy = false;
     QString m_connectedSsid;
+    int m_connectedStrength = 0;
 };

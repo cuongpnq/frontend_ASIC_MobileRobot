@@ -4,6 +4,7 @@ import QtQuick.Window 2.12
 import com.asic.mobilerobot.viewmodels 1.0
 
 ApplicationWindow {
+    id: window
     visible: true
     flags: Qt.FramelessWindowHint
     visibility: Window.FullScreen
@@ -28,5 +29,13 @@ ApplicationWindow {
                 default:                  return "MainView.qml"
             }
         }
+    }
+
+    // Global Virtual Keyboard
+    // Placing it here ensures it's above all views and dialogs
+    CustomKeyboard {
+        id: globalKeyboard
+        keyboardVisible: Qt.inputMethod.visible
+        hasVirtualKeyboard: HAS_VIRTUAL_KEYBOARD
     }
 }

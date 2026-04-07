@@ -9,10 +9,6 @@ Item {
     id: root
     anchors.fill: parent
 
-    // CustomKeyboard is anchored to the bottom of the parent window.
-    // It must be declared LAST (or have the highest z) so it renders above
-    // the Dialog's modal overlay and is reachable by touch/mouse events.
-
     ContainerBar {
         id: containerBar
         anchors.top: parent.top
@@ -60,9 +56,8 @@ Item {
         anchors.top: settingsText.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        // Leave space for the keyboard at the bottom when it is visible.
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: WifiSettingViewViewModel.keyboardVisible ? (root.height * 0.4) : 20
+        anchors.bottomMargin: Qt.inputMethod.visible ? Qt.inputMethod.keyboardRectangle.height : 20
         anchors.leftMargin: 200
         anchors.rightMargin: 200
         anchors.topMargin: 40

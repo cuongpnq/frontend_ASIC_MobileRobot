@@ -9,6 +9,7 @@
 #include <QDBusReply>
 #include <QDBusVariant>
 #include <QDebug>
+#include <QTimer>
 #include <QUuid>
 #include <algorithm>
 
@@ -97,6 +98,11 @@ QString WifiManager::connectedSsid() const
     return m_connectedSsid;
 }
 
+int WifiManager::connectedStrength() const
+{
+    return m_connectedStrength;
+}
+
 void WifiManager::setBusy(bool value)
 {
     if (m_busy == value)
@@ -105,12 +111,21 @@ void WifiManager::setBusy(bool value)
     emit busyChanged();
 }
 
-void WifiManager::setConnectedSsid(const QString &ssid)
+void WifiManager::setConnectedSsid(const QString &ssid, int strength)
 {
-    if (m_connectedSsid == ssid)
+    bool ssidChanged = (m_connectedSsid != ssid);
+    bool strengthChanged = (m_connectedStrength != strength);
+    
+    if (!ssidChanged && !strengthChanged)
         return;
+
     m_connectedSsid = ssid;
-    emit connectedSsidChanged();
+    m_connectedStrength = strength;
+
+    if (ssidChanged)
+        emit connectedSsidChanged();
+    if (strengthChanged)
+        emit connectedStrengthChanged();
 }
 
 QString WifiManager::decodeSsid(const QByteArray &ssidBytes) const
@@ -279,9 +294,11 @@ QVariantMap WifiManager::makeConnectionSettings(const QString &ssid, const QStri
     // a{sa{sv}}  -> map<string, map<string, variant>>
 
     QVariantMap connectionSection;
-    connectionSection["id"]   = ssid;
-    connectionSection["type"] = QString("802-11-wireless");
+    connectionSection["id"] = ssid + " (Robot)";
+    connectionSection["type"] = "802-11-wireless";
     connectionSection["uuid"] = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    connectionSection["autoconnect"] = true;
+    connectionSection["autoconnect-priority"] = 100;
 
     QVariantMap wifi;
     // SSID must be a byte-array variant (ay)
@@ -348,11 +365,14 @@ void WifiManager::connectToNetwork(const QString &ssid, const QString &password)
         setBusy(false);
 
         if (reply.isError()) {
+            qWarning() << "AddAndActivateConnection error:" << reply.error().message();
             emit connectionFailed(ssid, reply.error().message());
             return;
         }
 
-        setConnectedSsid(ssid);
+        qInfo() << "Successfully connected to" << ssid;
+        setConnectedSsid(ssid, 0); // Temporary until refresh
+        QTimer::singleShot(2000, this, &WifiManager::refreshConnectedSsid); // Delay to let state settle
         emit connectionSucceeded(ssid);
     });
 }
@@ -406,11 +426,17 @@ void WifiManager::refreshConnectedSsid()
 
     QDBusInterface apProps(NM_SERVICE, apPath.path(), DBUS_PROPERTIES, QDBusConnection::systemBus());
     QDBusReply<QVariant> ssidReply = apProps.call("Get", NM_AP_IFACE, "Ssid");
+    QDBusReply<QVariant> strengthReply = apProps.call("Get", NM_AP_IFACE, "Strength");
+
     if (!ssidReply.isValid()) {
-        setConnectedSsid(QString());
+        setConnectedSsid(QString(), 0);
         return;
     }
 
     const QByteArray ssidBytes = extractByteArraySafely(ssidReply.value());
-    setConnectedSsid(decodeSsid(ssidBytes));
+    int strength = 0;
+    if (strengthReply.isValid()) {
+        strength = unwrapDBusVariant(strengthReply.value()).toInt();
+    }
+    setConnectedSsid(decodeSsid(ssidBytes), strength);
 }

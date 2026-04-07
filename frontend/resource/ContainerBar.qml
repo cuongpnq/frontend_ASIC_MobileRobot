@@ -78,7 +78,8 @@ Item {
                     var ctx = getContext("2d")
                     ctx.clearRect(0, 0, width, height)
 
-                    var connected = ContainerBarViewModel.wifiConnected
+                    var connected = (WifiManager.connectedSsid !== "")
+                    var strength = WifiManager.connectedStrength
                     var color = connected ? "#000000" : '#757575'
 
                     ctx.strokeStyle = color
@@ -90,17 +91,22 @@ Item {
                     var cy = height - 4
 
                     if (connected) {
+                        // Always draw first arc if connected
                         ctx.beginPath()
                         ctx.arc(cx, cy, 9, Math.PI * 1.25, Math.PI * 1.75, false)
                         ctx.stroke()
 
-                        ctx.beginPath()
-                        ctx.arc(cx, cy, 18, Math.PI * 1.25, Math.PI * 1.75, false)
-                        ctx.stroke()
+                        if (strength > 33) {
+                            ctx.beginPath()
+                            ctx.arc(cx, cy, 18, Math.PI * 1.25, Math.PI * 1.75, false)
+                            ctx.stroke()
+                        }
 
-                        ctx.beginPath()
-                        ctx.arc(cx, cy, 27, Math.PI * 1.25, Math.PI * 1.75, false)
-                        ctx.stroke()
+                        if (strength > 66) {
+                            ctx.beginPath()
+                            ctx.arc(cx, cy, 27, Math.PI * 1.25, Math.PI * 1.75, false)
+                            ctx.stroke()
+                        }
                     }
 
                     // Center dot
@@ -112,8 +118,9 @@ Item {
 
                 // Repaint when wifi status changes
                 Connections {
-                    target: ContainerBarViewModel
-                    onWifiStatusChanged: wifiIcon.children[0].requestPaint()
+                    target: WifiManager
+                    onConnectedSsidChanged: wifiIcon.children[0].requestPaint()
+                    onConnectedStrengthChanged: wifiIcon.children[0].requestPaint()
                 }
             }
         }
