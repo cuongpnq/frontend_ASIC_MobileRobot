@@ -1,7 +1,7 @@
 # --- Robot AI Frontend Makefile ---
 BUILD_DIR ?= build-output
 
-.PHONY: help setup build run clean distclean
+.PHONY: help setup build run run-only clean distclean
 
 # Default: Show help
 help:
@@ -11,6 +11,7 @@ help:
 	@echo "  make setup     - Install system deps & AI core"
 	@echo "  make build     - Compile the entire system (GUI + AI)"
 	@echo "  make run       - Build and Launch (AI Server + QML GUI)"
+	@echo "  make run-only  - Launch without building (AI Server + QML GUI)"
 	@echo "  make clean     - Remove build folders and logs"
 	@echo "  make distclean - Reset project (Deletes AI source code)"
 	@echo "===================================================="
@@ -41,6 +42,10 @@ build:
 
 # 3. Launch System Orchestrator
 run: build
+	@chmod +x ./start_robot_system.sh
+	@./start_robot_system.sh
+
+run-only:
 	@chmod +x ./start_robot_system.sh
 	@./start_robot_system.sh
 

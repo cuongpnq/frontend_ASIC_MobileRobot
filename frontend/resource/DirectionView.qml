@@ -29,7 +29,6 @@ Item {
     
     Rectangle {
         id: mapBackground
-        anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: containerBar.bottom
         anchors.bottom: parent.bottom
         anchors.right: parent.right
