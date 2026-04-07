@@ -9,6 +9,7 @@
 #include <QDBusReply>
 #include <QDBusVariant>
 #include <QDebug>
+#include <QTimer>
 #include <QUuid>
 #include <algorithm>
 
@@ -286,9 +287,11 @@ QVariantMap WifiManager::makeConnectionSettings(const QString &ssid, const QStri
     QVariantMap ipv6;
 
     QVariantMap connectionSection;
-    connectionSection["id"] = ssid;
+    connectionSection["id"] = ssid + " (Robot)";
     connectionSection["type"] = "802-11-wireless";
     connectionSection["uuid"] = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    connectionSection["autoconnect"] = true;
+    connectionSection["autoconnect-priority"] = 100;
 
     wifi["ssid"] = ssid.toUtf8();
     wifi["mode"] = "infrastructure";
@@ -349,11 +352,14 @@ void WifiManager::connectToNetwork(const QString &ssid, const QString &password)
         setBusy(false);
 
         if (reply.isError()) {
+            qWarning() << "AddAndActivateConnection error:" << reply.error().message();
             emit connectionFailed(ssid, reply.error().message());
             return;
         }
 
-        setConnectedSsid(ssid);
+        qInfo() << "Successfully connected to" << ssid;
+        setConnectedSsid(ssid, 0); // Temporary until refresh
+        QTimer::singleShot(2000, this, &WifiManager::refreshConnectedSsid); // Delay to let state settle
         emit connectionSucceeded(ssid);
     });
 }

@@ -9,12 +9,6 @@ Item {
     id: root
     anchors.fill: parent
 
-    CustomKeyboard {
-        id: inputPanel
-        keyboardVisible: ChatViewViewModel.keyboardVisible
-        hasVirtualKeyboard: ChatViewViewModel.hasVirtualKeyboard
-    }
-
     ContainerBar {
         id: containerBar
         anchors.top: parent.top
@@ -55,6 +49,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: inputBarBackground.top
+        anchors.bottomMargin: 20
         anchors.margins: 20
         contentHeight: chatContainer.height
         contentWidth: width
@@ -200,7 +195,8 @@ Item {
 
     Rectangle {
         id: inputBarBackground
-        anchors.bottom: inputPanel.top
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Qt.inputMethod.visible ? Qt.inputMethod.keyboardRectangle.height : 20
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width - 40
         height: 80

@@ -9,12 +9,6 @@ Item {
     id: root
     anchors.fill: parent
 
-    CustomKeyboard {
-        id: inputPanel
-        keyboardVisible: WifiSettingViewViewModel.keyboardVisible
-        hasVirtualKeyboard: WifiSettingViewViewModel.hasVirtualKeyboard
-    }
-
     ContainerBar {
         id: containerBar
         anchors.top: parent.top
@@ -62,11 +56,11 @@ Item {
         anchors.top: settingsText.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: inputPanel.top
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Qt.inputMethod.visible ? Qt.inputMethod.keyboardRectangle.height : 20
         anchors.leftMargin: 200
         anchors.rightMargin: 200
         anchors.topMargin: 40
-        anchors.bottomMargin: 20
         spacing: 20
 
         Rectangle {
