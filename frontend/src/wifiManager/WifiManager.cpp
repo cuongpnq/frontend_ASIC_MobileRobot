@@ -23,6 +23,29 @@ const char *DBUS_PROPERTIES = "org.freedesktop.DBus.Properties";
 
 // NetworkManager device type for Wi-Fi = 2
 const uint DEVICE_TYPE_WIFI = 2;
+
+QVariant unwrapDBusVariant(const QVariant &var) {
+    if (var.userType() == qMetaTypeId<QDBusVariant>()) {
+        return qvariant_cast<QDBusVariant>(var).variant();
+    }
+    return var;
+}
+
+QByteArray extractByteArraySafely(const QVariant &var) {
+    QVariant unwrapped = unwrapDBusVariant(var);
+    if (unwrapped.type() == QVariant::ByteArray) {
+        return unwrapped.toByteArray();
+    }
+    if (unwrapped.userType() == qMetaTypeId<QDBusArgument>()) {
+        const QDBusArgument *arg = static_cast<const QDBusArgument *>(unwrapped.constData());
+        if (arg->currentType() == QDBusArgument::ByteArrayType) {
+            QByteArray ba;
+            *arg >> ba;
+            return ba;
+        }
+    }
+    return unwrapped.toByteArray();
+}
 }
 
 WifiManager::WifiManager(QObject *parent)
@@ -118,7 +141,8 @@ QString WifiManager::findWirelessDevicePath() const
         if (!typeReply.isValid())
             continue;
 
-        if (typeReply.value().toUInt() == DEVICE_TYPE_WIFI)
+        QVariant typeVar = unwrapDBusVariant(typeReply.value());
+        if (typeVar.toUInt() == DEVICE_TYPE_WIFI)
             return devicePath.path();
     }
 
@@ -189,19 +213,28 @@ void WifiManager::scanNetworks()
             if (!ssidReply.isValid())
                 continue;
 
-            const QByteArray ssidBytes = qdbus_cast<QByteArray>(ssidReply.value().value<QDBusArgument>());
+            const QByteArray ssidBytes = extractByteArraySafely(ssidReply.value());
             QString ssid = decodeSsid(ssidBytes);
 
             // Some APs may have hidden SSID.
             if (ssid.isEmpty())
                 ssid = "<Hidden>";
 
-            int strength = strengthReply.isValid() ? strengthReply.value().toInt() : 0;
+            int strength = 0;
+            if (strengthReply.isValid()) {
+                QVariant strengthVar = unwrapDBusVariant(strengthReply.value());
+                strength = strengthVar.toInt();
+            }
+
             bool secure = false;
-            if (wpaReply.isValid() && wpaReply.value().toUInt() != 0)
-                secure = true;
-            if (rsnReply.isValid() && rsnReply.value().toUInt() != 0)
-                secure = true;
+            if (wpaReply.isValid()) {
+                QVariant wpaVar = unwrapDBusVariant(wpaReply.value());
+                if (wpaVar.toUInt() != 0) secure = true;
+            }
+            if (rsnReply.isValid()) {
+                QVariant rsnVar = unwrapDBusVariant(rsnReply.value());
+                if (rsnVar.toUInt() != 0) secure = true;
+            }
 
             WifiNetwork net;
             net.ssid = ssid;
@@ -351,7 +384,8 @@ void WifiManager::refreshConnectedSsid()
         return;
     }
 
-    QDBusObjectPath apPath = qvariant_cast<QDBusObjectPath>(activeApReply.value());
+    QVariant activeApVar = unwrapDBusVariant(activeApReply.value());
+    QDBusObjectPath apPath = qdbus_cast<QDBusObjectPath>(activeApVar);
     if (apPath.path().isEmpty() || apPath.path() == "/") {
         setConnectedSsid(QString());
         return;
@@ -364,6 +398,6 @@ void WifiManager::refreshConnectedSsid()
         return;
     }
 
-    const QByteArray ssidBytes = qdbus_cast<QByteArray>(ssidReply.value().value<QDBusArgument>());
+    const QByteArray ssidBytes = extractByteArraySafely(ssidReply.value());
     setConnectedSsid(decodeSsid(ssidBytes));
 }
