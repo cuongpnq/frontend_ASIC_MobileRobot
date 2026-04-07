@@ -24,6 +24,11 @@ setup:
 		qtvirtualkeyboard-plugin \
 		qml-module-qt-labs-folderlistmodel \
 		qml-module-qt-labs-settings \
+		qml-module-qtquick2 \
+		qml-module-qtquick-window2 \
+		qml-module-qtquick-controls2 \
+		qml-module-qtquick-layouts \
+		qml-module-qtgraphicaleffects \
 		wget git cmake build-essential curl
 	@echo "[SETUP] Cloning AI inference core..."
 	chmod +x ./frontend/setup_llama.sh && ./frontend/setup_llama.sh
