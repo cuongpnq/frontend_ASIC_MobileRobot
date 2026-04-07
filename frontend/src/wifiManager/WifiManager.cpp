@@ -262,36 +262,49 @@ void WifiManager::scanNetworks()
     });
 }
 
+// Helper: wrap a plain QVariantMap into QVariantMap<QString, QDBusVariant>
+// so that Qt D-Bus marshals it as a{sv} instead of a{ss}.
+static QVariantMap wrapInnerMap(const QVariantMap &src)
+{
+    QVariantMap dst;
+    for (auto it = src.constBegin(); it != src.constEnd(); ++it) {
+        dst[it.key()] = QVariant::fromValue(QDBusVariant(it.value()));
+    }
+    return dst;
+}
+
 QVariantMap WifiManager::makeConnectionSettings(const QString &ssid, const QString &password) const
 {
     // D-Bus type wanted by AddAndActivateConnection:
     // a{sa{sv}}  -> map<string, map<string, variant>>
-    QVariantMap connection;
-    QVariantMap wifi;
-    QVariantMap ipv4;
-    QVariantMap ipv6;
 
     QVariantMap connectionSection;
-    connectionSection["id"] = ssid;
-    connectionSection["type"] = "802-11-wireless";
+    connectionSection["id"]   = ssid;
+    connectionSection["type"] = QString("802-11-wireless");
     connectionSection["uuid"] = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
-    wifi["ssid"] = ssid.toUtf8();
-    wifi["mode"] = "infrastructure";
+    QVariantMap wifi;
+    // SSID must be a byte-array variant (ay)
+    wifi["ssid"] = QVariant::fromValue(QDBusVariant(QVariant(ssid.toUtf8())));
+    wifi["mode"] = QVariant::fromValue(QDBusVariant(QVariant(QString("infrastructure"))));
 
-    ipv4["method"] = "auto";
-    ipv6["method"] = "auto";
+    QVariantMap ipv4;
+    ipv4["method"] = QVariant::fromValue(QDBusVariant(QVariant(QString("auto"))));
 
-    connection["connection"] = connectionSection;
-    connection["802-11-wireless"] = wifi;
-    connection["ipv4"] = ipv4;
-    connection["ipv6"] = ipv6;
+    QVariantMap ipv6;
+    ipv6["method"] = QVariant::fromValue(QDBusVariant(QVariant(QString("ignore"))));
+
+    QVariantMap connection;
+    connection["connection"]        = QVariant::fromValue(wrapInnerMap(connectionSection));
+    connection["802-11-wireless"]   = QVariant::fromValue(wifi);
+    connection["ipv4"]              = QVariant::fromValue(ipv4);
+    connection["ipv6"]              = QVariant::fromValue(ipv6);
 
     if (!password.isEmpty()) {
         QVariantMap wifiSec;
-        wifiSec["key-mgmt"] = "wpa-psk";
-        wifiSec["psk"] = password;
-        connection["802-11-wireless-security"] = wifiSec;
+        wifiSec["key-mgmt"] = QVariant::fromValue(QDBusVariant(QVariant(QString("wpa-psk"))));
+        wifiSec["psk"]      = QVariant::fromValue(QDBusVariant(QVariant(password)));
+        connection["802-11-wireless-security"] = QVariant::fromValue(wifiSec);
     }
 
     return connection;

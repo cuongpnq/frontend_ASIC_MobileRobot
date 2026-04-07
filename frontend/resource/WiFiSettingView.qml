@@ -9,11 +9,9 @@ Item {
     id: root
     anchors.fill: parent
 
-    CustomKeyboard {
-        id: inputPanel
-        keyboardVisible: WifiSettingViewViewModel.keyboardVisible
-        hasVirtualKeyboard: WifiSettingViewViewModel.hasVirtualKeyboard
-    }
+    // CustomKeyboard is anchored to the bottom of the parent window.
+    // It must be declared LAST (or have the highest z) so it renders above
+    // the Dialog's modal overlay and is reachable by touch/mouse events.
 
     ContainerBar {
         id: containerBar
@@ -62,12 +60,15 @@ Item {
         anchors.top: settingsText.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: inputPanel.top
+        // Leave space for the keyboard at the bottom when it is visible.
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: WifiSettingViewViewModel.keyboardVisible ? (root.height * 0.4) : 20
         anchors.leftMargin: 200
         anchors.rightMargin: 200
         anchors.topMargin: 40
-        anchors.bottomMargin: 20
         spacing: 20
+
+        Behavior on anchors.bottomMargin { NumberAnimation { duration: 200 } }
 
         Rectangle {
             width: 220
@@ -171,23 +172,29 @@ Item {
         modal: true
         focus: true
         x: (root.width - width) / 2
-        y: WifiSettingViewViewModel.keyboardVisible ? 50 : (root.height - height) / 2
-        width: 700
-        height: 400
-        
+        y: WifiSettingViewViewModel.keyboardVisible ? 30 : (root.height - height) / 2
+        width: 780
+        height: 420
+
+        // Animate dialog position when keyboard appears
+        Behavior on y { NumberAnimation { duration: 200 } }
+
         property string selectedSsid: ""
+
+        // Ensure password field always gets focus when dialog opens
+        onOpened: {
+            passwordField.forceActiveFocus()
+        }
+        onClosed: {
+            WifiSettingViewViewModel.dismissKeyboard()
+            passwordField.text = ""
+        }
 
         background: Rectangle {
             color: "#ffffff"
             radius: 20
             border.color: "#cccccc"
             border.width: 1
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: WifiSettingViewViewModel.dismissKeyboard()
-                z: -1
-            }
         }
 
         Column {
@@ -205,21 +212,39 @@ Item {
 
             TextField {
                 id: passwordField
-                width: 600
-                height: 80
+                width: 640
+                height: 90
                 font.pixelSize: 32
                 echoMode: TextInput.Password
                 placeholderText: "Password..."
+                // Make this field the active focus item so the VK responds.
+                activeFocusOnPress: true
                 background: Rectangle {
                     color: "#f0f0f0"
                     radius: 10
-                    border.color: passwordField.focus ? "#007AFF" : "#cccccc"
+                    border.color: passwordField.activeFocus ? "#007AFF" : "#cccccc"
                 }
+                // Pressing Return/Enter connects immediately.
+                Keys.onReturnPressed: {
+                    WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
+                    passwordDialog.close()
+                }
+                Keys.onEnterPressed: {
+                    WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
+                    passwordDialog.close()
+                }
+                // Also keep old onAccepted for compatibility.
                 onAccepted: {
                     WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
                     passwordDialog.close()
-                    passwordField.text = ""
-                    WifiSettingViewViewModel.dismissKeyboard()
+                }
+                // Explicitly request focus (triggers virtual keyboard) on press.
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        passwordField.forceActiveFocus()
+                        mouse.accepted = false  // let the TextField handle the press too
+                    }
                 }
             }
 
@@ -238,11 +263,7 @@ Item {
                     }
                     width: 200
                     height: 70
-                    onClicked: {
-                        passwordDialog.close()
-                        passwordField.text = ""
-                        WifiSettingViewViewModel.dismissKeyboard()
-                    }
+                    onClicked: passwordDialog.close()
                 }
 
                 Button {
@@ -263,8 +284,6 @@ Item {
                     onClicked: {
                         WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
                         passwordDialog.close()
-                        passwordField.text = ""
-                        WifiSettingViewViewModel.dismissKeyboard()
                     }
                 }
             }
@@ -275,5 +294,14 @@ Item {
         target: WifiManager
         function onConnectionSucceeded(ssid) { console.log("Connected to", ssid) }
         function onConnectionFailed(ssid, reason) { console.log("Connect failed:", ssid, reason) }
+    }
+
+    // The CustomKeyboard MUST be declared last so it appears above all children,
+    // including the Dialog's modal Overlay. z: 99999 ensures event delivery.
+    CustomKeyboard {
+        id: inputPanel
+        keyboardVisible: WifiSettingViewViewModel.keyboardVisible
+        hasVirtualKeyboard: WifiSettingViewViewModel.hasVirtualKeyboard
+        z: 99999
     }
 }
