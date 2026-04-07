@@ -9,8 +9,10 @@ Item {
     id: root
     anchors.fill: parent
 
-    Component.onCompleted: {
-        VirtualKeyboardSettings.styleName = "default"
+    CustomKeyboard {
+        id: inputPanel
+        keyboardVisible: ChatViewViewModel.keyboardVisible
+        hasVirtualKeyboard: ChatViewViewModel.hasVirtualKeyboard
     }
 
     ContainerBar {
@@ -265,14 +267,6 @@ Item {
                 }
             }
         }
-    }
-
-    InputPanel {
-        id: inputPanel
-        width: parent.width
-        y: ChatViewViewModel.keyboardVisible ? parent.height - inputPanel.height : parent.height
-        z: 10000 
-        visible: ChatViewViewModel.hasVirtualKeyboard
     }
 
     Connections {

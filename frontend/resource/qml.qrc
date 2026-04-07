@@ -10,6 +10,7 @@
         <file>DiagnosticsView.qml</file>
         <file>ChatView.qml</file>
         <file>WiFiSettingView.qml</file>
+        <file>CustomKeyboard.qml</file>
         <file>ContainerBar.qml</file>
         <file>ModeSwitch.qml</file>
         <file>images/UIT_logo.png</file>

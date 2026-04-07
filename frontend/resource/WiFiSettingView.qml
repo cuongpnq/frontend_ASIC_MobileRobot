@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.12
 import QtQuick.VirtualKeyboard 2.1
 import QtQuick.VirtualKeyboard.Settings 2.1
 import com.asic.mobilerobot.viewmodels 1.0
@@ -8,8 +9,10 @@ Item {
     id: root
     anchors.fill: parent
 
-    Component.onCompleted: {
-        VirtualKeyboardSettings.styleName = "default"
+    CustomKeyboard {
+        id: inputPanel
+        keyboardVisible: WifiSettingViewViewModel.keyboardVisible
+        hasVirtualKeyboard: WifiSettingViewViewModel.hasVirtualKeyboard
     }
 
     ContainerBar {
@@ -53,129 +56,107 @@ Item {
         color: "#000000"
     }
 
-    Flickable {
-        id: mainFlickable
+    // Main content area
+    ColumnLayout {
+        id: contentColumn
         anchors.top: settingsText.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: inputPanel.top
-        contentHeight: contentWrapper.height
-        contentWidth: width
-        clip: true
-        interactive: contentHeight > height
+        anchors.leftMargin: 200
+        anchors.rightMargin: 200
+        anchors.topMargin: 40
+        anchors.bottomMargin: 20
+        spacing: 20
 
-        Item {
-            id: contentWrapper
-            width: mainFlickable.width
-            height: Math.max(mainFlickable.height, 1000)
+        Rectangle {
+            width: 220
+            height: 60
+            radius: 25
+            color: WifiManager.busy ? "#a9a9a9" : "#c9d9d9d9"
+            Layout.preferredWidth: 220
+            Layout.preferredHeight: 60
+
+            Text {
+                anchors.centerIn: parent
+                text: WifiManager.busy ? "Scanning..." : "Scan"
+                font.family: "Inter"
+                font.bold: true
+                font.pixelSize: 32
+                color: "black"
+            }
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
-                    WifiSettingViewViewModel.dismissKeyboard()
-                    mouse.accepted = false
-                }
-                propagateComposedEvents: true
+                enabled: !WifiManager.busy
+                onClicked: WifiManager.scanNetworks()
             }
+        }
 
-            Column {
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: 200
-                anchors.rightMargin: 200
-                anchors.topMargin: 70
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 20
-                spacing: 20
+        ListView {
+            id: wifiList
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            model: WifiManager
+            clip: true
+            spacing: 20
+            interactive: true
+
+            delegate: Rectangle {
+                width: wifiList.width
+                height: 110
+                color: "#c9d9d9d9"
+                radius: 25
+
+                Text {
+                    id: networkText
+                    anchors.left: parent.left
+                    anchors.leftMargin: 55
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: ssid + (secure ? " 🔒" : "")
+                    font.pixelSize: 48
+                    font.family: "Inter"
+                    color: "black"
+                }
+
+                Text {
+                    anchors.left: networkText.right
+                    anchors.leftMargin: 40
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Signal: " + strength + "%"
+                    font.pixelSize: 32
+                    font.family: "Inter"
+                    color: "#666666"
+                }
 
                 Rectangle {
-                    width: 220
-                    height: 60
+                    anchors.right: parent.right
+                    anchors.rightMargin: 70
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 250
+                    height: 70
                     radius: 25
-                    color: WifiManager.busy ? "#a9a9a9" : "#c9d9d9d9"
+                    color: (WifiManager.connectedSsid === ssid) ? "#ff9999" : "#a9c9c9"
 
                     Text {
                         anchors.centerIn: parent
-                        text: WifiManager.busy ? "Scanning..." : "Scan"
+                        text: (WifiManager.connectedSsid === ssid) ? "Disconnect" : "Connect"
                         font.family: "Inter"
-                        font.bold: true
-                        font.pixelSize: 32
+                        font.pixelSize: 36
                         color: "black"
                     }
 
                     MouseArea {
                         anchors.fill: parent
-                        enabled: !WifiManager.busy
-                        onClicked: WifiManager.scanNetworks()
-                    }
-                }
-
-                ListView {
-                    id: wifiList
-                    width: parent.width
-                    height: parent.height - 150
-                    model: WifiManager
-                    clip: true
-                    spacing: 20
-
-                    delegate: Rectangle {
-                        width: 1500
-                        height: 100
-                        color: "#c9d9d9d9"
-                        radius: 25
-
-                        Text {
-                            id: networkText
-                            anchors.left: parent.left
-                            anchors.leftMargin: 55
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: ssid + (secure ? " 🔒" : "")
-                            font.pixelSize: 48
-                            font.family: "Inter"
-                            color: "black"
-                        }
-
-                        Text {
-                            anchors.left: networkText.right
-                            anchors.leftMargin: 40
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "Signal: " + strength + "%"
-                            font.pixelSize: 32
-                            font.family: "Inter"
-                            color: "#666666"
-                        }
-
-                        Rectangle {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 70
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 250
-                            height: 60
-                            radius: 25
-                            color: (WifiManager.connectedSsid === ssid) ? "#ff9999" : "#a9c9c9"
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: (WifiManager.connectedSsid === ssid) ? "Disconnect" : "Connect"
-                                font.family: "Inter"
-                                font.pixelSize: 32
-                                color: "black"
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    if (WifiManager.connectedSsid === ssid) {
-                                        WifiManager.disconnectCurrent()
-                                    } else {
-                                        if (secure) {
-                                            passwordDialog.selectedSsid = ssid
-                                            passwordDialog.open()
-                                        } else {
-                                            WifiManager.connectToNetwork(ssid, "")
-                                        }
-                                    }
+                        onClicked: {
+                            if (WifiManager.connectedSsid === ssid) {
+                                WifiManager.disconnectCurrent()
+                            } else {
+                                if (secure) {
+                                    passwordDialog.selectedSsid = ssid
+                                    passwordDialog.open()
+                                } else {
+                                    WifiManager.connectToNetwork(ssid, "")
                                 }
                             }
                         }
@@ -191,8 +172,8 @@ Item {
         focus: true
         x: (root.width - width) / 2
         y: WifiSettingViewViewModel.keyboardVisible ? 50 : (root.height - height) / 2
-        width: 600
-        height: 350
+        width: 700
+        height: 400
         
         property string selectedSsid: ""
 
@@ -211,46 +192,79 @@ Item {
 
         Column {
             anchors.centerIn: parent
-            spacing: 20
+            spacing: 30
 
             Text {
                 text: "Enter password for " + passwordDialog.selectedSsid
-                font.pixelSize: 28
+                font.pixelSize: 32
                 font.family: "Inter"
+                font.bold: true
                 color: "#000000"
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
             TextField {
                 id: passwordField
-                width: 500
-                height: 60
-                font.pixelSize: 24
+                width: 600
+                height: 80
+                font.pixelSize: 32
                 echoMode: TextInput.Password
                 placeholderText: "Password..."
+                background: Rectangle {
+                    color: "#f0f0f0"
+                    radius: 10
+                    border.color: passwordField.focus ? "#007AFF" : "#cccccc"
+                }
+                onAccepted: {
+                    WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
+                    passwordDialog.close()
+                    passwordField.text = ""
+                    WifiSettingViewViewModel.dismissKeyboard()
+                }
             }
 
             Row {
-                spacing: 20
+                spacing: 30
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 Button {
                     text: "Cancel"
-                    width: 150
-                    height: 50
+                    contentItem: Text {
+                        text: parent.text
+                        font.pixelSize: 28
+                        color: "black"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    width: 200
+                    height: 70
                     onClicked: {
                         passwordDialog.close()
                         passwordField.text = ""
+                        WifiSettingViewViewModel.dismissKeyboard()
                     }
                 }
 
                 Button {
                     text: "Connect"
-                    width: 150
-                    height: 50
+                    contentItem: Text {
+                        text: parent.text
+                        font.pixelSize: 28
+                        color: "white"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        color: "#007AFF"
+                        radius: 10
+                    }
+                    width: 200
+                    height: 70
                     onClicked: {
                         WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
                         passwordDialog.close()
                         passwordField.text = ""
+                        WifiSettingViewViewModel.dismissKeyboard()
                     }
                 }
             }
@@ -259,21 +273,7 @@ Item {
 
     Connections {
         target: WifiManager
-
-        function onConnectionSucceeded(ssid) {
-            console.log("Connected to", ssid)
-        }
-
-        function onConnectionFailed(ssid, reason) {
-            console.log("Connect failed:", ssid, reason)
-        }
-    }
-
-    InputPanel {
-        id: inputPanel
-        width: parent.width
-        y: WifiSettingViewViewModel.keyboardVisible ? parent.height - inputPanel.height : parent.height
-        z: 10000 
-        visible: WifiSettingViewViewModel.hasVirtualKeyboard
+        function onConnectionSucceeded(ssid) { console.log("Connected to", ssid) }
+        function onConnectionFailed(ssid, reason) { console.log("Connect failed:", ssid, reason) }
     }
 }
