@@ -97,6 +97,11 @@ QString WifiManager::connectedSsid() const
     return m_connectedSsid;
 }
 
+int WifiManager::connectedStrength() const
+{
+    return m_connectedStrength;
+}
+
 void WifiManager::setBusy(bool value)
 {
     if (m_busy == value)
@@ -105,12 +110,21 @@ void WifiManager::setBusy(bool value)
     emit busyChanged();
 }
 
-void WifiManager::setConnectedSsid(const QString &ssid)
+void WifiManager::setConnectedSsid(const QString &ssid, int strength)
 {
-    if (m_connectedSsid == ssid)
+    bool ssidChanged = (m_connectedSsid != ssid);
+    bool strengthChanged = (m_connectedStrength != strength);
+    
+    if (!ssidChanged && !strengthChanged)
         return;
+
     m_connectedSsid = ssid;
-    emit connectedSsidChanged();
+    m_connectedStrength = strength;
+
+    if (ssidChanged)
+        emit connectedSsidChanged();
+    if (strengthChanged)
+        emit connectedStrengthChanged();
 }
 
 QString WifiManager::decodeSsid(const QByteArray &ssidBytes) const
@@ -393,11 +407,17 @@ void WifiManager::refreshConnectedSsid()
 
     QDBusInterface apProps(NM_SERVICE, apPath.path(), DBUS_PROPERTIES, QDBusConnection::systemBus());
     QDBusReply<QVariant> ssidReply = apProps.call("Get", NM_AP_IFACE, "Ssid");
+    QDBusReply<QVariant> strengthReply = apProps.call("Get", NM_AP_IFACE, "Strength");
+
     if (!ssidReply.isValid()) {
-        setConnectedSsid(QString());
+        setConnectedSsid(QString(), 0);
         return;
     }
 
     const QByteArray ssidBytes = extractByteArraySafely(ssidReply.value());
-    setConnectedSsid(decodeSsid(ssidBytes));
+    int strength = 0;
+    if (strengthReply.isValid()) {
+        strength = unwrapDBusVariant(strengthReply.value()).toInt();
+    }
+    setConnectedSsid(decodeSsid(ssidBytes), strength);
 }
