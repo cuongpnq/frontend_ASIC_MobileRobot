@@ -202,6 +202,7 @@ Item {
                 width: 600
                 height: 80
                 font.pixelSize: 32
+                anchors.horizontalCenter: parent.horizontalCenter
                 echoMode: TextInput.Password
                 placeholderText: "Password..."
                 background: Rectangle {
