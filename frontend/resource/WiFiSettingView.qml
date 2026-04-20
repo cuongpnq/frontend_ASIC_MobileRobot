@@ -115,14 +115,59 @@ Item {
                     color: "black"
                 }
 
-                Text {
+                Item {
+                    id: wifiStrengthIcon
                     anchors.left: networkText.right
                     anchors.leftMargin: 40
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Signal: " + strength + "%"
-                    font.pixelSize: 32
-                    font.family: "Inter"
-                    color: "#666666"
+                    width: 54
+                    height: 42
+
+                    Canvas {
+                        id: wifiStrengthCanvas
+                        anchors.fill: parent
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.clearRect(0, 0, width, height)
+
+                            var sig = strength   // 0-100 from model
+                            var color = "#444444"
+
+                            ctx.strokeStyle = color
+                            ctx.lineWidth = 3.5
+                            ctx.lineCap = "round"
+
+                            var cx = width / 2
+                            var cy = height - 4
+
+                            // Smallest arc — always shown
+                            ctx.beginPath()
+                            ctx.arc(cx, cy, 9, Math.PI * 1.25, Math.PI * 1.75, false)
+                            ctx.stroke()
+
+                            // Medium arc — shown when signal > 33 %
+                            if (sig > 33) {
+                                ctx.beginPath()
+                                ctx.arc(cx, cy, 18, Math.PI * 1.25, Math.PI * 1.75, false)
+                                ctx.stroke()
+                            }
+
+                            // Large arc — shown when signal > 66 %
+                            if (sig > 66) {
+                                ctx.beginPath()
+                                ctx.arc(cx, cy, 27, Math.PI * 1.25, Math.PI * 1.75, false)
+                                ctx.stroke()
+                            }
+
+                            // Center dot
+                            ctx.fillStyle = color
+                            ctx.beginPath()
+                            ctx.arc(cx, cy, 3.5, 0, Math.PI * 2)
+                            ctx.fill()
+                        }
+
+                        Component.onCompleted: requestPaint()
+                    }
                 }
 
                 Rectangle {
