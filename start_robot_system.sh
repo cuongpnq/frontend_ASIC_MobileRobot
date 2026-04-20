@@ -19,7 +19,17 @@ APP_BIN="$PROJECT_ROOT/build-output/frontend/frontend_app"
 
 if [ ! -f "$SERVER_BIN" ]; then
     # Fallback to build output root search
-    SERVER_BIN=$(find build-output -name "llama-server" | head -n 1)
+    SERVER_BIN=$(find build-output -type f -name "llama-server" | head -n 1)
+fi
+
+if [ ! -x "$SERVER_BIN" ]; then
+    echo "[ERROR] AI Server binary not found or not executable: $SERVER_BIN"
+    exit 1
+fi
+
+if [ ! -f "$MODEL_PATH" ]; then
+    echo "[ERROR] Model file not found: $MODEL_PATH"
+    exit 1
 fi
 
 echo "[SYSTEM] Starting AI Server in background..."
@@ -29,7 +39,13 @@ SERVER_PID=$!
 
 # Wait for server to be ready
 echo "[SYSTEM] Waiting for AI Server to initialize..."
-until curl -s http://localhost:8080/health | grep -q "ok"; do
+while ! curl -s --connect-timeout 2 --max-time 5 http://localhost:8080/health | grep -q "ok"; do
+    if ! kill -0 $SERVER_PID 2>/dev/null; then
+        echo "[ERROR] AI Server process died unexpectedly."
+        echo "Last 10 lines of llama_server.log:"
+        tail -n 10 llama_server.log
+        exit 1
+    fi
     sleep 1
 done
 echo "[SYSTEM] AI Server is READY."
