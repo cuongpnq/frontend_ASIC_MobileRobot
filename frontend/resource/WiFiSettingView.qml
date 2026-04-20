@@ -63,6 +63,8 @@ Item {
         anchors.topMargin: 40
         spacing: 20
 
+        Behavior on anchors.bottomMargin { NumberAnimation { duration: 200 } }
+
         Rectangle {
             width: 220
             height: 60
@@ -144,12 +146,14 @@ Item {
                         anchors.fill: parent
                         onClicked: {
                             if (WifiManager.connectedSsid === ssid) {
+                                showToast("Disconnecting from '" + ssid + "'...", "info")
                                 WifiManager.disconnectCurrent()
                             } else {
                                 if (secure) {
                                     passwordDialog.selectedSsid = ssid
                                     passwordDialog.open()
                                 } else {
+                                    showToast("Connecting to '" + ssid + "'...", "info")
                                     WifiManager.connectToNetwork(ssid, "")
                                 }
                             }
@@ -160,28 +164,58 @@ Item {
         }
     }
 
-    Dialog {
+    // Dim overlay — sits BELOW the keyboard (z:99999) so keyboard events pass through.
+    // Tapping the dim area dismisses the password popup.
+    Rectangle {
+        id: dimOverlay
+        anchors.fill: parent
+        color: "#80000000"
+        visible: passwordDialog.visible
+        z: 9000
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: passwordDialog.close()
+        }
+    }
+
+    // Non-modal Popup — avoids the window-level Overlay that blocks the virtual keyboard.
+    Popup {
         id: passwordDialog
-        modal: true
-        focus: true
+        // non-modal: no Qt-level Overlay is created, so keyboard events reach CustomKeyboard
+        modal: false
+        focus: false          // let TextField own the focus
+        closePolicy: Popup.NoAutoClose   // we close manually
         x: (root.width - width) / 2
-        y: WifiSettingViewViewModel.keyboardVisible ? 50 : (root.height - height) / 2
-        width: 700
-        height: 400
-        
+        y: WifiSettingViewViewModel.keyboardVisible ? 30 : (root.height - height) / 2
+        width: 780
+        height: 420
+        z: 9001               // above dim overlay, below keyboard
+
+        // Animate position when keyboard appears/disappears
+        Behavior on y { NumberAnimation { duration: 200 } }
+
         property string selectedSsid: ""
+
+        // Small delay so the Popup enter animation settles before we grab focus.
+        Timer {
+            id: focusTimer
+            interval: 150
+            repeat: false
+            onTriggered: passwordField.forceActiveFocus()
+        }
+
+        onOpened: focusTimer.restart()
+        onClosed: {
+            WifiSettingViewViewModel.dismissKeyboard()
+            passwordField.text = ""
+        }
 
         background: Rectangle {
             color: "#ffffff"
             radius: 20
             border.color: "#cccccc"
             border.width: 1
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: WifiSettingViewViewModel.dismissKeyboard()
-                z: -1
-            }
         }
 
         Column {
@@ -199,22 +233,40 @@ Item {
 
             TextField {
                 id: passwordField
-                width: 600
-                height: 80
+                width: 640
+                height: 90
                 font.pixelSize: 32
                 anchors.horizontalCenter: parent.horizontalCenter
                 echoMode: TextInput.Password
                 placeholderText: "Password..."
+                activeFocusOnPress: true
                 background: Rectangle {
                     color: "#f0f0f0"
                     radius: 10
-                    border.color: passwordField.focus ? "#007AFF" : "#cccccc"
+                    border.color: passwordField.activeFocus ? "#007AFF" : "#cccccc"
                 }
-                onAccepted: {
+                Keys.onReturnPressed: {
+                    showToast("Connecting to '" + passwordDialog.selectedSsid + "'...", "info")
                     WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
                     passwordDialog.close()
-                    passwordField.text = ""
-                    WifiSettingViewViewModel.dismissKeyboard()
+                }
+                Keys.onEnterPressed: {
+                    showToast("Connecting to '" + passwordDialog.selectedSsid + "'...", "info")
+                    WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
+                    passwordDialog.close()
+                }
+                onAccepted: {
+                    showToast("Connecting to '" + passwordDialog.selectedSsid + "'...", "info")
+                    WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
+                    passwordDialog.close()
+                }
+                // Tap on field: (re-)grab focus to keep keyboard visible
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        passwordField.forceActiveFocus()
+                        mouse.accepted = false
+                    }
                 }
             }
 
@@ -233,11 +285,7 @@ Item {
                     }
                     width: 200
                     height: 70
-                    onClicked: {
-                        passwordDialog.close()
-                        passwordField.text = ""
-                        WifiSettingViewViewModel.dismissKeyboard()
-                    }
+                    onClicked: passwordDialog.close()
                 }
 
                 Button {
@@ -256,19 +304,127 @@ Item {
                     width: 200
                     height: 70
                     onClicked: {
+                        showToast("Connecting to '" + passwordDialog.selectedSsid + "'...", "info")
                         WifiManager.connectToNetwork(passwordDialog.selectedSsid, passwordField.text)
                         passwordDialog.close()
-                        passwordField.text = ""
-                        WifiSettingViewViewModel.dismissKeyboard()
                     }
                 }
             }
         }
     }
 
+
+    // ── Toast notification ────────────────────────────────────────────────────
+    // Usage: call showToast("message", "success" | "error" | "info")
+    function showToast(message, type) {
+        toastMessage.text = message
+        if (type === "success") {
+            toastBg.color = "#2ECC71"       // green
+            toastIcon.text = "✔"
+        } else if (type === "error") {
+            toastBg.color = "#E74C3C"       // red
+            toastIcon.text = "✖"
+        } else {
+            toastBg.color = "#5B93C5"       // blue-info
+            toastIcon.text = "ℹ"
+        }
+        toastItem.opacity = 1
+        toastTimer.restart()
+    }
+
+    Item {
+        id: toastItem
+        anchors.top: parent.top
+        anchors.topMargin: 30
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: toastRow.implicitWidth + 60
+        height: 90
+        opacity: 0
+        z: 199998          // just below the keyboard
+
+        Behavior on opacity { NumberAnimation { duration: 220 } }
+
+        Rectangle {
+            id: toastBg
+            anchors.fill: parent
+            radius: 45
+            color: "#2ECC71"
+
+            // soft drop-shadow via layering
+            layer.enabled: true
+        }
+
+        Row {
+            id: toastRow
+            anchors.centerIn: parent
+            spacing: 18
+
+            Text {
+                id: toastIcon
+                text: "✔"
+                font.pixelSize: 40
+                color: "white"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                id: toastMessage
+                text: ""
+                font.pixelSize: 34
+                font.family: "Inter"
+                font.bold: true
+                color: "white"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        Timer {
+            id: toastTimer
+            interval: 3000
+            repeat: false
+            onTriggered: toastItem.opacity = 0
+        }
+    }
+
+    // ── WiFiManager event connections ─────────────────────────────────────────
     Connections {
         target: WifiManager
-        function onConnectionSucceeded(ssid) { console.log("Connected to", ssid) }
-        function onConnectionFailed(ssid, reason) { console.log("Connect failed:", ssid, reason) }
+
+        function onConnectionSucceeded(ssid) {
+            console.log("Connected to", ssid)
+            showToast("Connected to '" + ssid + "'", "success")
+        }
+
+        function onConnectionFailed(ssid, reason) {
+            console.log("Connect failed:", ssid, reason)
+            // Detect wrong-password clue from NM error string
+            var isPwdWrong = reason.indexOf("secrets") !== -1
+                          || reason.indexOf("password") !== -1
+                          || reason.indexOf("psk") !== -1
+                          || reason.indexOf("Invalid") !== -1
+            if (isPwdWrong) {
+                showToast("Wrong password for '" + ssid + "'", "error")
+            } else if (ssid === "") {
+                showToast("Disconnected", "info")
+            } else {
+                showToast("Failed: " + reason, "error")
+            }
+        }
+
+        function onConnectedSsidChanged() {
+            // When ssid becomes empty it means we just disconnected successfully.
+            if (WifiManager.connectedSsid === "") {
+                showToast("Wi-Fi disconnected", "info")
+            }
+        }
+    }
+
+    // The CustomKeyboard MUST be declared last so it appears above all children,
+    // including the Dialog's modal Overlay. z: 99999 ensures event delivery.
+    CustomKeyboard {
+        id: inputPanel
+        keyboardVisible: WifiSettingViewViewModel.keyboardVisible
+        hasVirtualKeyboard: WifiSettingViewViewModel.hasVirtualKeyboard
+        z: 99999
     }
 }

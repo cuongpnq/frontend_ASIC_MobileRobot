@@ -2,7 +2,12 @@
 
 #include <QAbstractListModel>
 #include <QDBusObjectPath>
+#include <QMap>
 #include <QVector>
+
+// NM AddAndActivateConnection outer settings type: a{sa{sv}}
+// QMap<QString, QVariantMap> is marshaled by Qt D-Bus as a{sa{sv}}.
+typedef QMap<QString, QVariantMap> NMConnectionSettings;
 
 struct WifiNetwork
 {
@@ -55,7 +60,7 @@ private:
     void setBusy(bool value);
     void setConnectedSsid(const QString &ssid, int strength = 0);
     void refreshConnectedSsid();
-    QVariantMap makeConnectionSettings(const QString &ssid, const QString &password) const;
+    NMConnectionSettings makeConnectionSettings(const QString &ssid, const QString &password) const;
     QString findApPathBySsid(const QString &ssid) const;
 
 private:
