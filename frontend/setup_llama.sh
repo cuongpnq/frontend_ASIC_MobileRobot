@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Configuration
-FRONTEND_DIR="/home/kien/Development/frontend_ASIC_MobileRobot/frontend"
+CURRENT_DIR=$(pwd)
+FRONTEND_DIR="$CURRENT_DIR/frontend"
 THIRD_PARTY_DIR="$FRONTEND_DIR/3rdparty"
 LLAMA_REPO="https://github.com/ggerganov/llama.cpp"
 MODEL_URL="https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf"
@@ -42,4 +43,4 @@ echo "Setup complete!"
 echo "AI Core: Ready in $THIRD_PARTY_DIR/llama.cpp"
 echo "Model:   Ready in $FRONTEND_DIR/models/$MODEL_NAME"
 echo "===================================================="
-echo "Next step: Run 'make system' to launch the robot brain."
+echo "Next step: Run 'make run' to build and launch the robot brain."

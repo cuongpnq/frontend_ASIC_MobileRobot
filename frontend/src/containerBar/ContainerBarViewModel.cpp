@@ -1,11 +1,18 @@
 #include "containerBar/ContainerBarViewModel.hpp"
 #include <QTimer>
+#include <QDateTime>
 
 ContainerBarViewModel::ContainerBarViewModel(QObject* parent) 
     : QObject(parent),
       m_wifiConnected(true),
       m_batteryLevel(85)
 {
+    // Sync time immediately, then update every second
+    updateTime();
+
+    QTimer* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &ContainerBarViewModel::updateTime);
+    timer->start(1000);
 }
 
 void ContainerBarViewModel::setBatteryPower(int power)
@@ -49,4 +56,6 @@ int ContainerBarViewModel::batteryLevel() const
 
 void ContainerBarViewModel::updateTime()
 {
+    // Format: HH:mm  (24-hour clock, matching the existing QML font size)
+    setCurrentTime(QDateTime::currentDateTime().toString("HH:mm"));
 }
