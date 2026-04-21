@@ -37,7 +37,7 @@ setup:
 # 2. Build GUI & AI Server
 build:
 	@echo "[BUILD] Compiling AI System..."
-	cmake -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Debug
+	cmake -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Release
 	cmake --build $(BUILD_DIR) -j$$(nproc)
 
 # 3. Launch System Orchestrator

@@ -6,10 +6,12 @@
 #include <QVariantList>
 #include <QFutureWatcher>
 #include <QVector>
+#include <QSet>
 #include "LlamaInference.hpp"
 
 struct KnowledgeEntry {
     QStringList patterns;
+    QVector<QSet<QString>> patternWordSets;
     QString response;
 };
 
@@ -17,6 +19,7 @@ class ChatViewViewModel : public QObject {
     Q_OBJECT
     Q_PROPERTY(QVariantList messages READ messages NOTIFY messagesChanged)
     Q_PROPERTY(bool isThinking READ isThinking NOTIFY isThinkingChanged)
+    Q_PROPERTY(bool isGenerating READ isGenerating NOTIFY isGeneratingChanged)
     Q_PROPERTY(bool isLoaded READ isLoaded NOTIFY isLoadedChanged)
     Q_PROPERTY(bool isLoading READ isLoading NOTIFY isLoadingChanged)
     Q_PROPERTY(bool hasVirtualKeyboard READ hasVirtualKeyboard NOTIFY hasVirtualKeyboardChanged)
@@ -29,6 +32,7 @@ public:
 
     QVariantList messages() const;
     bool isThinking() const;
+    bool isGenerating() const;
     bool isLoaded() const;
     bool isLoading() const;
     bool hasVirtualKeyboard() const;
@@ -45,6 +49,7 @@ public:
 signals:
     void messagesChanged();
     void isThinkingChanged();
+    void isGeneratingChanged();
     void isLoadedChanged();
     void isLoadingChanged();
     void requestScrollToBottom();
@@ -61,11 +66,12 @@ private slots:
 private:
     void addMessage(const QString& sender, const QString& message);
     void loadKnowledgeBase();
-    float calculateSimilarity(const QString& s1, const QString& s2);
+    float calculateSimilarity(const QSet<QString>& set1, const QSet<QString>& set2, const QString& s1, const QString& s2);
 
     LlamaInference* m_llama;
     QVariantList m_messages;
     bool m_isThinking = false;
+    bool m_isGenerating = false;
     QFutureWatcher<QString> m_inferenceWatcher;
     QVector<KnowledgeEntry> m_knowledgeBase;
     bool m_hasVirtualKeyboard = true;

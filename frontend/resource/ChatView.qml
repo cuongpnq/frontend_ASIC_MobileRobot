@@ -18,7 +18,7 @@ Item {
 
         MouseArea {
             anchors.fill: parent
-            z: -1 // Behind the back button but on top of bar background
+            z: -1
             onClicked: ChatViewViewModel.dismissKeyboard()
         }
     }
@@ -43,152 +43,145 @@ Item {
         }
     }
 
-    Flickable {
-        id: mainFlickable
+    Rectangle {
+        id: chatContainer
         anchors.top: containerBar.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: inputBarBackground.top
-        anchors.bottomMargin: 20
         anchors.margins: 20
-        contentHeight: chatContainer.height
-        contentWidth: width
+        anchors.bottomMargin: 20
+        color: "white"
+        radius: 20
+        border.color: '#80e0e0e0'
+        border.width: 1
         clip: true
-        interactive: contentHeight > height
 
         Rectangle {
-            id: chatContainer
-            width: parent.width
-            height: Math.max(mainFlickable.height, 700)
-            color: "white"
-            radius: 20
-            border.color: '#80e0e0e0'
-            border.width: 1
+            id: titleBar
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: 20
+            anchors.leftMargin: 20
+            anchors.rightMargin: 20
+            height: 40
+            color: "transparent"
+            z: 5
+            
+            Text {
+                text: "AI Chat Assistant"
+                font.pixelSize: 28
+                font.bold: true
+                color: "#2C2C2C"
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: 10
+            }
 
-            Column {
+            Rectangle {
+                width: 100
+                height: 35
+                color: (ChatViewViewModel.isThinking || ChatViewViewModel.isGenerating) ? '#ff0000' : '#00fafafa'
+                radius: 10
+                border.color: (ChatViewViewModel.isThinking || ChatViewViewModel.isGenerating) ? '#ff0000' : '#920000'
+                border.width: 1
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: 10
+                Text {
+                    anchors.centerIn: parent
+                    text: (ChatViewViewModel.isThinking || ChatViewViewModel.isGenerating) ? "Stop" : "Clear"
+                    color: (ChatViewViewModel.isThinking || ChatViewViewModel.isGenerating) ? "white" : '#920000'
+                    font.bold: true
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        if (ChatViewViewModel.isThinking || ChatViewViewModel.isGenerating)
+                            ChatViewViewModel.stopChat()
+                        else
+                            ChatViewViewModel.clearHistory()
+                    }
+                }
+            }
+        }
+
+        ListView {
+            id: mainFlickable
+            anchors.top: titleBar.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.topMargin: 15
+            anchors.leftMargin: 20
+            anchors.rightMargin: 20
+            anchors.bottomMargin: 20
+            clip: true
+            model: ChatViewViewModel.messages
+            spacing: 15
+
+            // Loading Indicator
+            Rectangle {
                 anchors.fill: parent
-                anchors.margins: 20
-                spacing: 15
-
-                Rectangle {
-                    width: parent.width
-                    height: 40
-                    color: "transparent"
-                    
+                color: "#CCFFFFFF"
+                visible: ChatViewViewModel.isLoading
+                z: 10
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 20
+                    BusyIndicator {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        running: ChatViewViewModel.isLoading
+                    }
                     Text {
-                        text: "AI Chat Assistant"
-                        font.pixelSize: 28
-                        font.bold: true
-                        color: "#2C2C2C"
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
-                        anchors.leftMargin: 10
-                    }
-
-                    Item { Layout.fillWidth: true; width: 1 } // Spacer
-
-                    Rectangle {
-                        width: 100
-                        height: 35
-                        color: ChatViewViewModel.isThinking ? "#007AFF" : '#00fafafa'
-                        radius: 10
-                        border.color: ChatViewViewModel.isThinking ? "#007AFF" : '#920000'
-                        border.width: 1
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.right: parent.right
-                        anchors.rightMargin: 10
-                        Text {
-                            anchors.centerIn: parent
-                            text: ChatViewViewModel.isThinking ? "Stop" : "Clear"
-                            color: ChatViewViewModel.isThinking ? "white" : '#920000'
-                            font.bold: true
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                if (ChatViewViewModel.isThinking)
-                                    ChatViewViewModel.stopChat()
-                                else
-                                    ChatViewViewModel.clearHistory()
-                            }
-                        }
+                        text: "Optimizing AI Model for Jetson GPU...\n(Repacking tensors)"
+                        horizontalAlignment: Text.AlignHCenter
+                        font.pixelSize: 18
+                        color: "#555555"
                     }
                 }
+            }
 
-                Rectangle {
+            // Dismiss keyboard when clicking outside input
+            MouseArea {
+                anchors.fill: parent
+                z: -1
+                onClicked: {
+                    messageField.focus = false
+                    ChatViewViewModel.dismissKeyboard()
+                }
+            }
+
+            footer: Item {
+                width: mainFlickable.width
+                height: 40
+                visible: ChatViewViewModel.isThinking
+                Text {
+                    anchors.centerIn: parent
+                    text: "AI is thinking..."
+                    font.italic: true
+                    color: "#888888"
+                }
+            }
+
+            delegate: Column {
+                width: mainFlickable.width - 20
+                spacing: 5
+                Text {
+                    text: modelData.sender
+                    font.bold: true
+                    font.pixelSize: 14
+                    color: modelData.sender === "ASIC Chatbot" ? "#007AFF" : "#4CD964"
+                }
+                Text {
+                    text: modelData.message
                     width: parent.width
-                    height: parent.height - 100 // Leave space for title
-                    color: "#F9F9F9"
-                    radius: 10
-                    border.color: "#EEEEEE"
-
-                    // Loading Indicator
-                    Rectangle {
-                        anchors.fill: parent
-                        color: "#CCFFFFFF"
-                        visible: ChatViewViewModel.isLoading
-                        z: 10
-                        Column {
-                            anchors.centerIn: parent
-                            spacing: 20
-                            BusyIndicator {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                running: ChatViewViewModel.isLoading
-                            }
-                            Text {
-                                text: "Optimizing AI Model for Jetson GPU...\n(Repacking tensors)"
-                                horizontalAlignment: Text.AlignHCenter
-                                font.pixelSize: 18
-                                color: "#555555"
-                            }
-                        }
-                    }
-
-                    // Dismiss keyboard when clicking outside input
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            messageField.focus = false
-                            ChatViewViewModel.dismissKeyboard()
-                            mouse.accepted = false
-                        }
-                    }
-
-                    ListView {
-                        id: chatLog
-                        anchors.fill: parent
-                        anchors.margins: 10
-                        model: ChatViewViewModel.messages
-                        footer: Item {
-                            width: chatLog.width
-                            height: 40
-                            visible: ChatViewViewModel.isThinking
-                            Text {
-                                anchors.centerIn: parent
-                                text: "AI is thinking..."
-                                font.italic: true
-                                color: "#888888"
-                            }
-                        }
-                        delegate: Column {
-                            width: chatLog.width - 20
-                            spacing: 5
-                            Text {
-                                text: modelData.sender
-                                font.bold: true
-                                font.pixelSize: 14
-                                color: modelData.sender === "ASIC Chatbot" ? "#007AFF" : "#4CD964"
-                            }
-                            Text {
-                                text: modelData.message
-                                width: parent.width
-                                wrapMode: Text.Wrap
-                                font.pixelSize: 16
-                            }
-                            Item { height: 10; width: 1 }
-                        }
-                    }
+                    wrapMode: Text.Wrap
+                    font.pixelSize: 16
+                    color: "#2C2C2C"
                 }
+                Item { height: 10; width: 1 }
             }
         }
     }
@@ -222,10 +215,10 @@ Item {
                     anchors.leftMargin: 15
                     anchors.rightMargin: 15
                     anchors.verticalCenter: parent.verticalCenter
-                    placeholderText: !ChatViewViewModel.isLoaded ? (ChatViewViewModel.isLoading ? "Loading model..." : "Model not ready") : (ChatViewViewModel.isThinking ? "AI is thinking..." : "Type a message...")
+                    placeholderText: !ChatViewViewModel.isLoaded ? (ChatViewViewModel.isLoading ? "Loading model..." : "Model not ready") : ((ChatViewViewModel.isThinking || ChatViewViewModel.isGenerating) ? "AI is busy..." : "Type a message...")
                     font.pixelSize: 18
                     font.family: "Inter"
-                    enabled: ChatViewViewModel.isLoaded && !ChatViewViewModel.isThinking
+                    enabled: ChatViewViewModel.isLoaded && !ChatViewViewModel.isThinking && !ChatViewViewModel.isGenerating
                     inputMethodHints: Qt.ImhNoPredictiveText
                     background: Rectangle {
                         color: "transparent"
@@ -242,9 +235,9 @@ Item {
             Rectangle {
                 width: 90
                 height: parent.height
-                color: (ChatViewViewModel.isThinking || !ChatViewViewModel.isLoaded) ? "#CCCCCC" : "#007AFF"
+                color: (ChatViewViewModel.isThinking || ChatViewViewModel.isGenerating || !ChatViewViewModel.isLoaded) ? "#CCCCCC" : "#007AFF"
                 radius: 20
-                enabled: ChatViewViewModel.isLoaded && !ChatViewViewModel.isThinking
+                enabled: ChatViewViewModel.isLoaded && !ChatViewViewModel.isThinking && !ChatViewViewModel.isGenerating
                 Text {
                     anchors.centerIn: parent
                     text: "Send"
@@ -268,9 +261,7 @@ Item {
     Connections {
         target: ChatViewViewModel
         onRequestScrollToBottom: {
-            // Jump to end of list
-            chatLog.positionViewAtEnd()
-            // And ensure flicker is at bottom
+            mainFlickable.positionViewAtEnd()
             mainFlickable.contentY = Math.max(0, mainFlickable.contentHeight - mainFlickable.height)
         }
     }

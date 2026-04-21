@@ -31,23 +31,7 @@ Clone the repository using **username** and **Personal Access Token**. The crede
 
 Build native before run application
 
-## 1. Open IDE
+## Application command line
 ```bash
-make qtcreator
-```
-
-## 2. Build native
-```bash
-make debug_native
-```
-Flag CLEAN_BUILD=OFF by default
-
-## 3. Run application
-```bash
-make run_app
-```
-
-## 4. Build & run application
-```bash
-make build_run
+make help
 ```

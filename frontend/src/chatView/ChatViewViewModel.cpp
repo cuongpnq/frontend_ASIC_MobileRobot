@@ -81,6 +81,10 @@ bool ChatViewViewModel::isThinking() const {
     return m_isThinking;
 }
 
+bool ChatViewViewModel::isGenerating() const {
+    return m_isGenerating;
+}
+
 void ChatViewViewModel::requestMainView() {
     dismissKeyboard();
     AppStateMachine::instance().returnToMain();
@@ -94,24 +98,32 @@ void ChatViewViewModel::dismissKeyboard() {
 }
 
 void ChatViewViewModel::sendMessage(const QString& message) {
-    if (message.trimmed().isEmpty() || m_isThinking) return;
+    if (message.trimmed().isEmpty() || m_isThinking || m_isGenerating) return;
 
     addMessage("User", message);
     
     m_isThinking = true;
+    m_isGenerating = false;
     emit isThinkingChanged();
+    emit isGeneratingChanged();
 
     // 1. RAG: Search knowledge base for context
     QString context;
     float bestScore = 0.0f;
+    QString lowerMsg = message.toLower();
+    QStringList messageWordsList = lowerMsg.split(QRegExp("\\W+"), QString::SkipEmptyParts);
+    QSet<QString> messageWordSet = QSet<QString>::fromList(messageWordsList);
+    
     for (const auto& entry : m_knowledgeBase) {
-        for (const auto& pattern : entry.patterns) {
-            float score = calculateSimilarity(message.toLower(), pattern);
+        for (int i = 0; i < entry.patterns.size(); ++i) {
+            float score = calculateSimilarity(messageWordSet, entry.patternWordSets[i], lowerMsg, entry.patterns[i]);
             if (score > bestScore) {
                 bestScore = score;
                 context = entry.response;
             }
+            if (bestScore >= 1.0f) break; // Early exit on perfect match
         }
+        if (bestScore >= 1.0f) break;
     }
 
     qDebug() << "RAG: Best similarity score =" << bestScore;
@@ -142,12 +154,22 @@ void ChatViewViewModel::sendMessage(const QString& message) {
 void ChatViewViewModel::onInferenceFinished() {
     // Inference Finished (QFuture done)
     m_isThinking = false;
+    m_isGenerating = false;
     emit isThinkingChanged();
+    emit isGeneratingChanged();
     emit requestScrollToBottom();
 }
 
 void ChatViewViewModel::onTokenGenerated(const QString& token) {
     if (m_messages.isEmpty()) return;
+    
+    // Transition from thinking to generating on the first token
+    if (m_isThinking) {
+        m_isThinking = false;
+        m_isGenerating = true;
+        emit isThinkingChanged();
+        emit isGeneratingChanged();
+    }
     
     // Append token to the last message (must be from "ASIC Chatbot")
     QVariantMap lastMsg = m_messages.last().toMap();
@@ -171,9 +193,14 @@ void ChatViewViewModel::refreshModel() {
 }
 
 void ChatViewViewModel::stopChat() {
-    if (m_isThinking) {
+    if (m_isThinking || m_isGenerating) {
         qDebug() << "[VM] User requested stop of inference.";
         m_llama->stopInference();
+        
+        m_isThinking = false;
+        m_isGenerating = false;
+        emit isThinkingChanged();
+        emit isGeneratingChanged();
         
         // Append interruption notice to the last message if it's from the bot
         if (!m_messages.isEmpty()) {
@@ -240,13 +267,17 @@ void ChatViewViewModel::loadKnowledgeBase() {
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qDebug() << "Knowledge base loaded from:" << file.fileName();
         QTextStream in(&file);
+        QRegExp wordSplitRule("\\W+");
         while (!in.atEnd()) {
             QString line = in.readLine();
             QStringList parts = line.split(":");
             if (parts.size() >= 2) {
                 KnowledgeEntry entry;
                 entry.patterns = parts[0].trimmed().toLower().split(",");
-                for (QString& p : entry.patterns) p = p.trimmed();
+                for (QString& p : entry.patterns) {
+                    p = p.trimmed();
+                    entry.patternWordSets.append(QSet<QString>::fromList(p.split(wordSplitRule, QString::SkipEmptyParts)));
+                }
                 entry.response = parts[1].trimmed();
                 m_knowledgeBase.append(entry);
             }
@@ -257,23 +288,31 @@ void ChatViewViewModel::loadKnowledgeBase() {
     // Default fallback knowledge
     if (m_knowledgeBase.isEmpty()) {
         qWarning() << "Knowledge base file not found even after searching. Using fallbacks.";
-        m_knowledgeBase.append({{"hello", "hi"}, "I am the ASIC Lab assistant."});
-        m_knowledgeBase.append({{"location", "where"}, "The laboratory is in the H1 building."});
+        
+        KnowledgeEntry e1;
+        e1.patterns << "hello" << "hi";
+        e1.patternWordSets << QSet<QString>({"hello"}) << QSet<QString>({"hi"});
+        e1.response = "I am the ASIC Lab assistant.";
+        m_knowledgeBase.append(e1);
+
+        KnowledgeEntry e2;
+        e2.patterns << "location" << "where";
+        e2.patternWordSets << QSet<QString>({"location"}) << QSet<QString>({"where"});
+        e2.response = "The laboratory is in the H1 building.";
+        m_knowledgeBase.append(e2);
     }
 }
 
-float ChatViewViewModel::calculateSimilarity(const QString& s1, const QString& s2) {
+float ChatViewViewModel::calculateSimilarity(const QSet<QString>& set1, const QSet<QString>& set2, const QString& s1, const QString& s2) {
     // Keyword match logic (Robot-specific optimization)
-    if (s1.contains(s2, Qt::CaseInsensitive) || s2.contains(s1, Qt::CaseInsensitive)) {
+    if (s1.contains(s2) || s2.contains(s1)) {
         return 1.0f;
     }
 
-    QStringList words1 = s1.split(QRegExp("\\W+"), QString::SkipEmptyParts);
-    QStringList words2 = s2.split(QRegExp("\\W+"), QString::SkipEmptyParts);
-    if (words1.isEmpty() || words2.isEmpty()) return 0.0f;
-    QSet<QString> set1 = QSet<QString>::fromList(words1);
-    QSet<QString> set2 = QSet<QString>::fromList(words2);
+    if (set1.isEmpty() || set2.isEmpty()) return 0.0f;
+    
     int intersection = 0;
     for (const QString& word : set1) if (set2.contains(word)) intersection++;
+    
     return static_cast<float>(intersection) / (set1.size() + set2.size() - intersection);
 }
