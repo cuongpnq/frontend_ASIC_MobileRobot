@@ -6,3 +6,6 @@ tasks, mission, job, doing, activity:I am currently assigned to monitor the hall
 creator, built, developed, made:I was created by the talented engineers at ASIC.
 name, call, identity:You can call me ASIC Bot.
 clear, reset, restart:You can use the 'Clear' button in the header to reset our conversation.
+leadership, dean, faculty head : The Faculty Leadership Board includes Dr. Nguyen Minh Son (Dean), Dr. Doan Duy (Vice Dean), and MSc. Phan Dinh Duy (Vice Dean).
+scientific council, research board : The Scientific Council includes Dr. Nguyen Minh Son, Dr. Lam Duc Khai, Dr. Doan Duy, Dr. Trinh Le Huy, and MSc. Le Hoai Nghia.
+union, organization, student association : The faculty organizations include MSc. Pham Minh Quan (Trade Union Chairman), BEng. Nguyen Thanh Nhan (Youth Union Secretary), and Student Than Thanh Khoi (Student Association President).
