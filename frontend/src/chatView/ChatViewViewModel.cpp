@@ -42,7 +42,7 @@ ChatViewViewModel::ChatViewViewModel(QObject* parent) : QObject(parent) {
     connect(&m_inferenceWatcher, &QFutureWatcher<QString>::finished, this, &ChatViewViewModel::onInferenceFinished);
 
     // Initial welcome message
-    addMessage("ASIC Chatbot", "Hello! I am your AI assistant running locally on Jetson. How can I help you?");
+    addMessage("ASIC Chatbot", "Hello! I am your AI assistant. How can I help you?");
 }
 
 ChatViewViewModel::~ChatViewViewModel() {
@@ -111,19 +111,36 @@ void ChatViewViewModel::sendMessage(const QString& message) {
     QString context;
     float bestScore = 0.0f;
     QString lowerMsg = message.toLower();
-    QStringList messageWordsList = lowerMsg.split(QRegExp("\\W+"), QString::SkipEmptyParts);
-    QSet<QString> messageWordSet = QSet<QString>::fromList(messageWordsList);
+    QStringList queryWords = lowerMsg.split(QRegExp("\\W+"), QString::SkipEmptyParts);
+    QSet<QString> querySet = QSet<QString>::fromList(queryWords);
     
-    for (const auto& entry : m_knowledgeBase) {
+    for (const KnowledgeEntry& entry : m_knowledgeBase) {
+        float entryBestScore = 0;
+        // Check keywords
         for (int i = 0; i < entry.patterns.size(); ++i) {
-            float score = calculateSimilarity(messageWordSet, entry.patternWordSets[i], lowerMsg, entry.patterns[i]);
-            if (score > bestScore) {
-                bestScore = score;
-                context = entry.response;
-            }
-            if (bestScore >= 1.0f) break; // Early exit on perfect match
+            float score = calculateSimilarity(entry.patternWordSets[i], querySet, entry.patterns[i], message.toLower());
+            if (score > entryBestScore) entryBestScore = score;
         }
-        if (bestScore >= 1.0f) break;
+        
+        // Scan response text for extra relevance (helps with finding specific names)
+        float textMatchScore = 0;
+        int matchCount = 0;
+        QString responseLower = entry.response.toLower();
+        for (const QString& qWord : queryWords) {
+            if (qWord.length() > 3 && responseLower.contains(qWord)) {
+                matchCount++;
+            }
+        }
+        if (!queryWords.isEmpty()) {
+            textMatchScore = (float)matchCount / queryWords.size();
+            // Weight text matches slightly less than keyword matches to avoid false positives
+            if (textMatchScore * 0.8f > entryBestScore) entryBestScore = textMatchScore * 0.8f;
+        }
+
+        if (entryBestScore > bestScore) {
+            bestScore = entryBestScore;
+            context = entry.response;
+        }
     }
 
     qDebug() << "RAG: Best similarity score =" << bestScore;
@@ -134,7 +151,7 @@ void ChatViewViewModel::sendMessage(const QString& message) {
     // 2. Augment the prompt using the Phi-3 chat template
     QString augmentedPrompt;
     if (bestScore > 0.3f) {
-        augmentedPrompt = QString("<|system|>\nYou are a robot assistant. Use the provided context to answer the user's question. If the answer is not in the context, say you don't know.\nContext: %1<|end|>\n<|user|>\n%2<|end|>\n<|assistant|>\n").arg(context).arg(message);
+        augmentedPrompt = QString("<|system|>\nYou are UIT Assistant, an AI developed by the ASIC Laboratory in the Faculty of Computer Engineering at the University of Information Technology (UIT), VNU-HCM. Your role is to serve as a knowledgeable, friendly, and professional assistant for students, faculty, and visitors. You provide accurate answers to questions related to UIT and the Faculty of Computer Engineering, including departments, lecturers, leadership, organizations, and research activities. You maintain a respectful, clear, and supportive tone in all responses. Always respond in English unless the user explicitly requests another language. Use the knowledge base provided (knowledge.txt) to answer queries about faculty leadership, scientific council, organizations, and lecturers in both departments: Integrated Circuit & Hardware Design, and Embedded Systems & Robotics Design. When asked about topics outside UIT or the faculty, politely redirect or provide general guidance without speculation. Identity: UIT Assistant (ASIC Bot), created by ASIC Laboratory, Faculty of Computer Engineering, UIT, located in Ho Chi Minh City, Vietnam.\nContext: %1<|end|>\n<|user|>\n%2<|end|>\n<|assistant|>\n").arg(context).arg(message);
         qDebug() << "RAG: Using Phi-3 augmented prompt with context.";
     } else {
         augmentedPrompt = QString("<|user|>\n%1<|end|>\n<|assistant|>\n").arg(message);
@@ -183,7 +200,7 @@ void ChatViewViewModel::onTokenGenerated(const QString& token) {
 
 void ChatViewViewModel::clearHistory() {
     m_messages.clear();
-    addMessage("ASIC Chatbot", "Hello! I am your AI assistant running locally on Jetson. How can I help you?");
+    addMessage("ASIC Chatbot", "Hello! I am your AI assistant. How can I help you?");
     emit messagesChanged();
     emit requestScrollToBottom();
 }
@@ -270,15 +287,18 @@ void ChatViewViewModel::loadKnowledgeBase() {
         QRegExp wordSplitRule("\\W+");
         while (!in.atEnd()) {
             QString line = in.readLine();
-            QStringList parts = line.split(":");
-            if (parts.size() >= 2) {
+            int colonIdx = line.indexOf(':');
+            if (colonIdx > 0) {
                 KnowledgeEntry entry;
-                entry.patterns = parts[0].trimmed().toLower().split(",");
+                QString patternsPart = line.left(colonIdx);
+                QString responsePart = line.mid(colonIdx + 1);
+                
+                entry.patterns = patternsPart.trimmed().toLower().split(",");
                 for (QString& p : entry.patterns) {
                     p = p.trimmed();
                     entry.patternWordSets.append(QSet<QString>::fromList(p.split(wordSplitRule, QString::SkipEmptyParts)));
                 }
-                entry.response = parts[1].trimmed();
+                entry.response = responsePart.trimmed();
                 m_knowledgeBase.append(entry);
             }
         }
@@ -304,15 +324,19 @@ void ChatViewViewModel::loadKnowledgeBase() {
 }
 
 float ChatViewViewModel::calculateSimilarity(const QSet<QString>& set1, const QSet<QString>& set2, const QString& s1, const QString& s2) {
-    // Keyword match logic (Robot-specific optimization)
-    if (s1.contains(s2) || s2.contains(s1)) {
+    if (set1.isEmpty() || set2.isEmpty()) return 0.0f;
+
+    // Fast path: Exact sequence match
+    if (s2.contains(s1)) {
         return 1.0f;
     }
 
-    if (set1.isEmpty() || set2.isEmpty()) return 0.0f;
-    
     int intersection = 0;
-    for (const QString& word : set1) if (set2.contains(word)) intersection++;
+    for (const QString& word : set1) {
+        if (set2.contains(word)) intersection++;
+    }
     
-    return static_cast<float>(intersection) / (set1.size() + set2.size() - intersection);
+    // Use overlap coefficient relative to the pattern size.
+    // This makes the match robust against "noise" words in the user query.
+    return static_cast<float>(intersection) / set1.size();
 }

@@ -34,7 +34,7 @@ fi
 
 echo "[SYSTEM] Starting AI Server in background..."
 # Run the server on port 8080. Using GPU layers if possible.
-$SERVER_BIN -m "$MODEL_PATH" --port 8080 --host 0.0.0.0 --ctx-size 1024 --threads 4 --n-gpu-layers 33 -fa on -np 1 > llama_server.log 2>&1 &
+$SERVER_BIN -m "$MODEL_PATH" --port 8080 --host 0.0.0.0 --ctx-size 2048 --threads 4 --n-gpu-layers 33 -fa on -np 1 > llama_server.log 2>&1 &
 SERVER_PID=$!
 
 # Wait for server to be ready

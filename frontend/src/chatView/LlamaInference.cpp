@@ -47,7 +47,7 @@ QFuture<QString> LlamaInference::generateResponse(const QString& prompt) {
         QNetworkAccessManager manager; // Locally created for thread-safe concurrent usage
         QJsonObject json;
         json["prompt"] = prompt;
-        json["n_predict"] = 256; // Allow longer responses but keep stop button ready
+        json["n_predict"] = 512; // Increased to prevent truncation for long faculty info
         json["stream"] = true; 
         
         QNetworkRequest request(QUrl("http://localhost:8080/completion"));
