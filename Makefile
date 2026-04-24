@@ -10,11 +10,20 @@ help:
 	@echo "===================================================="
 	@echo "  make setup     - Install system deps & AI core"
 	@echo "  make build     - Compile the entire system (GUI + AI)"
-	@echo "  make run       - Build and Launch (AI Server + QML GUI)"
-	@echo "  make run-only  - Launch without building (AI Server + QML GUI)"
+	@echo "  make run       - Execute system orchestration (uses flags)"
+	@echo ""
+	@echo "  Flags for 'make run':"
+	@echo "    BUILD=ON    - Forces a rebuild before running"
+	@echo "    RUN_APP=ON   - Launches only the QML GUI"
+	@echo ""
+	@echo "  Example: make run BUILD=ON"
 	@echo "  make clean     - Remove build folders and logs"
 	@echo "  make distclean - Reset project (Deletes AI source code)"
 	@echo "===================================================="
+
+# Flags (OFF by default)
+BUILD ?= OFF
+RUN_APP ?= OFF
 
 # 1. System Setup
 setup:
@@ -41,13 +50,18 @@ build:
 	cmake --build $(BUILD_DIR) -j$$(nproc)
 
 # 3. Launch System Orchestrator
-run: build
+run:
+ifeq ($(BUILD), ON)
+	@$(MAKE) build
 	@chmod +x ./start_robot_system.sh
 	@./start_robot_system.sh
-
-run-only:
+endif
+ifeq ($(RUN_APP), OFF)
 	@chmod +x ./start_robot_system.sh
 	@./start_robot_system.sh
+else
+	./build-output/frontend/frontend_app
+endif
 
 # 4. Cleanup
 clean:
