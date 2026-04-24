@@ -268,12 +268,11 @@ void ChatViewViewModel::loadKnowledgeBase() {
     
     if (!file.exists()) {
         QString appPath = QCoreApplication::applicationDirPath();
-        QStringList possiblePaths = {
-            "knowledge.txt",
-            appPath + "/knowledge.txt",
-            appPath + "/../frontend/knowledge.txt",
-            "../frontend/knowledge.txt"
-        };
+        QStringList possiblePaths;
+        possiblePaths << "knowledge.txt"
+                      << appPath + "/knowledge.txt"
+                      << appPath + "/../frontend/knowledge.txt"
+                      << "../frontend/knowledge.txt";
 
         for (const QString& path : possiblePaths) {
             file.setFileName(path);
