@@ -105,17 +105,30 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/llama.cpp")
     set(LLAMA_BUILD_SERVER ON CACHE BOOL "Enable llama.cpp server" FORCE)
     set(LLAMA_BUILD_WEBUI OFF CACHE BOOL "Disable server web UI" FORCE)
     
+    # Define variable needed by mtmd and other tools when added manually
+    set(LLAMA_INSTALL_VERSION "0.0.0")
+    
     # Save current flags and mute warnings for 3rdparty
     set(OLD_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     set(OLD_CUDA_FLAGS ${CMAKE_CUDA_FLAGS})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -w")
     
-    add_subdirectory(3rdparty/llama.cpp EXCLUDE_FROM_ALL)
+    add_subdirectory(3rdparty/llama.cpp)
+    
+    # Explicitly add necessary subdirectories to match expected binary paths
+    # Using manual binary directories fixes the path for start_robot_system.sh
+    add_subdirectory(3rdparty/llama.cpp/tools/mtmd build-output/llama-mtmd)
+    add_subdirectory(3rdparty/llama.cpp/tools/server build-output/llama-server)
     
     # Restore flags for the project
     set(CMAKE_CXX_FLAGS ${OLD_CXX_FLAGS})
     set(CMAKE_CUDA_FLAGS ${OLD_CUDA_FLAGS})
+    
+    # Ensure llama-server is built as it's needed by the start script
+    if (TARGET llama-server)
+        add_dependencies(frontend_app llama-server)
+    endif()
     
     target_link_libraries(frontend_app PRIVATE llama ggml)
     
