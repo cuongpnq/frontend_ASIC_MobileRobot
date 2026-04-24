@@ -29,8 +29,6 @@ Clone the repository using **username** and **Personal Access Token**. The crede
 
 # Project
 
-Build native before run application
-
 ## Application command line
 ```bash
 make help
