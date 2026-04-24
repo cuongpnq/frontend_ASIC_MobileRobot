@@ -19,7 +19,7 @@ help:
 # 1. System Setup
 setup:
 	@echo "[SETUP] Installing Jetson dependencies..."
-	sudo apt-get update && sudo apt-get install -y \
+	sudo apt update && sudo apt install -y \
 		libqt5virtualkeyboard5-dev \
 		qml-module-qtquick-virtualkeyboard \
 		qtvirtualkeyboard-plugin \
