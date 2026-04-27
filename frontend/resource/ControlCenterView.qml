@@ -49,7 +49,7 @@ Item {
             anchors.topMargin: 100
         }
 
-        // ── Three Panels Row ────────────────────────────────────────
+        // ── Two Panels Row ────────────────────────────────────────
         Row {
             id: panelsRow
             height: 380
@@ -63,7 +63,7 @@ Item {
             // ── Diagnostics Panel ───────────────────────────────────
             Rectangle {
                 id: diagnosticsPanel
-                width: (parent.width - 80 * 2 - 100 * 2) / 3
+                width: (parent.width - 80 * 2 - 100) / 2
                 height: 320
                 radius: 32
                 color: "#DAD8D8"
@@ -113,63 +113,10 @@ Item {
                 }
             }
 
-            // ── Current Status Panel ────────────────────────────────
-            Rectangle {
-                id: statusPanel
-                width: (parent.width - 80 * 2 - 100 * 2) / 3
-                height: 320
-                radius: 32
-                color: "#DAD8D8"
-                opacity: 0.8
-
-                Column {
-                    anchors.centerIn: parent
-                    spacing: 40
-
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: "CURRENT STATUS:"
-                        font.pixelSize: 48
-                        font.family: "Inter"
-                        font.bold: true
-                        color: "#594A4A"
-                    }
-
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: ModeSwitchViewModel.isTakeControl ? "Controlling..." : "Exploring..."
-                        font.pixelSize: 46
-                        font.family: "Inter"
-                        font.bold: true
-                        color: ModeSwitchViewModel.isTakeControl ? "#007339" : "#107DB3"
-
-                        Behavior on color {
-                            ColorAnimation { duration: 200 }
-                        }
-                    }
-
-                    Text {
-                        text: "Tap to go to running view"
-                        font.pixelSize: 25
-                        font.family: "Inter"
-                        color: "#2C2C2C"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        ControlCenterViewViewModel.requestRunningView()
-                    }
-                }
-            }
-
             // ── Map Panel ───────────────────────────────────────────
             Rectangle {
                 id: mapPanel
-                width: (parent.width - 80 * 2 - 100 * 2) / 3
+                width: (parent.width - 80 * 2 - 100) / 2
                 height: 320
                 radius: 32
                 color: "#DAD8D8"

@@ -54,7 +54,6 @@ run:
 ifeq ($(BUILD), ON)
 	@$(MAKE) build
 	@chmod +x ./start_robot_system.sh
-	@./start_robot_system.sh
 endif
 ifeq ($(RUN_APP), OFF)
 	@chmod +x ./start_robot_system.sh

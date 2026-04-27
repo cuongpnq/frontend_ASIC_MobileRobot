@@ -12,6 +12,7 @@ public:
 
     bool isActive() const;
     Q_INVOKABLE void requestControlCenterView();
+    Q_INVOKABLE void requestDirectionView();
 
 signals:
     void isActiveChanged();

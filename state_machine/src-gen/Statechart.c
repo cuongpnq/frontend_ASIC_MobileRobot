@@ -675,7 +675,15 @@ static sc_integer frontend_app_DirectionView_react(Statechart* handle, const sc_
 			exseq_frontend_app_DirectionView(handle);
 			enseq_frontend_app_MainView_default(handle);
 			transitioned_after = 0;
-		} 
+		}  else
+		{
+			if (handle->iface.goToRunning_raised == bool_true)
+			{ 
+				exseq_frontend_app_DirectionView(handle);
+				enseq_frontend_app_RunningView_default(handle);
+				transitioned_after = 0;
+			} 
+		}
 	} 
 	/* If no transition was taken */
 	if ((transitioned_after) == (transitioned_before))
@@ -695,7 +703,7 @@ static sc_integer frontend_app_RunningView_react(Statechart* handle, const sc_in
 		if (handle->iface.returnToControlCenter_raised == bool_true)
 		{ 
 			exseq_frontend_app_RunningView(handle);
-			enseq_frontend_app_ControlCenterView_default(handle);
+			enseq_frontend_app_DirectionView_default(handle);
 			transitioned_after = 0;
 		} 
 	} 

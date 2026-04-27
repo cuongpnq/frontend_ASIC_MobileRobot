@@ -16,6 +16,10 @@ void RunningViewViewModel::requestControlCenterView() {
     AppStateMachine::instance().returnToControlCenter();
 }
 
+void RunningViewViewModel::requestDirectionView() {
+    AppStateMachine::instance().returnToControlCenter();
+}
+
 void RunningViewViewModel::onStateMachineChanged() {
     bool active = (AppStateMachine::instance().currentState() == "RunningView");
     if (m_isActive != active) {

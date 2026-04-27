@@ -36,7 +36,7 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: 30
         anchors.verticalCenter: parent.verticalCenter
-        visible: !MainViewViewModel.isActive
+        visible: !MainViewViewModel.isActive && !RunningViewViewModel.isActive
 
         MouseArea {
             anchors.fill: parent
