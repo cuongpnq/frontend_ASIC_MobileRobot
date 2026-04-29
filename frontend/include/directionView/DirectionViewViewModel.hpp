@@ -16,6 +16,7 @@ public:
     Q_INVOKABLE void setAutoReturnPending(bool value);
     Q_INVOKABLE void requestMainView();
     Q_INVOKABLE void requestRunningView();
+    Q_INVOKABLE void startNavigation(int cpId);
 
 signals:
     void isActiveChanged();

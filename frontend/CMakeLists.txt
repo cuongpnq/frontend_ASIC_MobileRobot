@@ -18,6 +18,13 @@ find_package(Qt5 REQUIRED COMPONENTS
     DBus
 )
 
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
+
 find_package(Qt5VirtualKeyboard QUIET)
 if (Qt5VirtualKeyboard_FOUND)
     add_compile_definitions(HAS_VIRTUAL_KEYBOARD)
@@ -67,13 +74,22 @@ target_include_directories(frontend_app PRIVATE
     ${YAKINDU_GEN_DIR}
 )
 
-target_link_libraries(frontend_app PRIVATE
+target_link_libraries(frontend_app
     Qt5::Core
     Qt5::Gui
     Qt5::Qml
     Qt5::Quick
     Qt5::Concurrent
     Qt5::DBus
+)
+
+# ROS 2 Dependencies using ament
+ament_target_dependencies(frontend_app
+    rclcpp
+    std_msgs
+    geometry_msgs
+    nav_msgs
+    nav2_msgs
 )
 
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/llama.cpp")
@@ -130,7 +146,7 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/llama.cpp")
         add_dependencies(frontend_app llama-server)
     endif()
     
-    target_link_libraries(frontend_app PRIVATE llama ggml)
+    target_link_libraries(frontend_app llama ggml)
     
     if (GGML_CUDA)
         target_compile_options(frontend_app PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-w>)
@@ -142,5 +158,5 @@ endif()
 # -----------------------------
 
 if (Qt5VirtualKeyboard_FOUND)
-    target_link_libraries(frontend_app PRIVATE Qt5::VirtualKeyboard)
+    target_link_libraries(frontend_app Qt5::VirtualKeyboard)
 endif()

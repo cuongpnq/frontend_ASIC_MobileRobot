@@ -51,8 +51,23 @@ done
 echo "[SYSTEM] AI Server is READY."
 
 # 3. Launch Frontend App
+echo "[SYSTEM] Sourcing ROS environment..."
+# Source the real robot workspace (adjust path if necessary)
+if [ -f "$PROJECT_ROOT/../mobile_robot_asiclab/install/setup.bash" ]; then
+    source "$PROJECT_ROOT/../mobile_robot_asiclab/install/setup.bash"
+else
+    echo "[WARN] Real robot workspace logic setup.bash not found. Sourcing standard ROS 2 Foxy..."
+    source /opt/ros/foxy/setup.bash || echo "[ERROR] Could not source ROS 2."
+fi
+
 echo "[SYSTEM] Launching Robot GUI..."
 export QT_QPA_PLATFORM=xcb
+
+# Disable Shared Memory and increase discovery resilience (fixes "send_goal failed")
+# export RMW_FASTRTPS_USE_SHM=0
+# export FASTRTPS_DEFAULT_PROFILES_FILE=""
+
+# Run Frontend
 $APP_BIN
 
 # 4. Cleanup on exit

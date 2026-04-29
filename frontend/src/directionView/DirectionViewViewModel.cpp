@@ -1,5 +1,7 @@
 #include "directionView/DirectionViewViewModel.hpp"
 #include "application/AppStateMachine.hpp"
+#include "application/ROSManager.hpp"
+#include "application/NavigationModule.hpp"
 
 DirectionViewViewModel::DirectionViewViewModel(QObject* parent) 
     : QObject(parent), m_isActive(false)
@@ -29,6 +31,13 @@ void DirectionViewViewModel::requestMainView() {
 
 void DirectionViewViewModel::requestRunningView() {
     AppStateMachine::instance().goToRunning();
+}
+
+void DirectionViewViewModel::startNavigation(int cpId) {
+    auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
+    if (navModule) {
+        navModule->navigateToCheckpoint(cpId);
+    }
 }
 
 void DirectionViewViewModel::onStateMachineChanged() {

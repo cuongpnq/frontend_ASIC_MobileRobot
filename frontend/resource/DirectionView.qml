@@ -42,10 +42,9 @@ Item {
 
     ListModel {
         id: locationModel
-        ListElement { name: "Home" }
-        ListElement { name: "Room 1" }
-        ListElement { name: "Room 2" }
-        ListElement { name: "Room 3" }
+        ListElement { name: "Meeting Room (E1.1)"; cpId: 0 }
+        ListElement { name: "Elevator"; cpId: 1 }
+        ListElement { name: "CELUiT's Office"; cpId: 3 }
     }
 
     ContainerBar {
@@ -350,6 +349,7 @@ Item {
                                 selectedLocation = pendingLocation
                                 confirmPopup.close()
                                 pendingLocation = ""
+                                DirectionViewViewModel.startNavigation(model.cpId)
                                 DirectionViewViewModel.requestRunningView()
                             }
                         }

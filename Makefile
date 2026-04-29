@@ -53,13 +53,12 @@ build:
 run:
 ifeq ($(BUILD), ON)
 	@$(MAKE) build
-	@chmod +x ./start_robot_system.sh
 endif
-ifeq ($(RUN_APP), OFF)
 	@chmod +x ./start_robot_system.sh
-	@./start_robot_system.sh
+ifeq ($(RUN_APP), ON)
+	@. /opt/ros/foxy/setup.bash && ./build-output/frontend/frontend_app
 else
-	./build-output/frontend/frontend_app
+	@./start_robot_system.sh
 endif
 
 # 4. Cleanup

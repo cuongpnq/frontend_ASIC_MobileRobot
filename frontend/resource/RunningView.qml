@@ -5,8 +5,13 @@ import com.asic.mobilerobot.viewmodels 1.0
 Item {
     id: root
 
-    // "navigating" or "stopped"
-    property string navStatus: "navigating"
+    // Mapping ROS state to local navStatus
+    property string navStatus: {
+        var state = RunningViewViewModel.robotState
+        if (state === "NAVIGATING" || state === "PRE_ROTATING" || state === "COMPUTING_PATH" || state === "RETURNING_HOME")
+            return "navigating"
+        return "stopped"
+    }
 
     ContainerBar {
         id: containerBar
@@ -73,12 +78,16 @@ Item {
                 spacing: 6
 
                 Text {
+                    id: statusLabel
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Current status:"
+                    text: RunningViewViewModel.statusMessage
                     font.pixelSize: 30
                     font.family: "Inter"
                     font.bold: false
                     color: "#555555"
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    width: parent.width
                 }
 
                 Row {
@@ -87,7 +96,7 @@ Item {
 
                     Text {
                         id: statusText
-                        text: navStatus === "navigating" ? "Navigating" : "Stopped"
+                        text: RunningViewViewModel.robotState
                         font.pixelSize: 64
                         font.family: "Inter"
                         font.bold: true
@@ -132,7 +141,7 @@ Item {
 
                 // STOP button (only when navigating)
                 Rectangle {
-                    visible: navStatus === "navigating"
+                    visible: navStatus === "navigating" || RunningViewViewModel.robotState === "NAVIGATING"
                     width: 200
                     height: 66
                     radius: 16
@@ -153,13 +162,13 @@ Item {
                         id: stopArea
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: navStatus = "stopped"
+                        onClicked: RunningViewViewModel.stopRobot()
                     }
                 }
 
-                // RESET button (only when stopped)
+                // RESET button (only when stopped or idle)
                 Rectangle {
-                    visible: navStatus === "stopped"
+                    visible: navStatus === "stopped" || RunningViewViewModel.robotState === "IDLE" || RunningViewViewModel.robotState === "AT_CHECKPOINT"
                     width: 200
                     height: 66
                     radius: 16
@@ -187,9 +196,9 @@ Item {
                     }
                 }
 
-                // CONTINUE button (only when stopped)
+                // CONTINUE button (only when emergency stop)
                 Rectangle {
-                    visible: navStatus === "stopped"
+                    visible: RunningViewViewModel.robotState === "EMERGENCY_STOP"
                     width: 200
                     height: 66
                     radius: 16
@@ -199,7 +208,7 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "▶  Continue"
+                        text: "▶  Resume"
                         font.pixelSize: 28
                         font.family: "Inter"
                         font.bold: true
@@ -210,20 +219,11 @@ Item {
                         id: continueArea
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: navStatus = "navigating"
+                        onClicked: RunningViewViewModel.resumeRobot()
                     }
                 }
             }
         }
     }
-
-    // Reset status to "navigating" every time this view becomes active
-    Connections {
-        target: RunningViewViewModel
-        onIsActiveChanged: {
-            if (RunningViewViewModel.isActive) {
-                navStatus = "navigating"
-            }
-        }
-    }
+}
 }

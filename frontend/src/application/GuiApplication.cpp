@@ -12,6 +12,8 @@
 #include "chatView/ChatViewViewModel.hpp"
 #include "wifiSettingView/WifiSettingViewViewModel.hpp"
 #include "wifiManager/WifiManager.hpp"
+#include "application/ROSManager.hpp"
+#include "application/NavigationModule.hpp"
 #include <QQmlContext>
 #include <QQmlEngine>
 
@@ -21,6 +23,15 @@ GuiApplication::GuiApplication(int &argc, char **argv)
 
     app = std::make_unique<QGuiApplication>(argc, argv);
     engine = std::make_unique<QQmlApplicationEngine>();
+
+    // ── ROS 2 Initialization ──────────────────────────────────────
+    auto& rosManager = ROSManager::instance();
+    
+    auto navModule = std::make_shared<NavigationModule>();
+    rosManager.registerModule(navModule);
+    
+    rosManager.start();
+    // ──────────────────────────────────────────────────────────────
 
 #ifdef HAS_VIRTUAL_KEYBOARD
     engine->rootContext()->setContextProperty("HAS_VIRTUAL_KEYBOARD", true);
@@ -136,5 +147,7 @@ GuiApplication::GuiApplication(int &argc, char **argv)
 
 int GuiApplication::exec()
 {
-    return app->exec();
+    int result = app->exec();
+    ROSManager::instance().stop();
+    return result;
 }
