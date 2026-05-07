@@ -6,6 +6,7 @@ class DirectionViewViewModel : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool isActive READ isActive NOTIFY isActiveChanged)
     Q_PROPERTY(bool autoReturnPending READ autoReturnPending NOTIFY autoReturnPendingChanged)
+    Q_PROPERTY(bool idleReturnPending READ idleReturnPending NOTIFY idleReturnPendingChanged)
     Q_PROPERTY(QString mapId READ mapId NOTIFY mapIdChanged)
 
 public:
@@ -16,8 +17,10 @@ public:
 
     bool isActive() const;
     bool autoReturnPending() const;
+    bool idleReturnPending() const;
     QString mapId() const { return m_mapId; }
     Q_INVOKABLE void setAutoReturnPending(bool value);
+    Q_INVOKABLE void setIdleReturnPending(bool value);
     Q_INVOKABLE void requestMainView();
     Q_INVOKABLE void requestRunningView();
     Q_INVOKABLE void startNavigation(int cpId);
@@ -25,6 +28,7 @@ public:
 signals:
     void isActiveChanged();
     void autoReturnPendingChanged();
+    void idleReturnPendingChanged();
     void mapIdChanged();
 
 private slots:
@@ -34,5 +38,6 @@ private slots:
 private:
     bool m_isActive = false;
     bool m_autoReturnPending = false;
+    bool m_idleReturnPending = false;
     QString m_mapId = "unknown";
 };

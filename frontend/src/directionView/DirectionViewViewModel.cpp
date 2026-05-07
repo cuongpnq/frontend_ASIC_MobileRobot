@@ -38,10 +38,21 @@ bool DirectionViewViewModel::autoReturnPending() const {
     return m_autoReturnPending;
 }
 
+bool DirectionViewViewModel::idleReturnPending() const {
+    return m_idleReturnPending;
+}
+
 void DirectionViewViewModel::setAutoReturnPending(bool value) {
     if (m_autoReturnPending != value) {
         m_autoReturnPending = value;
         emit autoReturnPendingChanged();
+    }
+}
+
+void DirectionViewViewModel::setIdleReturnPending(bool value) {
+    if (m_idleReturnPending != value) {
+        m_idleReturnPending = value;
+        emit idleReturnPendingChanged();
     }
 }
 

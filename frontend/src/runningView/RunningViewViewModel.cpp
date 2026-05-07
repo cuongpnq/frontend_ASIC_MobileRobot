@@ -74,9 +74,17 @@ void RunningViewViewModel::onRobotStateChanged(const QString& state) {
         m_robotState = state;
         emit robotStateChanged();
 
-        // When reach ANY goal (AT_CHECKPOINT), automatically go back to DirectionView for next interaction
-        if (m_robotState == "AT_CHECKPOINT") {
-            qDebug() << "RunningViewViewModel: Goal reached, returning to DirectionView";
+        // When reach ANY goal (AT_CHECKPOINT) or become IDLE, automatically go back to DirectionView
+        if (m_robotState == "AT_CHECKPOINT" || m_robotState == "IDLE") {
+            qDebug() << "RunningViewViewModel: Robot is " << m_robotState << ", returning to DirectionView";
+            
+            // If not at home, we want a 15s idle timeout in DirectionView (as requested)
+            if (m_currentCheckpoint != 0) {
+                if (auto dirView = DirectionViewViewModel::instance()) {
+                    dirView->setIdleReturnPending(true);
+                }
+            }
+            
             requestDirectionView();
         }
 

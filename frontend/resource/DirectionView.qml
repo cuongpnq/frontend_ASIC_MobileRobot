@@ -31,10 +31,16 @@ Item {
     Connections {
         target: DirectionViewViewModel
         onIsActiveChanged: {
-            if (DirectionViewViewModel.isActive && DirectionViewViewModel.autoReturnPending) {
-                DirectionViewViewModel.setAutoReturnPending(false)
-                autoHomeSeconds = 30
-                autoHomeTimer.start()
+            if (DirectionViewViewModel.isActive) {
+                if (DirectionViewViewModel.autoReturnPending) {
+                    DirectionViewViewModel.setAutoReturnPending(false)
+                    autoHomeSeconds = 30
+                    autoHomeTimer.start()
+                } else if (DirectionViewViewModel.idleReturnPending) {
+                    DirectionViewViewModel.setIdleReturnPending(false)
+                    autoHomeSeconds = 15
+                    autoHomeTimer.start()
+                }
             } else {
                 autoHomeTimer.stop()
             }
