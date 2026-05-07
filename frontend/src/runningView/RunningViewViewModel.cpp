@@ -2,6 +2,7 @@
 #include "application/AppStateMachine.hpp"
 #include "application/ROSManager.hpp"
 #include "application/NavigationModule.hpp"
+#include "directionView/DirectionViewViewModel.hpp"
 #include <QDebug>
 
 RunningViewViewModel::RunningViewViewModel(QObject* parent) 
@@ -27,7 +28,23 @@ void RunningViewViewModel::requestControlCenterView() {
 }
 
 void RunningViewViewModel::requestDirectionView() {
+    // Some state machine transitions require returning to a parent state first
+    AppStateMachine::instance().returnToControlCenter();
     AppStateMachine::instance().goToDirection();
+}
+
+void RunningViewViewModel::resetToDirectionView() {
+    qDebug() << "RunningViewViewModel: Resetting and returning to DirectionView";
+    
+    // Stop the robot if it's currently moving
+    stopRobot();
+    
+    // Set auto-return pending on the DirectionView
+    if (auto dirView = DirectionViewViewModel::instance()) {
+        dirView->setAutoReturnPending(true);
+    }
+    
+    requestDirectionView();
 }
 
 void RunningViewViewModel::stopRobot() {
@@ -56,6 +73,12 @@ void RunningViewViewModel::onRobotStateChanged(const QString& state) {
     if (m_robotState != state) {
         m_robotState = state;
         emit robotStateChanged();
+
+        // When reach ANY goal (AT_CHECKPOINT), automatically go back to DirectionView for next interaction
+        if (m_robotState == "AT_CHECKPOINT") {
+            qDebug() << "RunningViewViewModel: Goal reached, returning to DirectionView";
+            requestDirectionView();
+        }
 
         // Reset countdown if not in a waiting state
         if (m_robotState != "IDLE" && m_robotState != "AT_CHECKPOINT" && m_robotState != "WAITING_RESET") {
@@ -92,11 +115,6 @@ void RunningViewViewModel::onCheckpointChanged(int cpId) {
         if (navModule) {
             m_currentCheckpointName = navModule->getCheckpointName(m_currentCheckpoint);
             emit currentCheckpointNameChanged();
-        }
-
-        // When reach home (checkpoint 0), automatically go back to DirectionView
-        if (m_currentCheckpoint == 0) {
-            AppStateMachine::instance().goToDirection();
         }
     }
 }

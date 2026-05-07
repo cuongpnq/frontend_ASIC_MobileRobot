@@ -25,6 +25,7 @@ public:
 
     Q_INVOKABLE void requestControlCenterView();
     Q_INVOKABLE void requestDirectionView();
+    Q_INVOKABLE void resetToDirectionView();
     Q_INVOKABLE void stopRobot();
     Q_INVOKABLE void resumeRobot();
 

@@ -10,7 +10,9 @@ class DirectionViewViewModel : public QObject {
 
 public:
     explicit DirectionViewViewModel(QObject* parent = nullptr);
-    ~DirectionViewViewModel() override = default;
+    ~DirectionViewViewModel() override;
+
+    static DirectionViewViewModel* instance();
 
     bool isActive() const;
     bool autoReturnPending() const;

@@ -2,10 +2,18 @@
 #include "application/AppStateMachine.hpp"
 #include "application/ROSManager.hpp"
 #include "application/NavigationModule.hpp"
+#include <QDebug>
+
+static DirectionViewViewModel* s_instance = nullptr;
+
+DirectionViewViewModel* DirectionViewViewModel::instance() {
+    return s_instance;
+}
 
 DirectionViewViewModel::DirectionViewViewModel(QObject* parent) 
     : QObject(parent), m_isActive(false)
 {
+    s_instance = this;
     connect(&AppStateMachine::instance(), &AppStateMachine::currentStateChanged,
             this, &DirectionViewViewModel::onStateMachineChanged);
     
@@ -13,6 +21,12 @@ DirectionViewViewModel::DirectionViewViewModel(QObject* parent)
     if (navModule) {
         m_mapId = navModule->mapId();
         connect(navModule.get(), &NavigationModule::mapIdChanged, this, &DirectionViewViewModel::onMapIdChanged);
+    }
+}
+
+DirectionViewViewModel::~DirectionViewViewModel() {
+    if (s_instance == this) {
+        s_instance = nullptr;
     }
 }
 

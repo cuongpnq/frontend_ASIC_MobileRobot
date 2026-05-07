@@ -212,9 +212,9 @@ Item {
                     }
                 }
 
-                // RESET button (only when stopped or idle)
+                // RESET button (only when stopped)
                 Rectangle {
-                    visible: navStatus === "stopped" || RunningViewViewModel.robotState === "IDLE" || RunningViewViewModel.robotState === "AT_CHECKPOINT"
+                    visible: RunningViewViewModel.robotState === "STOPPED"
                     width: 200
                     height: 66
                     radius: 16
@@ -235,10 +235,7 @@ Item {
                         id: resetArea
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            DirectionViewViewModel.setAutoReturnPending(true)
-                            RunningViewViewModel.requestDirectionView()
-                        }
+                        onClicked: RunningViewViewModel.resetToDirectionView()
                     }
                 }
 
