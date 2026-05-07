@@ -7,6 +7,7 @@ Item {
 
     property string selectedLocation: "Home"
     property string pendingLocation: ""
+    property int pendingCpId: -1
     property int autoHomeSeconds: 30
 
     // ── Auto-home countdown timer ─────────────────────────────────────
@@ -199,6 +200,7 @@ Item {
                                 sameLocationPopup.open()
                             } else {
                                 pendingLocation = model.name
+                                pendingCpId = model.cpId
                                 locationPopup.close()
                                 confirmPopup.open()
                             }
@@ -345,6 +347,7 @@ Item {
                         onClicked: {
                             confirmPopup.close()
                             pendingLocation = ""
+                            pendingCpId = -1
                         }
                     }
                 }
@@ -372,7 +375,8 @@ Item {
                                 selectedLocation = pendingLocation
                                 confirmPopup.close()
                                 pendingLocation = ""
-                                DirectionViewViewModel.startNavigation(model.cpId)
+                                DirectionViewViewModel.startNavigation(pendingCpId)
+                                pendingCpId = -1
                                 DirectionViewViewModel.requestRunningView()
                             }
                         }
