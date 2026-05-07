@@ -38,13 +38,36 @@ Item {
                 autoHomeTimer.stop()
             }
         }
+        
+        onMapIdChanged: {
+            updateLocationModel()
+        }
+    }
+
+    Component.onCompleted: {
+        updateLocationModel()
+    }
+
+    function updateLocationModel() {
+        locationModel.clear()
+        if (DirectionViewViewModel.mapId === "e1") {
+            locationModel.append({ "name": "Meeting Room (E1.1)", "cpId": 0 })
+            locationModel.append({ "name": "Elevator", "cpId": 1 })
+            locationModel.append({ "name": "CELUiT's Office", "cpId": 3 })
+        } else if (DirectionViewViewModel.mapId === "e6") {
+            locationModel.append({ "name": "LAB Room", "cpId": 0 })
+            locationModel.append({ "name": "Elevator", "cpId": 1 })
+            locationModel.append({ "name": "Meeting Room (E6.3)", "cpId": 2 })
+            locationModel.append({ "name": "Dean's Room", "cpId": 3 })
+        } else {
+            // Default or unknown fallback
+            locationModel.append({ "name": "Waiting for Map...", "cpId": -1 })
+        }
     }
 
     ListModel {
         id: locationModel
-        ListElement { name: "Meeting Room (E1.1)"; cpId: 0 }
-        ListElement { name: "Elevator"; cpId: 1 }
-        ListElement { name: "CELUiT's Office"; cpId: 3 }
+        // Dynamically populated in updateLocationModel()
     }
 
     ContainerBar {

@@ -39,6 +39,11 @@ public:
      */
     bool isConnected() const;
 
+    /**
+     * @brief Returns the identified map ID (e.g., "e1", "e6").
+     */
+    QString mapId() const { return m_mapId; }
+
 signals:
     /**
      * @brief Emitted when the robot state changes (e.g., IDLE -> NAVIGATING).
@@ -60,20 +65,27 @@ signals:
      */
     void connectionStatusChanged(bool connected);
 
+    /**
+     * @brief Emitted when the map ID is identified or changed.
+     */
+    void mapIdChanged(const QString& mapId);
+
 private:
     void onStateCallback(const std_msgs::msg::String::SharedPtr msg);
     void onStatusCallback(const std_msgs::msg::String::SharedPtr msg);
     void onCheckpointCallback(const std_msgs::msg::Int32::SharedPtr msg);
     void checkConnection();
+    void requestMapId();
 
     std::shared_ptr<rclcpp::Node> m_node;
-    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr m_navPub;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr m_stopPub;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr m_cmdPub;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr m_stateSub;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr m_statusSub;
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr m_checkpointSub;
     
     QTimer* m_connectionTimer;
+    QTimer* m_mapUpdateTimer;
     bool m_connected;
     int m_currentCheckpoint;
+    QString m_mapId = "e6";
 };

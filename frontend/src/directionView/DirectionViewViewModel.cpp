@@ -8,6 +8,12 @@ DirectionViewViewModel::DirectionViewViewModel(QObject* parent)
 {
     connect(&AppStateMachine::instance(), &AppStateMachine::currentStateChanged,
             this, &DirectionViewViewModel::onStateMachineChanged);
+    
+    auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
+    if (navModule) {
+        m_mapId = navModule->mapId();
+        connect(navModule.get(), &NavigationModule::mapIdChanged, this, &DirectionViewViewModel::onMapIdChanged);
+    }
 }
 
 bool DirectionViewViewModel::isActive() const {
@@ -45,5 +51,12 @@ void DirectionViewViewModel::onStateMachineChanged() {
     if (m_isActive != active) {
         m_isActive = active;
         emit isActiveChanged();
+    }
+}
+
+void DirectionViewViewModel::onMapIdChanged(const QString& mapId) {
+    if (m_mapId != mapId) {
+        m_mapId = mapId;
+        emit mapIdChanged();
     }
 }

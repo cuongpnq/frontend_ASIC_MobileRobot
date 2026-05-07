@@ -2,6 +2,7 @@
 #include <QDebug>
 #include <QTimer>
 #include <std_msgs/msg/int32.hpp>
+#include <rclcpp/parameter_client.hpp>
 
 NavigationModule::NavigationModule(QObject* parent)
     : QObject(parent), m_connected(false), m_currentCheckpoint(0)
@@ -9,14 +10,17 @@ NavigationModule::NavigationModule(QObject* parent)
     m_connectionTimer = new QTimer(this);
     connect(m_connectionTimer, &QTimer::timeout, this, &NavigationModule::checkConnection);
     m_connectionTimer->start(1000); // Check every second
+
+    m_mapUpdateTimer = new QTimer(this);
+    connect(m_mapUpdateTimer, &QTimer::timeout, this, &NavigationModule::requestMapId);
+    m_mapUpdateTimer->start(5000); // Check every 5 seconds until identified
 }
 
 void NavigationModule::initialize(std::shared_ptr<rclcpp::Node> node) {
     m_node = node;
     
-    // Create Publishers for commands
-    m_navPub = m_node->create_publisher<std_msgs::msg::Int32>("/robot/navigate_to_checkpoint", 10);
-    m_stopPub = m_node->create_publisher<std_msgs::msg::Bool>("/robot/emergency_stop", 10);
+    // Create Publisher for commands
+    m_cmdPub = m_node->create_publisher<std_msgs::msg::String>("/robot/command", 10);
     
     // Create Subscriptions for feedback
     m_stateSub = m_node->create_subscription<std_msgs::msg::String>(
@@ -28,13 +32,13 @@ void NavigationModule::initialize(std::shared_ptr<rclcpp::Node> node) {
     m_checkpointSub = m_node->create_subscription<std_msgs::msg::Int32>(
         "/robot/current_checkpoint", 10, std::bind(&NavigationModule::onCheckpointCallback, this, std::placeholders::_1));
 
-    qDebug() << "NavigationModule: Initialized with topics /robot/navigate_to_checkpoint, /robot/emergency_stop, /robot/state, /robot/status_message, /robot/current_checkpoint";
+    qDebug() << "NavigationModule: Initialized with topics /robot/command, /robot/state, /robot/status_message, /robot/current_checkpoint";
 }
 
 void NavigationModule::shutdown() {
     m_connectionTimer->stop();
-    m_navPub.reset();
-    m_stopPub.reset();
+    m_mapUpdateTimer->stop();
+    m_cmdPub.reset();
     m_stateSub.reset();
     m_statusSub.reset();
     m_checkpointSub.reset();
@@ -42,29 +46,29 @@ void NavigationModule::shutdown() {
 }
 
 void NavigationModule::navigateToCheckpoint(int cpId) {
-    if (!m_navPub) {
+    if (!m_cmdPub) {
         qWarning() << "NavigationModule: Cannot navigate, publisher not initialized!";
         return;
     }
 
-    auto msg = std_msgs::msg::Int32();
-    msg.data = cpId;
-    m_navPub->publish(msg);
+    auto msg = std_msgs::msg::String();
+    msg.data = "go:" + std::to_string(cpId);
+    m_cmdPub->publish(msg);
     
-    qDebug() << "NavigationModule: Published navigation goal to checkpoint:" << cpId;
+    qDebug() << "NavigationModule: Published navigation goal to checkpoint:" << cpId << "as 'go:" + QString::number(cpId) + "'";
 }
 
 void NavigationModule::sendEmergencyStop(bool stop) {
-    if (!m_stopPub) {
+    if (!m_cmdPub) {
         qWarning() << "NavigationModule: Cannot send stop command, publisher not initialized!";
         return;
     }
 
-    auto msg = std_msgs::msg::Bool();
-    msg.data = stop;
-    m_stopPub->publish(msg);
+    auto msg = std_msgs::msg::String();
+    msg.data = stop ? "stop" : "continue";
+    m_cmdPub->publish(msg);
     
-    qDebug() << "NavigationModule: Published emergency stop command:" << (stop ? "STOP" : "RESUME");
+    qDebug() << "NavigationModule: Published command:" << (stop ? "STOP" : "CONTINUE");
 }
 
 void NavigationModule::onStateCallback(const std_msgs::msg::String::SharedPtr msg) {
@@ -92,14 +96,55 @@ bool NavigationModule::isConnected() const {
 }
 
 void NavigationModule::checkConnection() {
-    if (!m_navPub) return;
+    if (!m_cmdPub) return;
 
-    // Check if anyone is subscribed to /robot/navigate_to_checkpoint (likely the navigator)
-    bool connected = (m_navPub->get_subscription_count() > 0);
+    // Check if anyone is subscribed to /robot/command (likely the navigator)
+    bool connected = (m_cmdPub->get_subscription_count() > 0);
     
     if (m_connected != connected) {
         m_connected = connected;
         qDebug() << "NavigationModule: Connection status changed:" << (m_connected ? "Connected" : "Disconnected");
         emit connectionStatusChanged(m_connected);
     }
+}
+void NavigationModule::requestMapId() {
+    if (!m_node) return;
+
+    // We use a simple parameter client to query the /navigator node
+    auto parameters_client = std::make_shared<rclcpp::AsyncParametersClient>(m_node, "/navigator");
+    
+    // Check if the service is available first to avoid hanging
+    if (!parameters_client->service_is_ready()) {
+        return;
+    }
+
+    parameters_client->get_parameters({"checkpoint_file"}, 
+        [this](std::shared_future<std::vector<rclcpp::Parameter>> future) {
+            // Guard: check if the node or timers are already being destroyed
+            if (!m_node || !m_mapUpdateTimer) return;
+
+            try {
+                auto result = future.get();
+                if (!result.empty()) {
+                    std::string path = result[0].as_string();
+                    QString mapId = "e6"; // Fallback to default
+                    
+                    if (path.find("_e1.yaml") != std::string::npos) mapId = "e1";
+                    else if (path.find("_e6.yaml") != std::string::npos) mapId = "e6";
+                    
+                    if (m_mapId != mapId) {
+                        m_mapId = mapId;
+                        qDebug() << "NavigationModule: Identified map ID from ROS:" << m_mapId;
+                        emit mapIdChanged(m_mapId);
+                    }
+                    
+                    // Stop the timer once we've successfully contacted the navigator
+                    if (m_mapUpdateTimer) {
+                        m_mapUpdateTimer->stop();
+                    }
+                }
+            } catch (const std::exception& e) {
+                qWarning() << "NavigationModule: Failed to get parameters:" << e.what();
+            }
+        });
 }

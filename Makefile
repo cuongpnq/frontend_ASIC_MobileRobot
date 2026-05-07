@@ -1,4 +1,5 @@
 # --- Robot AI Frontend Makefile ---
+SHELL := /bin/bash
 BUILD_DIR ?= build-output
 
 .PHONY: help setup build run run-only clean distclean
