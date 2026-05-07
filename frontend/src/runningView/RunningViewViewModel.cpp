@@ -27,7 +27,7 @@ void RunningViewViewModel::requestControlCenterView() {
 }
 
 void RunningViewViewModel::requestDirectionView() {
-    AppStateMachine::instance().returnToControlCenter();
+    AppStateMachine::instance().goToDirection();
 }
 
 void RunningViewViewModel::stopRobot() {
@@ -92,6 +92,11 @@ void RunningViewViewModel::onCheckpointChanged(int cpId) {
         if (navModule) {
             m_currentCheckpointName = navModule->getCheckpointName(m_currentCheckpoint);
             emit currentCheckpointNameChanged();
+        }
+
+        // When reach home (checkpoint 0), automatically go back to DirectionView
+        if (m_currentCheckpoint == 0) {
+            AppStateMachine::instance().goToDirection();
         }
     }
 }

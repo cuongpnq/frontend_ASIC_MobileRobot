@@ -242,9 +242,9 @@ Item {
                     }
                 }
 
-                // CONTINUE button (only when emergency stop)
+                // CONTINUE button (only when stopped or emergency stop)
                 Rectangle {
-                    visible: RunningViewViewModel.robotState === "EMERGENCY_STOP"
+                    visible: RunningViewViewModel.robotState === "STOPPED"
                     width: 200
                     height: 66
                     radius: 16
@@ -254,7 +254,7 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "▶  Resume"
+                        text: "▶  Continue"
                         font.pixelSize: 28
                         font.family: "Inter"
                         font.bold: true
