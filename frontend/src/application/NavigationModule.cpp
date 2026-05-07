@@ -148,3 +148,19 @@ void NavigationModule::requestMapId() {
             }
         });
 }
+
+QString NavigationModule::getCheckpointName(int cpId) const {
+    if (m_mapId == "e1") {
+        if (cpId == 0) return "Meeting Room (E1.1)";
+        if (cpId == 1) return "Elevator";
+        if (cpId == 3) return "CELUiT's Office";
+    } else if (m_mapId == "e6") {
+        if (cpId == 0) return "LAB Room";
+        if (cpId == 1) return "Elevator";
+        if (cpId == 2) return "Meeting Room (E6.3)";
+        if (cpId == 3) return "Dean's Room";
+    }
+    
+    if (cpId == -1) return "Unknown";
+    return "Checkpoint " + QString::number(cpId);
+}

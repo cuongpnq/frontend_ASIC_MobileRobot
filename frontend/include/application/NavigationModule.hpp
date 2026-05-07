@@ -44,6 +44,11 @@ public:
      */
     QString mapId() const { return m_mapId; }
 
+    /**
+     * @brief Returns the human-readable name of a checkpoint.
+     */
+    QString getCheckpointName(int cpId) const;
+
 signals:
     /**
      * @brief Emitted when the robot state changes (e.g., IDLE -> NAVIGATING).

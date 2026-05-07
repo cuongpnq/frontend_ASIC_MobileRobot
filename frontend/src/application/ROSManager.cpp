@@ -21,6 +21,7 @@ void ROSManager::start() {
     qDebug() << "ROSManager: Starting ROS 2 Context...";
     
     if (!rclcpp::ok()) {
+        // We handle signals in main.cpp
         rclcpp::init(0, nullptr);
     }
 
@@ -53,7 +54,11 @@ void ROSManager::stop() {
     // Now we can safely join the thread
     if (m_executorThread && m_executorThread->joinable()) {
         m_executorThread->join();
+        m_executorThread.reset();
     }
+
+    // Explicitly reset the node AFTER the executor thread has joined
+    m_node.reset();
 
     {
         std::lock_guard<std::mutex> lock(m_mutex);
