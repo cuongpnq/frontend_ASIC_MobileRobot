@@ -17,6 +17,10 @@ RunningViewViewModel::RunningViewViewModel(QObject* parent)
         connect(navModule.get(), &NavigationModule::statusMessageReceived, this, &RunningViewViewModel::onStatusMessageReceived);
         connect(navModule.get(), &NavigationModule::currentCheckpointChanged, this, &RunningViewViewModel::onCheckpointChanged);
     }
+
+    m_idleTimer = new QTimer(this);
+    connect(m_idleTimer, &QTimer::timeout, this, &RunningViewViewModel::onIdleTimerTimeout);
+    m_idleTimer->start(1000);
 }
 
 bool RunningViewViewModel::isActive() const {
@@ -76,19 +80,9 @@ void RunningViewViewModel::onRobotStateChanged(const QString& state) {
         m_robotState = state;
         emit robotStateChanged();
 
-        // When reach ANY goal (AT_CHECKPOINT) or become IDLE, automatically go back to DirectionView
-        if (m_robotState == "AT_CHECKPOINT" || m_robotState == "IDLE") {
-            qDebug() << "RunningViewViewModel: Robot is " << m_robotState << ", returning to DirectionView";
-            
-            // If not at home, we want a 15s idle timeout in DirectionView (as requested)
-            if (m_currentCheckpoint != 0) {
-                if (auto dirView = DirectionViewViewModel::instance()) {
-                    dirView->setIdleReturnPending(true);
-                }
-            }
-            
-            requestDirectionView();
-        }
+        // We intentionally do not auto-return to DirectionView here.
+        // The user can manually return via the 'Direction View' button in RunningView
+        // or the system will return Home via the backend's timeout.
 
         // Reset countdown if not in a waiting state
         if (m_robotState != "IDLE" && m_robotState != "AT_CHECKPOINT" && m_robotState != "WAITING_RESET") {
@@ -130,5 +124,19 @@ void RunningViewViewModel::onCheckpointChanged(int cpId) {
 }
 
 void RunningViewViewModel::onIdleTimerTimeout() {
-    // This is no longer used as we sync with ROS status messages
+    if (!m_isActive) return;
+
+    if (m_robotState == "IDLE" || m_robotState == "AT_CHECKPOINT" || m_robotState == "WAITING_RESET") {
+        if (m_currentCheckpoint != 0 && m_idleCountdown > 0) {
+            m_idleCountdown--;
+            emit idleCountdownChanged();
+
+            if (m_idleCountdown <= 0) {
+                auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
+                if (navModule) {
+                    navModule->navigateToCheckpoint(0);
+                }
+            }
+        }
+    }
 }
