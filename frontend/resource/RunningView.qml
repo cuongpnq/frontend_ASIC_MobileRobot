@@ -161,25 +161,6 @@ Item {
                 }
             }
 
-            // ── Auto-home countdown hint ───────────────────────────────
-            Text {
-                id: autoHomeHint
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "Returning Home in " + RunningViewViewModel.idleCountdown + "s…"
-                font.pixelSize: 22
-                font.family: "Inter"
-                color: "#CC3333"
-                font.italic: true
-                visible: (RunningViewViewModel.robotState === "IDLE" || RunningViewViewModel.robotState === "AT_CHECKPOINT" || RunningViewViewModel.robotState === "WAITING_RESET") && RunningViewViewModel.currentCheckpoint !== 0
-
-                SequentialAnimation on opacity {
-                    running: autoHomeHint.visible
-                    loops: Animation.Infinite
-                    NumberAnimation { to: 0.4; duration: 800; easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
-                }
-            }
-
             // ── Button Row ────────────────────────────────────────
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
