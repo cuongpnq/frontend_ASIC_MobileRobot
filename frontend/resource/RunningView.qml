@@ -265,6 +265,33 @@ Item {
                         onClicked: RunningViewViewModel.resumeRobot()
                     }
                 }
+
+                // DIRECTION VIEW button (when idle or at checkpoint)
+                Rectangle {
+                    visible: RunningViewViewModel.robotState === "IDLE"
+                    width: 300
+                    height: 66
+                    radius: 16
+                    color: returnArea.pressed ? "#0D6199" : "#107DB3"
+
+                    Behavior on color { ColorAnimation { duration: 150 } }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Back"
+                        font.pixelSize: 24
+                        font.family: "Inter"
+                        font.bold: true
+                        color: "#FFFFFF"
+                    }
+
+                    MouseArea {
+                        id: returnArea
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: RunningViewViewModel.requestDirectionView()
+                    }
+                }
             }
         }
     }

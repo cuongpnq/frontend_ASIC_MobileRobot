@@ -32,6 +32,11 @@ public:
      */
     void sendEmergencyStop(bool stop);
 
+    /**
+     * @brief Send a reset command to /robot/command.
+     */
+    void sendReset();
+
     void DEBUG_setCurrentCheckpoint(int cpId) { m_currentCheckpoint = cpId; }
 
     /**

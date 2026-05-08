@@ -71,6 +71,19 @@ void NavigationModule::sendEmergencyStop(bool stop) {
     qDebug() << "NavigationModule: Published command:" << (stop ? "STOP" : "CONTINUE");
 }
 
+void NavigationModule::sendReset() {
+    if (!m_cmdPub) {
+        qWarning() << "NavigationModule: Cannot send reset command, publisher not initialized!";
+        return;
+    }
+
+    auto msg = std_msgs::msg::String();
+    msg.data = "reset";
+    m_cmdPub->publish(msg);
+    
+    qDebug() << "NavigationModule: Published command:" << "RESET";
+}
+
 void NavigationModule::onStateCallback(const std_msgs::msg::String::SharedPtr msg) {
     QString state = QString::fromStdString(msg->data);
     emit robotStateChanged(state);

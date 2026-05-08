@@ -36,8 +36,10 @@ void RunningViewViewModel::requestDirectionView() {
 void RunningViewViewModel::resetToDirectionView() {
     qDebug() << "RunningViewViewModel: Resetting and returning to DirectionView";
     
-    // Stop the robot if it's currently moving
-    stopRobot();
+    auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
+    if (navModule) {
+        navModule->sendReset();
+    }
     
     // Set auto-return pending on the DirectionView
     if (auto dirView = DirectionViewViewModel::instance()) {
