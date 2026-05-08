@@ -109,6 +109,13 @@ Item {
         anchors.margins: 50
         radius: 32
         color: '#80dad8d8'
+
+        Image {
+            id: mapImage
+            anchors.centerIn: parent
+            source: "images/E6_maplocation.png"
+            fillMode: Image.PreserveAspectFit
+        }
     }
 
     Text {

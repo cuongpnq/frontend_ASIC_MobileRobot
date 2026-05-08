@@ -47,8 +47,8 @@ setup:
 # 2. Build GUI & AI Server
 build:
 	@echo "[BUILD] Compiling AI System..."
-	cmake -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Release
-	cmake --build $(BUILD_DIR) -j$$(nproc)
+	source /opt/ros/foxy/setup.bash && cmake -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Release
+	source /opt/ros/foxy/setup.bash && cmake --build $(BUILD_DIR) -j$$(nproc)
 
 # 3. Launch System Orchestrator
 run:
