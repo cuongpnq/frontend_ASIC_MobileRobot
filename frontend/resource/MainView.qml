@@ -45,6 +45,7 @@ Item {
 
             model: ListModel {
                 ListElement { name: "Direction View"; viewType: "direction"; icon: "images/direction.png" }
+                ListElement { name: "Presentation"; viewType: "presentation"; icon: "images/presentation.png" }
                 ListElement { name: "Q&A"; viewType: "chatView"; icon: "images/chatbot.png" }
                 ListElement { name: "Control Center"; viewType: "controlCenter"; icon: "images/control_center.png" }
                 ListElement { name: "Settings View"; viewType: "settings"; icon: "images/settings.png" }
@@ -69,6 +70,8 @@ Item {
                     onClicked: {
                         if (model.viewType === "direction") {
                             MainViewViewModel.requestDirectionView()
+                        } else if (model.viewType === "presentation") {
+                            MainViewViewModel.requestPresentationView()
                         } else if (model.viewType === "chatView") {
                             MainViewViewModel.requestChatView()
                         } else if (model.viewType === "controlCenter") {

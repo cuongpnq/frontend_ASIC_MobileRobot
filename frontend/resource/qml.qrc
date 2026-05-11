@@ -8,6 +8,7 @@
         <file>SettingsView.qml</file>
         <file>MapPanelView.qml</file>
         <file>DiagnosticsView.qml</file>
+        <file>PresentationView.qml</file>
         <file>ChatView.qml</file>
         <file>WiFiSettingView.qml</file>
         <file>CustomKeyboard.qml</file>
@@ -25,5 +26,6 @@
         <file>images/E6_map.png</file>
         <file>images/E6_maplocation.png</file>
         <file>images/location.png</file>
+        <file>images/presentation.png</file>
     </qresource>
 </RCC>

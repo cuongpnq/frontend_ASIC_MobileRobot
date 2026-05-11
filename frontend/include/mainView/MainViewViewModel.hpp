@@ -13,6 +13,7 @@ public:
     bool isActive() const;
     Q_INVOKABLE void requestControlCenterView();
     Q_INVOKABLE void requestDirectionView();
+    Q_INVOKABLE void requestPresentationView();
     Q_INVOKABLE void requestSettingsView();
     Q_INVOKABLE void requestChatView();
 

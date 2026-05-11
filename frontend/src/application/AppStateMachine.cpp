@@ -46,6 +46,12 @@ void AppStateMachine::goToDirection()
     updateState();
 }
 
+void AppStateMachine::goToPresentation()
+{
+    statechart_raise_goToPresentation(&m_statechart);
+    updateState();
+}
+
 void AppStateMachine::returnToControlCenter()
 {
     statechart_raise_returnToControlCenter(&m_statechart);
@@ -110,6 +116,8 @@ void AppStateMachine::updateState()
         newState = "ChatView";
     } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_WiFiSettingView)) {
         newState = "WiFiSettingView";
+    } else if (statechart_is_state_active(&m_statechart, Statechart_frontend_app_PresentationView)) {
+        newState = "PresentationView";
     }
 
     if (m_currentState != newState) {

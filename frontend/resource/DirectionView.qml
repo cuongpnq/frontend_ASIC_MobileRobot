@@ -20,6 +20,7 @@ Item {
             if (autoHomeSeconds <= 1) {
                 autoHomeTimer.stop()
                 selectedLocation = "Home"
+                DirectionViewViewModel.startNavigation(0)
                 DirectionViewViewModel.requestRunningView()
             } else {
                 autoHomeSeconds -= 1

@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.3/notation" xmlns:sgraph="http://www.yakindu.org/sct/sgraph/2.0.0">
-  <sgraph:Statechart xmi:id="_0Lt0QCGMEfGrpfx3GTzbRA" specification="// Use the event driven execution model.&#xA;// Switch to cycle based behavior&#xA;// by specifying '@CycleBased(200)'.&#xA;@EventDriven&#xA;&#xA;// Use @SuperSteps(yes) to enable&#xA;// super step semantics.&#xA;@SuperSteps(no)&#xA;&#xA;interface:&#xA;&#x9;// Define events and variables here. &#xA;&#x9;// Use CTRL + Space for content assist.&#xA;&#x9;in event returnToMain&#xA;&#x9;in event goToRunning&#xA;&#x9;in event goToControlCenter&#xA;&#x9;in event goToDirection&#xA;&#x9;in event returnToControlCenter&#xA;&#x9;in event goToSettings&#xA;&#x9;in event goToDiagnostics&#xA;&#x9;in event goToMapPanel&#xA;&#x9;in event goToChatView&#xA;&#x9;in event goToWiFiSettings&#xA;&#x9;in event returnToSettings" name="Statechart">
+  <sgraph:Statechart xmi:id="_0Lt0QCGMEfGrpfx3GTzbRA" specification="// Use the event driven execution model.&#xA;// Switch to cycle based behavior&#xA;// by specifying '@CycleBased(200)'.&#xA;@EventDriven&#xA;&#xA;// Use @SuperSteps(yes) to enable&#xA;// super step semantics.&#xA;@SuperSteps(no)&#xA;&#xA;interface:&#xA;&#x9;// Define events and variables here. &#xA;&#x9;// Use CTRL + Space for content assist.&#xA;&#x9;in event returnToMain&#xA;&#x9;in event goToRunning&#xA;&#x9;in event goToControlCenter&#xA;&#x9;in event goToDirection&#xA;&#x9;in event returnToControlCenter&#xA;&#x9;in event goToSettings&#xA;&#x9;in event goToDiagnostics&#xA;&#x9;in event goToMapPanel&#xA;&#x9;in event goToChatView&#xA;&#x9;in event goToWiFiSettings&#xA;&#x9;in event returnToSettings&#xA;&#x9;in event goToPresentation" name="Statechart">
     <regions xmi:id="_0LubWyGMEfGrpfx3GTzbRA" name="frontend_app">
       <vertices xsi:type="sgraph:Entry" xmi:id="_0LubXCGMEfGrpfx3GTzbRA">
         <outgoingTransitions xmi:id="_0LubXSGMEfGrpfx3GTzbRA" target="_0LubXiGMEfGrpfx3GTzbRA"/>
       </vertices>
-      <vertices xsi:type="sgraph:State" xmi:id="_0LubXiGMEfGrpfx3GTzbRA" name="MainView" incomingTransitions="_0LubXSGMEfGrpfx3GTzbRA _0LvCYiGMEfGrpfx3GTzbRA _cXrH8CurEfGtbu7UijmezA _7rzrcCxqEfGgHuKrmTtSqQ _IXHKUC7lEfG7G6HwVfzY-g">
+      <vertices xsi:type="sgraph:State" xmi:id="_0LubXiGMEfGrpfx3GTzbRA" name="MainView" incomingTransitions="_0LubXSGMEfGrpfx3GTzbRA _0LvCYiGMEfGrpfx3GTzbRA _cXrH8CurEfGtbu7UijmezA _7rzrcCxqEfGgHuKrmTtSqQ _IXHKUC7lEfG7G6HwVfzY-g _returnFromPresentationTrans">
         <outgoingTransitions xmi:id="_XeiOwCurEfGtbu7UijmezA" specification="goToDirection" target="_SdeIoCurEfGtbu7UijmezA"/>
         <outgoingTransitions xmi:id="_sdKvYCusEfGtbu7UijmezA" specification="goToControlCenter" target="_0LubaCGMEfGrpfx3GTzbRA"/>
         <outgoingTransitions xmi:id="_4-qIsCxqEfGgHuKrmTtSqQ" specification="goToSettings" target="_0SvMICxqEfGgHuKrmTtSqQ"/>
         <outgoingTransitions xmi:id="_GKgv4C7lEfG7G6HwVfzY-g" specification="goToChatView" target="_D04VQC7lEfG7G6HwVfzY-g"/>
+        <outgoingTransitions xmi:id="_goToPresentationTrans" specification="goToPresentation" target="_presentationState"/>
       </vertices>
       <vertices xsi:type="sgraph:State" xmi:id="_0LubaCGMEfGrpfx3GTzbRA" name="ControlCenterView" incomingTransitions="_jFzM0CurEfGtbu7UijmezA _sdKvYCusEfGtbu7UijmezA _V6WosCx7EfG8bZIhtEx2bw _YJjEICx7EfG8bZIhtEx2bw">
         <outgoingTransitions xmi:id="_0LvCYiGMEfGrpfx3GTzbRA" specification="returnToMain" target="_0LubXiGMEfGrpfx3GTzbRA"/>
@@ -38,6 +39,9 @@
       </vertices>
       <vertices xsi:type="sgraph:State" xmi:id="_352E0DGQEfGN3qwQTJcFlQ" name="WiFiSettingView" incomingTransitions="_ANq8MDGREfGN3qwQTJcFlQ">
         <outgoingTransitions xmi:id="_E79QQDGREfGN3qwQTJcFlQ" specification="returnToSettings" target="_0SvMICxqEfGgHuKrmTtSqQ"/>
+      </vertices>
+      <vertices xsi:type="sgraph:State" xmi:id="_presentationState" name="PresentationView" incomingTransitions="_goToPresentationTrans">
+        <outgoingTransitions xmi:id="_returnFromPresentationTrans" specification="returnToMain" target="_0LubXiGMEfGrpfx3GTzbRA"/>
       </vertices>
     </regions>
   </sgraph:Statechart>

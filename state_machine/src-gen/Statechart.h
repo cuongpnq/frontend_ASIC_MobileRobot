@@ -41,7 +41,7 @@ Header of the state machine 'Statechart'.
 #define SC_INVALID_EVENT_VALUE 0
 #endif
 /*! Define number of states in the state enum */
-#define STATECHART_STATE_COUNT 9
+#define STATECHART_STATE_COUNT 10
 
 /*! Define dimension of the state configuration vector for orthogonal states. */
 #define STATECHART_MAX_ORTHOGONAL_STATES 1
@@ -56,6 +56,7 @@ Header of the state machine 'Statechart'.
 #define SCVI_STATECHART_FRONTEND_APP_MAPPANELVIEW 0
 #define SCVI_STATECHART_FRONTEND_APP_CHATVIEW 0
 #define SCVI_STATECHART_FRONTEND_APP_WIFISETTINGVIEW 0
+#define SCVI_STATECHART_FRONTEND_APP_PRESENTATIONVIEW 0
 
 
 /* 
@@ -73,7 +74,8 @@ typedef enum  {
 	Statechart_goToMapPanel,
 	Statechart_goToChatView,
 	Statechart_goToWiFiSettings,
-	Statechart_returnToSettings
+	Statechart_returnToSettings,
+	Statechart_goToPresentation
 } StatechartEventID;
 
 /*
@@ -106,7 +108,8 @@ typedef enum
 	Statechart_frontend_app_DiagnosticsView,
 	Statechart_frontend_app_MapPanelView,
 	Statechart_frontend_app_ChatView,
-	Statechart_frontend_app_WiFiSettingView
+	Statechart_frontend_app_WiFiSettingView,
+	Statechart_frontend_app_PresentationView
 } StatechartStates;
 
 
@@ -124,6 +127,7 @@ struct StatechartIface
 	sc_boolean goToChatView_raised;
 	sc_boolean goToWiFiSettings_raised;
 	sc_boolean returnToSettings_raised;
+	sc_boolean goToPresentation_raised;
 };
 
 
@@ -185,6 +189,8 @@ extern void statechart_raise_goToChatView(Statechart* handle);
 extern void statechart_raise_goToWiFiSettings(Statechart* handle);
 /*! Raises the in event 'returnToSettings' that is defined in the default interface scope. */ 
 extern void statechart_raise_returnToSettings(Statechart* handle);
+/*! Raises the in event 'goToPresentation' that is defined in the default interface scope. */ 
+extern void statechart_raise_goToPresentation(Statechart* handle);
 
 /*!
  * Checks whether the state machine is active (until 2.4.1 this method was used for states).
