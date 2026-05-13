@@ -64,7 +64,7 @@ endif
 
 shortcut:
 	@echo "Creating desktop shortcut..."
-	@cp RobotControl.desktop ~/Desktop/
+	@sed "s|{{PROJECT_ROOT}}|$(CURDIR)|g" RobotControl.desktop > ~/Desktop/RobotControl.desktop
 	@chmod +x ~/Desktop/RobotControl.desktop
 	@gio set ~/Desktop/RobotControl.desktop metadata::trusted true || true
 	@echo "Shortcut created and enabled on Desktop."
