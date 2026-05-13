@@ -75,7 +75,6 @@ Item {
             onClicked: {
                 if (window.isStandby) {
                     window.isStandby = false;
-                    AppStateMachine.returnToMain();
                 }
             }
         }

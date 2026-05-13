@@ -64,6 +64,13 @@ void PresentationViewViewModel::startMobileImport() {
         return;
     }
 
+    // Don't restart if already listening
+    if (m_server->isListening()) {
+        m_isMobileImportActive = true;
+        emit isMobileImportActiveChanged();
+        return;
+    }
+
     if (m_server->startServer(8081)) {
         QString uploadUrl = QString("http://%1:8081").arg(localIp);
         // Use qrserver.com API to generate QR code image URL
@@ -100,7 +107,10 @@ void PresentationViewViewModel::onStateMachineChanged() {
 }
 
 void PresentationViewViewModel::loadContent() {
-    loadFromFile("frontend/presentation.txt");
+    // Default load of presentation.txt removed as requested.
+    // Content will remain blank until user imports a file.
+    m_content = "";
+    emit contentChanged();
 }
 
 void PresentationViewViewModel::loadFromFile(const QString& filePath) {

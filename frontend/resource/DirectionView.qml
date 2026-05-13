@@ -201,6 +201,14 @@ Item {
             width: 300
             height: Math.min(locationModel.count * 60 + 20, 400)
             closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+            // Automatically close when standby is triggered
+            Connections {
+                target: window
+                onIsStandbyChanged: {
+                    if (window.isStandby) locationPopup.close()
+                }
+            }
             
             background: Rectangle {
                 color: "#ffffff"
@@ -261,6 +269,14 @@ Item {
         height: 200
         modal: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        // Automatically close when standby is triggered
+        Connections {
+            target: window
+            onIsStandbyChanged: {
+                if (window.isStandby) sameLocationPopup.close()
+            }
+        }
 
         background: Rectangle {
             color: "#ffffff"
@@ -328,6 +344,14 @@ Item {
         height: 240
         modal: true
         closePolicy: Popup.CloseOnEscape
+
+        // Automatically close when standby is triggered
+        Connections {
+            target: window
+            onIsStandbyChanged: {
+                if (window.isStandby) confirmPopup.close()
+            }
+        }
 
         background: Rectangle {
             color: "#ffffff"

@@ -41,7 +41,7 @@ Item {
         // Mobile Import Button
         Button {
             id: mobileImportBtn
-            text: "Import File from Phone"
+            text: "Import"
             font.pixelSize: 24
             contentItem: Text {
                 text: mobileImportBtn.text
@@ -53,7 +53,7 @@ Item {
             background: Rectangle {
                 implicitWidth: 300
                 implicitHeight: 60
-                color: mobileImportBtn.pressed ? "#1a1a1a" : "#2C2C2C"
+                color: mobileImportBtn.pressed ? '#505050' : '#888888'
                 radius: 10
             }
             onClicked: PresentationViewViewModel.startMobileImport()
@@ -93,6 +93,16 @@ Item {
                 wrapMode: Text.WordWrap
             }
 
+            Text {
+                id: placeholderText
+                anchors.centerIn: parent
+                text: "Please import text file"
+                font.pixelSize: 32
+                font.family: "Inter"
+                color: "#AAAAAA"
+                visible: textContent.text === ""
+            }
+
             ScrollBar.vertical: ScrollBar {
                 active: true
             }
@@ -110,6 +120,14 @@ Item {
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         visible: PresentationViewViewModel.isMobileImportActive
         onClosed: PresentationViewViewModel.stopMobileImport()
+
+        // Automatically close when standby is triggered
+        Connections {
+            target: window
+            onIsStandbyChanged: {
+                if (window.isStandby) mobileImportPopup.close()
+            }
+        }
 
         background: Rectangle {
             color: "white"
@@ -148,13 +166,6 @@ Item {
                         text: "Generating QR..."
                     }
                 }
-            }
-
-            Text {
-                text: "Open in browser: " + PresentationViewViewModel.qrCodeUrl.split("data=")[1]
-                font.pixelSize: 20
-                color: "#2C2C2C"
-                anchors.horizontalCenter: parent.horizontalCenter
             }
 
             Text {

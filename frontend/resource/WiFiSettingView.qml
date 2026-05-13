@@ -231,6 +231,14 @@ Item {
         modal: false
         focus: false          // let TextField own the focus
         closePolicy: Popup.NoAutoClose   // we close manually
+
+        // Automatically close when standby is triggered
+        Connections {
+            target: window
+            onIsStandbyChanged: {
+                if (window.isStandby) passwordDialog.close()
+            }
+        }
         x: (root.width - width) / 2
         y: WifiSettingViewViewModel.keyboardVisible ? 30 : (root.height - height) / 2
         width: 780

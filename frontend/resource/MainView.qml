@@ -22,9 +22,15 @@ Item {
         y: 115
         width: 240
         height: 150
-        modal: true
-        focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        // Automatically close when standby is triggered (e.g. by timer or button)
+        Connections {
+            target: window
+            onIsStandbyChanged: {
+                if (window.isStandby) powerPopup.close()
+            }
+        }
 
         background: Rectangle {
             border.color: "#22000000"
@@ -91,7 +97,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     onClicked: {
-                        console.log("Sleep requested")
+                        window.isStandby = true
                         powerPopup.close()
                     }
                 }
