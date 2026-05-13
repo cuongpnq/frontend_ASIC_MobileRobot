@@ -11,6 +11,27 @@ ApplicationWindow {
     width: 1920
     height: 1200
 
+    property bool isStandby: true
+
+    Timer {
+        id: standbyTimer
+        interval: 60000 // 1 minute
+        running: !window.isStandby && AppStateMachine.currentState !== "RunningView"
+        repeat: false
+        onTriggered: {
+            if (AppStateMachine.currentState !== "RunningView") {
+                window.isStandby = true
+            }
+        }
+    }
+
+    Connections {
+        target: UserInteraction
+        onInteracted: {
+            standbyTimer.restart();
+        }
+    }
+
     // Dynamic View Loader (State-Driven)
     Loader {
         id: viewLoader
@@ -37,5 +58,13 @@ ApplicationWindow {
         id: globalKeyboard
         keyboardVisible: Qt.inputMethod.visible
         hasVirtualKeyboard: HAS_VIRTUAL_KEYBOARD
+    }
+
+    // Standby View Overlay
+    StandbyView {
+        id: standbyView
+        anchors.fill: parent
+        visible: window.isStandby
+        z: 100 // High z-index to cover everything
     }
 }

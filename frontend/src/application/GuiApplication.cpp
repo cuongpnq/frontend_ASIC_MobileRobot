@@ -16,6 +16,7 @@
 #include "application/NavigationModule.hpp"
 #include <QQmlContext>
 #include <QQmlEngine>
+#include <QEvent>
 
 GuiApplication::GuiApplication(int &argc, char **argv)
 {
@@ -23,6 +24,10 @@ GuiApplication::GuiApplication(int &argc, char **argv)
 
     app = std::make_unique<QGuiApplication>(argc, argv);
     engine = std::make_unique<QQmlApplicationEngine>();
+
+    auto monitor = new UserInteractionMonitor(app.get());
+    app->installEventFilter(monitor);
+    engine->rootContext()->setContextProperty("UserInteraction", monitor);
 
     // ── ROS 2 Initialization ──────────────────────────────────────
     auto& rosManager = ROSManager::instance();

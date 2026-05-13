@@ -20,6 +20,7 @@ public:
 
     QString currentState() const;
 
+public slots:
     // Direct C++ methods to trigger state machine events
     void goToRunning();
     void returnToMain();
