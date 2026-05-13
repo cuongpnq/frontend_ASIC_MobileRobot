@@ -1,4 +1,6 @@
 import QtQuick 2.12
+import QtQuick.Controls 2.12
+import QtGraphicalEffects 1.12
 import com.asic.mobilerobot.viewmodels 1.0
 
 Item {
@@ -10,7 +12,93 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
+        onPowerClicked: powerPopup.open()
     }
+
+    // --- Power Menu Popup ---
+    Popup {
+        id: powerPopup
+        x: 30
+        y: 115
+        width: 240
+        height: 150
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            border.color: "#22000000"
+            border.width: 4
+            radius: 24
+        }
+
+        Column {
+            anchors.fill: parent
+            spacing: 8
+
+            // Power Off Row
+            Rectangle {
+                width: parent.width
+                height: 60
+                radius: 12
+                color: powerOffMouse.pressed ? "#e0e0e0" : "#f0f0f0"
+                border.color: "#bbbbbb"
+                border.width: 1
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 12
+                    Text { 
+                        text: "Power Off"
+                        font.pixelSize: 22
+                        font.family: "Inter"
+                        color: '#ff0000' 
+                        font.bold: true
+                    }
+                }
+
+                MouseArea {
+                    id: powerOffMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: Qt.quit()
+                }
+            }
+
+            // Sleep Row
+            Rectangle {
+                width: parent.width
+                height: 60
+                radius: 12
+                color: sleepMouse.pressed ? "#e0e0e0" : "#f0f0f0"
+                border.color: "#bbbbbb"
+                border.width: 1
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 12
+                    Text { 
+                        text: "Sleep"
+                        font.pixelSize: 22
+                        font.family: "Inter"
+                        color: '#978800' 
+                        font.bold: true
+                    }
+                }
+
+                MouseArea {
+                    id: sleepMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        console.log("Sleep requested")
+                        powerPopup.close()
+                    }
+                }
+            }
+        }
+    }
+
 
     Rectangle {
         anchors.fill: parent

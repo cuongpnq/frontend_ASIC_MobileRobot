@@ -16,6 +16,7 @@ find_package(Qt5 REQUIRED COMPONENTS
     Quick
     Concurrent
     DBus
+    Network
 )
 
 find_package(ament_cmake REQUIRED)
@@ -81,6 +82,7 @@ target_link_libraries(frontend_app
     Qt5::Quick
     Qt5::Concurrent
     Qt5::DBus
+    Qt5::Network
 )
 
 # ROS 2 Dependencies using ament

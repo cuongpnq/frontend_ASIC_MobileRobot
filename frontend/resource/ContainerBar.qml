@@ -11,6 +11,7 @@ Item {
     z: 10
 
     signal backClicked()
+    signal powerClicked()
 
     Rectangle {
         id: bgRect
@@ -29,19 +30,22 @@ Item {
     }
 
     Image {
-        id: backButton
-        source: "qrc:/images/back_button.png"
+        source: MainViewViewModel.isActive ? "qrc:/images/power_button.png" : "qrc:/images/back_button.png"
         width: 60
         height: 60
         anchors.left: parent.left
         anchors.leftMargin: 30
         anchors.verticalCenter: parent.verticalCenter
-        visible: !MainViewViewModel.isActive && !RunningViewViewModel.isActive
+        visible: !RunningViewViewModel.isActive
 
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                containerBar.backClicked()
+                if (MainViewViewModel.isActive) {
+                    containerBar.powerClicked()
+                } else {
+                    containerBar.backClicked()
+                }
             }
         }
     }
@@ -126,71 +130,71 @@ Item {
         }
 
         // Battery group (Text and Icon)
-        Row {
-            spacing: 12
-            anchors.verticalCenter: parent.verticalCenter
+        // Row {
+        //     spacing: 12
+        //     anchors.verticalCenter: parent.verticalCenter
 
-            // Battery percentage text
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: ContainerBarViewModel.batteryLevel + "%"
-                font.pixelSize: 48
-                font.family: "Inter"
-                color: "#000000"
-            }
+        //     // Battery percentage text
+        //     Text {
+        //         anchors.verticalCenter: parent.verticalCenter
+        //         text: ContainerBarViewModel.batteryLevel + "%"
+        //         font.pixelSize: 48
+        //         font.family: "Inter"
+        //         color: "#000000"
+        //     }
 
-            // Battery icon (drawn with Canvas)
-            Item {
-                id: batteryIcon
-                width: 100
-                height: 50
-                anchors.verticalCenter: parent.verticalCenter
+        //     // Battery icon (drawn with Canvas)
+        //     Item {
+        //         id: batteryIcon
+        //         width: 100
+        //         height: 50
+        //         anchors.verticalCenter: parent.verticalCenter
                 
-                Canvas {
-                    id: batteryCanvas
-                    anchors.fill: parent
-                    onPaint: {
-                        var ctx = getContext("2d")
-                        ctx.clearRect(0, 0, width, height)
+        //         Canvas {
+        //             id: batteryCanvas
+        //             anchors.fill: parent
+        //             onPaint: {
+        //                 var ctx = getContext("2d")
+        //                 ctx.clearRect(0, 0, width, height)
 
-                        var level = ContainerBarViewModel.batteryLevel
-                        var bodyWidth = width - 6
-                        var bodyHeight = height
-                        var tipWidth = 6
-                        var tipHeight = 14
+        //                 var level = ContainerBarViewModel.batteryLevel
+        //                 var bodyWidth = width - 6
+        //                 var bodyHeight = height
+        //                 var tipWidth = 6
+        //                 var tipHeight = 14
 
-                        // Battery body outline
-                        ctx.strokeStyle = "#1a1a1a"
-                        ctx.lineWidth = 3
-                        ctx.beginPath()
-                        ctx.roundedRect(1.5, 1.5, bodyWidth - 3, bodyHeight - 3, 4, 4)
-                        ctx.stroke()
+        //                 // Battery body outline
+        //                 ctx.strokeStyle = "#1a1a1a"
+        //                 ctx.lineWidth = 3
+        //                 ctx.beginPath()
+        //                 ctx.roundedRect(1.5, 1.5, bodyWidth - 3, bodyHeight - 3, 4, 4)
+        //                 ctx.stroke()
 
-                        // Battery tip (positive terminal)
-                        ctx.fillStyle = "#1a1a1a"
-                        ctx.beginPath()
-                        ctx.roundedRect(bodyWidth, (bodyHeight - tipHeight) / 2, tipWidth, tipHeight, 2, 2)
-                        ctx.fill()
+        //                 // Battery tip (positive terminal)
+        //                 ctx.fillStyle = "#1a1a1a"
+        //                 ctx.beginPath()
+        //                 ctx.roundedRect(bodyWidth, (bodyHeight - tipHeight) / 2, tipWidth, tipHeight, 2, 2)
+        //                 ctx.fill()
 
-                        // Battery fill level
-                        var fillWidth = (bodyWidth - 4) * (level / 100)
-                        var fillColor = "#4caf50"
-                        if (level <= 20) fillColor = "#f44336"
-                        else if (level <= 50) fillColor = "#ff9800"
+        //                 // Battery fill level
+        //                 var fillWidth = (bodyWidth - 4) * (level / 100)
+        //                 var fillColor = "#4caf50"
+        //                 if (level <= 20) fillColor = "#f44336"
+        //                 else if (level <= 50) fillColor = "#ff9800"
 
-                        ctx.fillStyle = fillColor
-                        ctx.beginPath()
-                        ctx.roundedRect(4, 4, Math.max(0, fillWidth - 5), bodyHeight - 8, 2, 2)
-                        ctx.fill()
-                    }
+        //                 ctx.fillStyle = fillColor
+        //                 ctx.beginPath()
+        //                 ctx.roundedRect(4, 4, Math.max(0, fillWidth - 5), bodyHeight - 8, 2, 2)
+        //                 ctx.fill()
+        //             }
 
-                    // Repaint when battery level changes
-                    Connections {
-                        target: ContainerBarViewModel
-                        onBatteryLevelChanged: batteryCanvas.requestPaint()
-                    }
-                }
-            }
-        }
+        //             // Repaint when battery level changes
+        //             Connections {
+        //                 target: ContainerBarViewModel
+        //                 onBatteryLevelChanged: batteryCanvas.requestPaint()
+        //             }
+        //         }
+        //     }
+        // }
     }
 }

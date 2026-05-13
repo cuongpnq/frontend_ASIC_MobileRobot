@@ -27,5 +27,6 @@
         <file>images/E6_maplocation.png</file>
         <file>images/location.png</file>
         <file>images/presentation.png</file>
+        <file>images/power_button.png</file>
     </qresource>
 </RCC>
