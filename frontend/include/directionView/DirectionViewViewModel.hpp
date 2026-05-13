@@ -34,10 +34,16 @@ signals:
 private slots:
     void onStateMachineChanged();
     void onMapIdChanged(const QString& mapId);
+    void onRobotStateChanged(const QString& state);
+    void onCheckpointChanged(int cpId);
 
 private:
+    void checkIdleReturnStatus();
+
     bool m_isActive = false;
     bool m_autoReturnPending = false;
     bool m_idleReturnPending = false;
     QString m_mapId = "unknown";
+    QString m_robotState = "Unknown";
+    int m_currentCheckpoint = -1;
 };

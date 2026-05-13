@@ -11,6 +11,7 @@
 #include "mapPanelView/MapPanelViewViewModel.hpp"
 #include "chatView/ChatViewViewModel.hpp"
 #include "wifiSettingView/WifiSettingViewViewModel.hpp"
+#include "presentationView/PresentationViewViewModel.hpp"
 #include "wifiManager/WifiManager.hpp"
 #include "application/ROSManager.hpp"
 #include "application/NavigationModule.hpp"
@@ -119,6 +120,13 @@ GuiApplication::GuiApplication(int &argc, char **argv)
             Q_UNUSED(engine)
             Q_UNUSED(scriptEngine)
             return new WifiSettingViewViewModel();
+        });
+
+    qmlRegisterSingletonType<PresentationViewViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "PresentationViewViewModel",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            return new PresentationViewViewModel();
         });
 
     qmlRegisterSingletonType<WifiManager>("com.asic.mobilerobot.viewmodels", 1, 0, "WifiManager",

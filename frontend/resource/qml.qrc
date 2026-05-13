@@ -8,6 +8,7 @@
         <file>SettingsView.qml</file>
         <file>MapPanelView.qml</file>
         <file>DiagnosticsView.qml</file>
+        <file>PresentationView.qml</file>
         <file>ChatView.qml</file>
         <file>WiFiSettingView.qml</file>
         <file>StandbyView.qml</file>
@@ -28,5 +29,6 @@
         <file>images/location.png</file>
         <file>images/robot_eyes_open.png</file>
         <file>images/robot_eyes_closed.png</file>
+        <file>images/presentation.png</file>
     </qresource>
 </RCC>

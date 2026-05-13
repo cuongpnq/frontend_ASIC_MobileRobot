@@ -20,6 +20,10 @@ void MainViewViewModel::requestDirectionView() {
     AppStateMachine::instance().goToDirection();
 }
 
+void MainViewViewModel::requestPresentationView() {
+    AppStateMachine::instance().goToPresentation();
+}
+
 void MainViewViewModel::requestSettingsView() {
     AppStateMachine::instance().goToSettings();
 }

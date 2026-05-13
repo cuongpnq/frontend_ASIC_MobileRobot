@@ -22,17 +22,18 @@ public:
 
 public slots:
     // Direct C++ methods to trigger state machine events
-    void goToRunning();
-    void returnToMain();
-    void goToControlCenter();
-    void goToDirection();
-    void returnToControlCenter();
-    void goToSettings();
-    void goToDiagnostics();
-    void goToMapPanel();
-    void goToChatView();
-    void goToWiFiSettings();
-    void returnToSettings();
+    Q_INVOKABLE void goToRunning();
+    Q_INVOKABLE void returnToMain();
+    Q_INVOKABLE void goToControlCenter();
+    Q_INVOKABLE void goToDirection();
+    Q_INVOKABLE void goToPresentation();
+    Q_INVOKABLE void returnToControlCenter();
+    Q_INVOKABLE void goToSettings();
+    Q_INVOKABLE void goToDiagnostics();
+    Q_INVOKABLE void goToMapPanel();
+    Q_INVOKABLE void goToChatView();
+    Q_INVOKABLE void goToWiFiSettings();
+    Q_INVOKABLE void returnToSettings();
 
 signals:
     void currentStateChanged();

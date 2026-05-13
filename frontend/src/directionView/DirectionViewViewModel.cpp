@@ -21,6 +21,8 @@ DirectionViewViewModel::DirectionViewViewModel(QObject* parent)
     if (navModule) {
         m_mapId = navModule->mapId();
         connect(navModule.get(), &NavigationModule::mapIdChanged, this, &DirectionViewViewModel::onMapIdChanged);
+        connect(navModule.get(), &NavigationModule::robotStateChanged, this, &DirectionViewViewModel::onRobotStateChanged);
+        connect(navModule.get(), &NavigationModule::currentCheckpointChanged, this, &DirectionViewViewModel::onCheckpointChanged);
     }
 }
 
@@ -83,5 +85,47 @@ void DirectionViewViewModel::onMapIdChanged(const QString& mapId) {
     if (m_mapId != mapId) {
         m_mapId = mapId;
         emit mapIdChanged();
+    }
+}
+
+void DirectionViewViewModel::onRobotStateChanged(const QString& state) {
+    if (m_robotState != state) {
+        m_robotState = state;
+        
+        if (m_robotState == "IDLE") {
+            // Requirement: If robot in IDLE state, the view is always DirectionView
+            if (AppStateMachine::instance().currentState() != "DirectionView") {
+                qDebug() << "DirectionViewViewModel: Robot is IDLE, forcing DirectionView transition.";
+                AppStateMachine::instance().goToDirection();
+            }
+        }
+        
+        checkIdleReturnStatus();
+    }
+}
+
+void DirectionViewViewModel::onCheckpointChanged(int cpId) {
+    if (m_currentCheckpoint != cpId) {
+        m_currentCheckpoint = cpId;
+        checkIdleReturnStatus();
+    }
+}
+
+void DirectionViewViewModel::checkIdleReturnStatus() {
+    // Only proceed if this view is active
+    if (!m_isActive) return;
+
+    // Condition: Robot is IDLE and NOT at Home (cpId 0)
+    if (m_robotState == "IDLE" && m_currentCheckpoint != 0 && m_currentCheckpoint != -1) {
+        // Trigger the 15s countdown in QML
+        if (!m_idleReturnPending) {
+            qDebug() << "DirectionViewViewModel: Robot is IDLE away from home, starting 15s timeout.";
+            setIdleReturnPending(true);
+        }
+    } else {
+        // If robot starts moving or reaches home, cancel the pending return
+        if (m_idleReturnPending) {
+            setIdleReturnPending(false);
+        }
     }
 }

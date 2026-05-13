@@ -45,6 +45,7 @@ ApplicationWindow {
                 case "SettingsView":      return "SettingsView.qml"
                 case "MapPanelView":      return "MapPanelView.qml"
                 case "DiagnosticsView":   return "DiagnosticsView.qml"
+                case "PresentationView":  return "PresentationView.qml"
                 case "ChatView":          return "ChatView.qml"
                 case "WiFiSettingView":   return "WiFiSettingView.qml"
                 default:                  return "MainView.qml"
