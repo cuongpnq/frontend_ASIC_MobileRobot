@@ -20,7 +20,7 @@ Item {
 
         Timer {
             id: blinkTimer
-            interval: 3000
+            interval: 10000
             running: root.visible
             repeat: true
             onTriggered: {
@@ -53,7 +53,7 @@ Item {
         Text {
             id: standbyText
             anchors.bottom: timeText.top
-            anchors.topMargin: 20
+            anchors.bottomMargin: 100
             anchors.horizontalCenter: parent.horizontalCenter
             text: "Tap anywhere to wake"
             color: "#FFFFFF"
