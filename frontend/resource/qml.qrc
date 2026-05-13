@@ -11,6 +11,7 @@
         <file>PresentationView.qml</file>
         <file>ChatView.qml</file>
         <file>WiFiSettingView.qml</file>
+        <file>StandbyView.qml</file>
         <file>CustomKeyboard.qml</file>
         <file>ContainerBar.qml</file>
         <file>ModeSwitch.qml</file>
@@ -26,6 +27,8 @@
         <file>images/E6_map.png</file>
         <file>images/E6_maplocation.png</file>
         <file>images/location.png</file>
+        <file>images/robot_eyes_open.png</file>
+        <file>images/robot_eyes_closed.png</file>
         <file>images/presentation.png</file>
         <file>images/power_button.png</file>
     </qresource>

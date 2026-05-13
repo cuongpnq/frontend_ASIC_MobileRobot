@@ -20,6 +20,7 @@ public:
 
     QString currentState() const;
 
+public slots:
     // Direct C++ methods to trigger state machine events
     Q_INVOKABLE void goToRunning();
     Q_INVOKABLE void returnToMain();
