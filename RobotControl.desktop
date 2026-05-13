@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Robot Control
+Comment=Launch Robot GUI and AI Server
+Exec=/home/kien/Development/frontend_ASIC_MobileRobot/start_robot_system.sh
+Icon=/home/kien/Development/frontend_ASIC_MobileRobot/frontend/resource/images/UIT_logo.png
+Path=/home/kien/Development/frontend_ASIC_MobileRobot
+Terminal=true
+Categories=Utility;Development;

@@ -1,0 +1,23 @@
+{
+  "maps": {
+    "e1": {
+      "name": "Floor 1",
+      "image": "images/E1_maplocation.png",
+      "checkpoints": [
+        { "id": 0, "name": "Meeting Room (E1.1)", "x": 0.0, "y": 0.0 },
+        { "id": 1, "name": "Elevator", "x": 0.0, "y": 0.0 },
+        { "id": 3, "name": "CELUiT's Office", "x": 0.0, "y": 0.0 }
+      ]
+    },
+    "e6": {
+      "name": "Floor 6",
+      "image": "images/E6_maplocation.png",
+      "checkpoints": [
+        { "id": 0, "name": "LAB Room", "x": 0.0730, "y": 0.7140 },
+        { "id": 1, "name": "Elevator", "x": 0.2920, "y": 0.1382 },
+        { "id": 2, "name": "Meeting Room (E6.3)", "x": 0.6091, "y": 0.3800 },
+        { "id": 3, "name": "Dean's Room", "x": 0.9468, "y": 0.2591 }
+      ]
+    }
+  }
+}

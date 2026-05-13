@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QVariantList>
 
 class DirectionViewViewModel : public QObject {
     Q_OBJECT
@@ -8,6 +9,8 @@ class DirectionViewViewModel : public QObject {
     Q_PROPERTY(bool autoReturnPending READ autoReturnPending NOTIFY autoReturnPendingChanged)
     Q_PROPERTY(bool idleReturnPending READ idleReturnPending NOTIFY idleReturnPendingChanged)
     Q_PROPERTY(QString mapId READ mapId NOTIFY mapIdChanged)
+    Q_PROPERTY(QString mapImage READ mapImage NOTIFY mapIdChanged)
+    Q_PROPERTY(QVariantList locations READ locations NOTIFY mapIdChanged)
 
 public:
     explicit DirectionViewViewModel(QObject* parent = nullptr);
@@ -19,6 +22,8 @@ public:
     bool autoReturnPending() const;
     bool idleReturnPending() const;
     QString mapId() const { return m_mapId; }
+    QString mapImage() const;
+    QVariantList locations() const;
     Q_INVOKABLE void setAutoReturnPending(bool value);
     Q_INVOKABLE void setIdleReturnPending(bool value);
     Q_INVOKABLE void requestMainView();

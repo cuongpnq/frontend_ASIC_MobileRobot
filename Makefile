@@ -62,6 +62,13 @@ else
 	@./start_robot_system.sh
 endif
 
+shortcut:
+	@echo "Creating desktop shortcut..."
+	@cp RobotControl.desktop ~/Desktop/
+	@chmod +x ~/Desktop/RobotControl.desktop
+	@gio set ~/Desktop/RobotControl.desktop metadata::trusted true || true
+	@echo "Shortcut created and enabled on Desktop."
+
 # 4. Cleanup
 clean:
 	@echo "[CLEAN] Removing build files and logs..."

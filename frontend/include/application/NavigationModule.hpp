@@ -7,6 +7,8 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QVariantList>
+#include <QJsonObject>
 
 /**
  * @brief Module for handling high-level robot navigation commands and state feedback.
@@ -54,6 +56,16 @@ public:
      */
     QString getCheckpointName(int cpId) const;
 
+    /**
+     * @brief Returns the image path for the current map.
+     */
+    Q_INVOKABLE QString getMapImage() const;
+
+    /**
+     * @brief Returns a list of locations for the current map.
+     */
+    Q_INVOKABLE QVariantList getLocations() const;
+
 signals:
     /**
      * @brief Emitted when the robot state changes (e.g., IDLE -> NAVIGATING).
@@ -87,6 +99,8 @@ private:
     void checkConnection();
     void requestMapId();
 
+    void loadConfig();
+
     std::shared_ptr<rclcpp::Node> m_node;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr m_cmdPub;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr m_stateSub;
@@ -98,4 +112,5 @@ private:
     bool m_connected;
     int m_currentCheckpoint;
     QString m_mapId = "e6";
+    QJsonObject m_config;
 };

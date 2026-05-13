@@ -1,5 +1,9 @@
 #include "application/NavigationModule.hpp"
 #include <QDebug>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QDir>
 #include <QTimer>
 #include <std_msgs/msg/int32.hpp>
 #include <rclcpp/parameter_client.hpp>
@@ -18,6 +22,7 @@ NavigationModule::NavigationModule(QObject* parent)
 
 void NavigationModule::initialize(std::shared_ptr<rclcpp::Node> node) {
     m_node = node;
+    loadConfig();
     
     // Create Publisher for commands
     m_cmdPub = m_node->create_publisher<std_msgs::msg::String>("/robot/command", 10);
@@ -163,17 +168,72 @@ void NavigationModule::requestMapId() {
 }
 
 QString NavigationModule::getCheckpointName(int cpId) const {
-    if (m_mapId == "e1") {
-        if (cpId == 0) return "Meeting Room (E1.1)";
-        if (cpId == 1) return "Elevator";
-        if (cpId == 3) return "CELUiT's Office";
-    } else if (m_mapId == "e6") {
-        if (cpId == 0) return "LAB Room";
-        if (cpId == 1) return "Elevator";
-        if (cpId == 2) return "Meeting Room (E6.3)";
-        if (cpId == 3) return "Dean's Room";
+    if (m_config.isEmpty()) return "Checkpoint " + QString::number(cpId);
+
+    QJsonObject maps = m_config["maps"].toObject();
+    if (!maps.contains(m_mapId)) return "Checkpoint " + QString::number(cpId);
+
+    QJsonObject map = maps[m_mapId].toObject();
+    QJsonArray checkpoints = map["checkpoints"].toArray();
+
+    for (const auto& cpValue : checkpoints) {
+        QJsonObject cp = cpValue.toObject();
+        if (cp["id"].toInt() == cpId) {
+            return cp["name"].toString();
+        }
     }
     
     if (cpId == -1) return "Unknown";
     return "Checkpoint " + QString::number(cpId);
+}
+
+QString NavigationModule::getMapImage() const {
+    if (m_config.isEmpty()) return "images/E6_maplocation.png";
+
+    QJsonObject maps = m_config["maps"].toObject();
+    if (maps.contains(m_mapId)) {
+        return maps[m_mapId].toObject()["image"].toString();
+    }
+    return "images/E6_maplocation.png";
+}
+
+QVariantList NavigationModule::getLocations() const {
+    QVariantList locations;
+    if (m_config.isEmpty()) return locations;
+
+    QJsonObject maps = m_config["maps"].toObject();
+    if (maps.contains(m_mapId)) {
+        QJsonArray checkpoints = maps[m_mapId].toObject()["checkpoints"].toArray();
+        for (const auto& cpValue : checkpoints) {
+            QJsonObject cp = cpValue.toObject();
+            QVariantMap loc;
+            loc["name"] = cp["name"].toString();
+            loc["cpId"] = cp["id"].toInt();
+            loc["pctX"] = cp["x"].toDouble();
+            loc["pctY"] = cp["y"].toDouble();
+            locations.append(loc);
+        }
+    }
+    return locations;
+}
+
+void NavigationModule::loadConfig() {
+    QString configPath = "frontend/config/navigation_config.json";
+    QFile file(configPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "NavigationModule: Failed to open config file:" << configPath;
+        return;
+    }
+
+    QByteArray data = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+    if (doc.isNull()) {
+        qWarning() << "NavigationModule: Failed to parse config JSON";
+        return;
+    }
+
+    m_config = doc.object();
+    qDebug() << "NavigationModule: Loaded configuration from" << configPath;
 }

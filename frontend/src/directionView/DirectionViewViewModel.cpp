@@ -88,6 +88,22 @@ void DirectionViewViewModel::onMapIdChanged(const QString& mapId) {
     }
 }
 
+QString DirectionViewViewModel::mapImage() const {
+    auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
+    if (navModule) {
+        return navModule->getMapImage();
+    }
+    return "images/E6_maplocation.png";
+}
+
+QVariantList DirectionViewViewModel::locations() const {
+    auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
+    if (navModule) {
+        return navModule->getLocations();
+    }
+    return QVariantList();
+}
+
 void DirectionViewViewModel::onRobotStateChanged(const QString& state) {
     if (m_robotState != state) {
         m_robotState = state;

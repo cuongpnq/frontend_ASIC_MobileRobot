@@ -58,18 +58,13 @@ Item {
 
     function updateLocationModel() {
         locationModel.clear()
-        if (DirectionViewViewModel.mapId === "e1") {
-            locationModel.append({ "name": "Meeting Room (E1.1)", "cpId": 0, "pctX": 0.0, "pctY": 0.0 })
-            locationModel.append({ "name": "Elevator", "cpId": 1, "pctX": 0.0, "pctY": 0.0 })
-            locationModel.append({ "name": "CELUiT's Office", "cpId": 3, "pctX": 0.0, "pctY": 0.0 })
-        } else if (DirectionViewViewModel.mapId === "e6") {
-            locationModel.append({ "name": "LAB Room", "cpId": 0, "pctX": 0.0730, "pctY": 0.7140 })
-            locationModel.append({ "name": "Elevator", "cpId": 1, "pctX": 0.2920, "pctY": 0.1382 })
-            locationModel.append({ "name": "Meeting Room (E6.3)", "cpId": 2, "pctX": 0.6091, "pctY": 0.3800 })
-            locationModel.append({ "name": "Dean's Room", "cpId": 3, "pctX": 0.9468, "pctY": 0.2591 })
-        } else {
-            // Default or unknown fallback
+        var locs = DirectionViewViewModel.locations
+        if (locs.length === 0) {
             locationModel.append({ "name": "Waiting for Map...", "cpId": -1, "pctX": 0.0, "pctY": 0.0 })
+        } else {
+            for (var i = 0; i < locs.length; i++) {
+                locationModel.append(locs[i])
+            }
         }
     }
 
@@ -114,7 +109,7 @@ Item {
         Image {
             id: mapImage
             anchors.centerIn: parent
-            source: "images/E6_maplocation.png"
+            source: DirectionViewViewModel.mapImage
             fillMode: Image.PreserveAspectFit
 
             Repeater {
