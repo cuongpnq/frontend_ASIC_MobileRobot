@@ -138,8 +138,6 @@ void ChatViewViewModel::sendMessage(const QString& message) {
         }
 
         if (entryBestScore > bestScore || (entryBestScore == bestScore && bestScore > 0)) {
-            // If scores are tied, prefer the entry with the longest matching pattern
-            // This ensures "establishment date" (specific) wins over "uit" (generic)
             bestScore = entryBestScore;
             context = entry.response;
         }
@@ -150,14 +148,41 @@ void ChatViewViewModel::sendMessage(const QString& message) {
         qDebug() << "RAG: Matched context =" << context;
     }
 
+    // ── FAST PATH: High-confidence RAG match → bypass LLM entirely ──
+    // When the knowledge base has a near-perfect match, the answer is already
+    // complete. Sending it through the LLM wastes 30-120s for no benefit.
+    if (bestScore >= 0.8f) {
+        qDebug() << "RAG FAST PATH: score" << bestScore << ">= 0.8, returning KB answer directly.";
+        addMessage("ASIC Chatbot", context);
+        m_isThinking = false;
+        m_isGenerating = false;
+        emit isThinkingChanged();
+        emit isGeneratingChanged();
+        emit requestScrollToBottom();
+        return;
+    }
+
     // 2. Augment the prompt using the Phi-3 chat template
+    //    System prompt compressed to ~40 tokens (was ~200) to reduce prefill time.
     QString augmentedPrompt;
-    if (bestScore > 0.3f) {
-        augmentedPrompt = QString("<|system|>\nYou are UIT Assistant, an AI developed by the ASIC Laboratory in the Faculty of Computer Engineering at the University of Information Technology (UIT), VNU-HCM. Your role is to serve as a knowledgeable, friendly, and professional assistant for students, faculty, and visitors. You provide accurate answers to questions related to UIT and the Faculty of Computer Engineering, including departments, lecturers, leadership, organizations, and research activities. You maintain a respectful, clear, and supportive tone in all responses. Always respond in English unless the user explicitly requests another language. Use the knowledge base provided (knowledge.txt) to answer queries about faculty leadership, scientific council, organizations, and lecturers in both departments: Integrated Circuit & Hardware Design, and Embedded Systems & Robotics Design. When asked about topics outside UIT or the faculty, politely redirect or provide general guidance without speculation. Identity: UIT Assistant (ASIC Bot), created by ASIC Laboratory, Faculty of Computer Engineering, UIT, located in Ho Chi Minh City, Vietnam.\nContext: %1<|end|>\n<|user|>\n%2<|end|>\n<|assistant|>\n").arg(context).arg(message);
-        qDebug() << "RAG: Using Phi-3 augmented prompt with context.";
+    if (bestScore > 0.25f) {
+        augmentedPrompt = QString(
+            "<|system|>\n"
+            "You are UIT Assistant (ASIC Bot) at UIT VNU-HCM, Faculty of Computer Engineering. "
+            "Answer concisely using the provided context. Reply in English.\n"
+            "Context: %1<|end|>\n"
+            "<|user|>\n%2<|end|>\n"
+            "<|assistant|>\n"
+        ).arg(context).arg(message);
+        qDebug() << "RAG: Using compact augmented prompt with context.";
     } else {
-        augmentedPrompt = QString("<|user|>\n%1<|end|>\n<|assistant|>\n").arg(message);
-        qDebug() << "RAG: Similarity low (" << bestScore << "), using default template.";
+        augmentedPrompt = QString(
+            "<|system|>\n"
+            "You are UIT Assistant (ASIC Bot). Answer concisely in English.<|end|>\n"
+            "<|user|>\n%1<|end|>\n"
+            "<|assistant|>\n"
+        ).arg(message);
+        qDebug() << "RAG: Similarity low (" << bestScore << "), using minimal template.";
     }
     
     qDebug() << "Final Prompt sent to LLM:\n" << augmentedPrompt;

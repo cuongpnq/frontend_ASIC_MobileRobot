@@ -1,7 +1,7 @@
 # General Identity and Greeting
 hello, hi, hey, greetings, chào:Hello! I am UIT Assistant (ASIC Bot), your AI robot assistant. How can I help you today?
 who are you, identity, what is your name, your job:I am UIT Assistant, an AI developed by the ASIC Laboratory in the Faculty of Computer Engineering at the University of Information Technology (UIT). I am here to help you with information about our faculty.
-uit, university of information technology, vnu-hcm, sce:The University of Information Technology (UIT), VNU-HCM, is a leading university. I am in the Faculty of Computer Engineering (SCE).
+uit, university of information technology, vnu-hcm, fce:The University of Information Technology (UIT), VNU-HCM, is a leading university. I am in the Faculty of Computer Engineering (FCE).
 creator, built, developed, made:I was created by the talented engineers at the ASIC Laboratory.
 
 # Robot Status
@@ -10,12 +10,13 @@ where, location, position, find:I am currently in the ASIC laboratory at UIT, pe
 # Computer Engineering Faculty Leadership
 leadership, dean, chairman, head, son, duy, phan dinh duy:The Faculty Leadership Board includes Dr. Nguyen Minh Son (Dean), Dr. Doan Duy (Vice Dean), and MSc. Phan Dinh Duy (Vice Dean).
 dean, nguyen minh son:Dr. Nguyen Minh Son is the Dean of the Faculty of Computer Engineering. Email: sonnm@uit.edu.vn.
-vice dean, doan duy:Dr. Doan Duy is a Vice Dean of the Faculty. Email: duyd@uit.edu.vn.
-vice dean, phan dinh duy:MSc. Phan Dinh Duy is a Vice Dean of the Faculty. Email: duypd@uit.edu.vn.
+vice dean, doan duy:Dr. Doan Duy and MSc. Phan Dinh Duy are Vice Dean of the Faculty
+doan duy:Dr. Doan Duy is a Vice Dean of the Faculty. Email: duyd@uit.edu.vn.
+phan dinh duy:MSc. Phan Dinh Duy is a Vice Dean of the Faculty. Email: duypd@uit.edu.vn.
 
 # Departments & Lecturers
-asic department, integrated circuit, hardware design, ic design, vlsi, khai, huy:The ASIC Department focuses on VLSI, ASIC, FPGA, and microelectronics. Head of Dept: Assoc. Prof. Dr. Trinh Le Huy (huytl@uit.edu.vn). Other staff: Dr. Lam Duc Khai (khaild@uit.edu.vn), Dr. Nguyen Mau Toan, etc.
-embedded systems, robotics, automation, iot, nghia, duy, hung:The Embedded Systems and Robotics Department focuses on IoT, robotics, and automation. Head of Dept: MSc. Le Hoai Nghia (nghialh@uit.edu.vn). Other staff: Dr. Doan Duy (duyd@uit.edu.vn), Dr. Cao Van Hung, etc.
+asic department, integrated circuit, hardware design, ic design, vlsi:The ASIC Department focuses on VLSI, ASIC, FPGA, and microelectronics. Head of Dept: Assoc. Prof. Dr. Trinh Le Huy (huytl@uit.edu.vn). Other staff: Dr. Lam Duc Khai (khaild@uit.edu.vn), Dr. Nguyen Mau Toan, etc.
+embedded systems, robotics, automation, iot:The Embedded Systems and Robotics Department focuses on IoT, robotics, and automation. Head of Dept: MSc. Le Hoai Nghia (nghialh@uit.edu.vn). Other staff: Dr. Doan Duy (duyd@uit.edu.vn), Dr. Cao Van Hung, etc.
 lecturers, staff, professors, faculty names, teaching:Key lecturers include Dr. Lam Duc Khai, Dr. Nguyen Minh Son, Assoc. Prof. Dr. Trinh Le Huy, MSc. Le Hoai Nghia, Dr. Doan Duy, and many others in ASIC and Embedded departments.
 
 # Councils & Organizations

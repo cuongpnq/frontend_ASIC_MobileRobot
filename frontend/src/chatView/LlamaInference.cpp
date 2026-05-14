@@ -2,6 +2,7 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QEventLoop>
@@ -39,7 +40,7 @@ bool LlamaInference::loadModel(const QString& modelPath) {
     
     reply->deleteLater();
     manager->deleteLater();
-    return true;
+    return m_isLoaded;
 }
 
 QFuture<QString> LlamaInference::generateResponse(const QString& prompt) {
@@ -47,8 +48,29 @@ QFuture<QString> LlamaInference::generateResponse(const QString& prompt) {
         QNetworkAccessManager manager; // Locally created for thread-safe concurrent usage
         QJsonObject json;
         json["prompt"] = prompt;
-        json["n_predict"] = 512; // Increased to prevent truncation for long faculty info
-        json["stream"] = true; 
+
+        // ── Optimized generation parameters for Jetson ──
+        // Cap output at 128 tokens — FAQ answers rarely exceed 50 tokens.
+        // The stop tokens will terminate generation *before* hitting this limit.
+        json["n_predict"] = 128;
+
+        // Stop tokens: instruct the server to stop as soon as the model
+        // emits any of these markers, preventing wasted generation.
+        QJsonArray stopTokens;
+        stopTokens.append("<|end|>");
+        stopTokens.append("<|endoftext|>");
+        stopTokens.append("</s>");
+        stopTokens.append("\n\n\n");
+        json["stop"] = stopTokens;
+
+        // Low temperature for factual, deterministic answers (FAQ use-case)
+        json["temperature"] = 0.2;
+        json["top_k"] = 20;
+        json["top_p"] = 0.8;
+        json["repeat_penalty"] = 1.3;
+
+        // Stream for progressive UI updates
+        json["stream"] = true;
         
         QNetworkRequest request(QUrl("http://localhost:8080/completion"));
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");

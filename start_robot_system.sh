@@ -34,7 +34,17 @@ fi
 
 echo "[SYSTEM] Starting AI Server in background..."
 # Run the server on port 8080. Using GPU layers if possible.
-$SERVER_BIN -m "$MODEL_PATH" --port 8080 --host 0.0.0.0 --ctx-size 2048 --threads 4 --n-gpu-layers 33 -fa on -np 1 > llama_server.log 2>&1 &
+# Optimized for Jetson Xavier:
+#   --ctx-size 512:    Prompts are ~300 tokens max. Saves ~576 MiB KV cache vs 2048.
+#   --threads 6:       Xavier NX has 6 ARM cores. Use all of them.
+#   --batch-size 256:  Smaller batch = faster prompt processing on limited RAM.
+#   --ubatch-size 128: Micro-batch optimization for ARM architecture.
+#   --mlock:           Pin model in RAM, prevent OS from swapping to disk.
+#   --no-warmup:       Skip warmup run, saves 1-2s on startup.
+$SERVER_BIN -m "$MODEL_PATH" --port 8080 --host 0.0.0.0 \
+    --ctx-size 512 --threads 6 --n-gpu-layers 33 \
+    --batch-size 256 --ubatch-size 128 \
+    -fa on -np 1 --mlock --no-warmup > llama_server.log 2>&1 &
 SERVER_PID=$!
 
 # Wait for server to be ready
