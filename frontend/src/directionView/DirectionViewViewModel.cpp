@@ -20,6 +20,8 @@ DirectionViewViewModel::DirectionViewViewModel(QObject* parent)
     auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
     if (navModule) {
         m_mapId = navModule->mapId();
+        m_robotState = navModule->robotState();
+        m_currentCheckpoint = navModule->currentCheckpoint();
         connect(navModule.get(), &NavigationModule::mapIdChanged, this, &DirectionViewViewModel::onMapIdChanged);
         connect(navModule.get(), &NavigationModule::robotStateChanged, this, &DirectionViewViewModel::onRobotStateChanged);
         connect(navModule.get(), &NavigationModule::currentCheckpointChanged, this, &DirectionViewViewModel::onCheckpointChanged);

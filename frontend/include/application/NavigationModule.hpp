@@ -54,6 +54,21 @@ public:
     QStringList availableMaps() const;
 
     /**
+     * @brief Returns the current robot state.
+     */
+    QString robotState() const { return m_robotState; }
+
+    /**
+     * @brief Returns the last received status message.
+     */
+    QString statusMessage() const { return m_statusMessage; }
+
+    /**
+     * @brief Returns the last received checkpoint ID.
+     */
+    int currentCheckpoint() const { return m_currentCheckpoint; }
+
+    /**
      * @brief Returns the human-readable name of a checkpoint.
      */
     QString getCheckpointName(int cpId) const;
@@ -112,7 +127,9 @@ private:
     QTimer* m_connectionTimer;
     QTimer* m_mapUpdateTimer;
     bool m_connected;
-    int m_currentCheckpoint;
+    int m_currentCheckpoint = -1;
     QString m_mapId = "e6";
+    QString m_robotState = "IDLE";
+    QString m_statusMessage = "Ready";
     QJsonObject m_config;
 };

@@ -215,6 +215,7 @@ Item {
     }
 
     Text {
+        id: mapText
         x: mapBackground.x+35
         y: mapBackground.y+25
         text: "Map"
@@ -271,16 +272,29 @@ Item {
         }
     }
 
+    Text {
+        id: listRoomText
+        anchors.bottom: listRoom.top
+        anchors.left: listRoom.left
+        anchors.margins: 10
+        visible: DirectionViewViewModel.mapId === "a1"
+        text: "List room"
+        font.pixelSize: 24
+        font.bold: true
+        font.family: "Inter"
+        color: "#2C2C2C"
+    }
     Rectangle {
         id: listRoom
         width: mapBackground.width/3.5
         height: 200
-        anchors.bottom: mapButton.top
-        anchors.right: mapButton.right
-        anchors.margins: 10
-        color: "#EFEFEF"
+        anchors.top: mapText.bottom
+        anchors.left: mapText.left
+        anchors.topMargin: listRoomText.height + 30
+        color: '#b9efefef'
         visible: DirectionViewViewModel.mapId === "a1"
         radius: 25
+        
         ListView {
             anchors.fill: parent
             anchors.margins: 10

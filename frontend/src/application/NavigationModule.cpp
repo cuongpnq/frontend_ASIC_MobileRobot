@@ -9,7 +9,7 @@
 #include <rclcpp/parameter_client.hpp>
 
 NavigationModule::NavigationModule(QObject* parent)
-    : QObject(parent), m_connected(false), m_currentCheckpoint(0)
+    : QObject(parent), m_connected(false), m_currentCheckpoint(-1)
 {
     m_connectionTimer = new QTimer(this);
     connect(m_connectionTimer, &QTimer::timeout, this, &NavigationModule::checkConnection);
@@ -90,13 +90,19 @@ void NavigationModule::sendReset() {
 }
 
 void NavigationModule::onStateCallback(const std_msgs::msg::String::SharedPtr msg) {
-    QString state = QString::fromStdString(msg->data);
-    emit robotStateChanged(state);
+    QString state = QString::fromStdString(msg->data).trimmed();
+    if (m_robotState != state) {
+        m_robotState = state;
+        emit robotStateChanged(m_robotState);
+    }
 }
 
 void NavigationModule::onStatusCallback(const std_msgs::msg::String::SharedPtr msg) {
     QString status = QString::fromStdString(msg->data);
-    emit statusMessageReceived(status);
+    if (m_statusMessage != status) {
+        m_statusMessage = status;
+        emit statusMessageReceived(m_statusMessage);
+    }
 }
 
 void NavigationModule::onCheckpointCallback(const std_msgs::msg::Int32::SharedPtr msg) {

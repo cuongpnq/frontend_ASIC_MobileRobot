@@ -13,6 +13,11 @@ RunningViewViewModel::RunningViewViewModel(QObject* parent)
     
     auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
     if (navModule) {
+        m_robotState = navModule->robotState();
+        m_statusMessage = navModule->statusMessage();
+        m_currentCheckpoint = navModule->currentCheckpoint();
+        m_currentCheckpointName = navModule->getCheckpointName(m_currentCheckpoint);
+
         connect(navModule.get(), &NavigationModule::robotStateChanged, this, &RunningViewViewModel::onRobotStateChanged);
         connect(navModule.get(), &NavigationModule::statusMessageReceived, this, &RunningViewViewModel::onStatusMessageReceived);
         connect(navModule.get(), &NavigationModule::currentCheckpointChanged, this, &RunningViewViewModel::onCheckpointChanged);
