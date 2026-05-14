@@ -50,6 +50,8 @@ public:
      * @brief Returns the identified map ID (e.g., "e1", "e6").
      */
     QString mapId() const { return m_mapId; }
+    void setMapId(const QString& mapId);
+    QStringList availableMaps() const;
 
     /**
      * @brief Returns the human-readable name of a checkpoint.

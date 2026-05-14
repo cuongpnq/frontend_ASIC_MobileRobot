@@ -11,6 +11,7 @@ class DirectionViewViewModel : public QObject {
     Q_PROPERTY(QString mapId READ mapId NOTIFY mapIdChanged)
     Q_PROPERTY(QString mapImage READ mapImage NOTIFY mapIdChanged)
     Q_PROPERTY(QVariantList locations READ locations NOTIFY mapIdChanged)
+    Q_PROPERTY(QStringList availableMaps READ availableMaps NOTIFY mapIdChanged)
 
 public:
     explicit DirectionViewViewModel(QObject* parent = nullptr);
@@ -29,6 +30,8 @@ public:
     Q_INVOKABLE void requestMainView();
     Q_INVOKABLE void requestRunningView();
     Q_INVOKABLE void startNavigation(int cpId);
+    Q_INVOKABLE void setMapId(const QString& mapId);
+    QStringList availableMaps() const;
 
 signals:
     void isActiveChanged();

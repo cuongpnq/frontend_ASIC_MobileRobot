@@ -149,6 +149,8 @@ void NavigationModule::requestMapId() {
                     
                     if (path.find("_e1.yaml") != std::string::npos) mapId = "e1";
                     else if (path.find("_e6.yaml") != std::string::npos) mapId = "e6";
+                    else if (path.find("_a_map.yaml") != std::string::npos) mapId = "a1";
+                    else if (path.find("a_map") != std::string::npos) mapId = "a1"; // Generic match
                     
                     if (m_mapId != mapId) {
                         m_mapId = mapId;
@@ -188,13 +190,13 @@ QString NavigationModule::getCheckpointName(int cpId) const {
 }
 
 QString NavigationModule::getMapImage() const {
-    if (m_config.isEmpty()) return "images/E6_maplocation.png";
+    if (m_config.isEmpty()) return "images/a_maplocation.png";
 
     QJsonObject maps = m_config["maps"].toObject();
     if (maps.contains(m_mapId)) {
         return maps[m_mapId].toObject()["image"].toString();
     }
-    return "images/E6_maplocation.png";
+    return "images/a_maplocation.png";
 }
 
 QVariantList NavigationModule::getLocations() const {
@@ -215,6 +217,29 @@ QVariantList NavigationModule::getLocations() const {
         }
     }
     return locations;
+}
+
+void NavigationModule::setMapId(const QString& mapId) {
+    if (m_mapId != mapId) {
+        m_mapId = mapId;
+        qDebug() << "NavigationModule: Switched map to:" << m_mapId;
+        emit mapIdChanged(m_mapId);
+        
+        // Inform ROS if connected
+        if (m_node) {
+            auto parameters_client = std::make_shared<rclcpp::AsyncParametersClient>(m_node, "/navigator");
+            if (parameters_client->service_is_ready()) {
+                // Heuristic: map name maps to checkpoints_NAME.yaml
+                std::string yamlPath = "checkpoints_" + mapId.toStdString() + ".yaml";
+                parameters_client->set_parameters({rclcpp::Parameter("checkpoint_file", yamlPath)});
+            }
+        }
+    }
+}
+
+QStringList NavigationModule::availableMaps() const {
+    if (m_config.isEmpty()) return QStringList();
+    return m_config["maps"].toObject().keys();
 }
 
 void NavigationModule::loadConfig() {

@@ -145,3 +145,18 @@ void DirectionViewViewModel::checkIdleReturnStatus() {
         }
     }
 }
+
+void DirectionViewViewModel::setMapId(const QString& mapId) {
+    auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
+    if (navModule) {
+        navModule->setMapId(mapId);
+    }
+}
+
+QStringList DirectionViewViewModel::availableMaps() const {
+    auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
+    if (navModule) {
+        return navModule->availableMaps();
+    }
+    return QStringList();
+}

@@ -106,39 +106,111 @@ Item {
         radius: 32
         color: '#80dad8d8'
 
-        Image {
-            id: mapImage
-            anchors.centerIn: parent
-            source: DirectionViewViewModel.mapImage
-            fillMode: Image.PreserveAspectFit
+        Flickable {
+            id: mapFlickable
+            anchors.fill: parent
+            anchors.margins: 20
+            clip: true
+            contentWidth: mapContainer.width
+            contentHeight: mapContainer.height
+            boundsBehavior: Flickable.StopAtBounds
 
-            Repeater {
-                model: locationModel
-                delegate: Item {
-                    // Center an invisible clickable area (80x80) over the percentage point
-                    x: mapImage.width * model.pctX - width / 2
-                    y: mapImage.height * model.pctY - height / 2
-                    width: 80
-                    height: 80
-                    visible: model.pctX > 0.0 && model.pctY > 0.0
+            PinchArea {
+                anchors.fill: parent
+                z: -1 // Behind content
+                pinch.target: null
+                pinch.minimumScale: 1.0
+                pinch.maximumScale: 5.0
+                
+                onPinchUpdated: {
+                    var oldScale = mapContainer.zoomScale
+                    mapContainer.zoomScale = Math.min(5.0, Math.max(1.0, mapContainer.zoomScale * pinch.scale / pinch.previousScale))
+                    
+                    var zoomFactor = mapContainer.zoomScale / oldScale
+                    mapFlickable.contentX = (mapFlickable.contentX + pinch.center.x) * zoomFactor - pinch.center.x
+                    mapFlickable.contentY = (mapFlickable.contentY + pinch.center.y) * zoomFactor - pinch.center.y
+                }
+            }
 
-                    // Optional: uncomment the Rectangle below to visually debug hitboxes
-                    // Rectangle { anchors.fill: parent; color: "blue"; opacity: 0.3; radius: width/2 }
+            MouseArea {
+                anchors.fill: parent
+                z: -1 // Behind content
+                acceptedButtons: Qt.NoButton
+                propagateComposedEvents: true
+                onWheel: {
+                    var oldScale = mapContainer.zoomScale
+                    var zoomStep = wheel.angleDelta.y > 0 ? 1.1 : 0.9
+                    mapContainer.zoomScale = Math.min(5.0, Math.max(1.0, mapContainer.zoomScale * zoomStep))
+                    
+                    var zoomFactor = mapContainer.zoomScale / oldScale
+                    mapFlickable.contentX = (mapFlickable.contentX + wheel.x) * zoomFactor - wheel.x
+                    mapFlickable.contentY = (mapFlickable.contentY + wheel.y) * zoomFactor - wheel.y
+                }
+            }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            if (model.name === selectedLocation) {
-                                sameLocationPopup.open()
-                            } else {
-                                pendingLocation = model.name
-                                pendingCpId = model.cpId
-                                confirmPopup.open()
+            Item {
+                id: mapContainer
+                width: mapFlickable.width * zoomScale
+                height: mapFlickable.height * zoomScale
+                
+                property double zoomScale: 1.0
+                onZoomScaleChanged: {
+                    if (zoomScale <= 1.0) {
+                        mapFlickable.contentX = 0
+                        mapFlickable.contentY = 0
+                    }
+                }
+                
+                Image {
+                    id: mapImage
+                    anchors.fill: parent
+                    source: DirectionViewViewModel.mapImage
+                    fillMode: Image.PreserveAspectFit
+                    
+                    onStatusChanged: {
+                        if (status === Image.Ready) {
+                            mapContainer.zoomScale = 1.0
+                        }
+                    }
+
+                    // MouseArea {
+                    //     anchors.fill: parent
+                    //     onClicked: {
+                    //         var pctX = (mouse.x - (mapImage.width - mapImage.paintedWidth) / 2) / mapImage.paintedWidth
+                    //         var pctY = (mouse.y - (mapImage.height - mapImage.paintedHeight) / 2) / mapImage.paintedHeight
+                    //         console.log("Map Clicked - ID: " + DirectionViewViewModel.mapId + " pctX: " + pctX.toFixed(4) + ", pctY: " + pctY.toFixed(4))
+                    //     }
+                    // }
+
+                    Repeater {
+                        model: locationModel
+                        delegate: Item {
+                            z: 100 // High z-index to ensure clickability
+                            // Coordinate mapping using parent.width/height (mapContainer/mapImage)
+                            x: (mapImage.width - mapImage.paintedWidth) / 2 + mapImage.paintedWidth * model.pctX - width / 2
+                            y: (mapImage.height - mapImage.paintedHeight) / 2 + mapImage.paintedHeight * model.pctY - height / 2
+                            width: DirectionViewViewModel.mapId === "a1" ? 30 : 80
+                            height: DirectionViewViewModel.mapId === "a1" ? 40 : 80
+                            visible: model.pctX > 0.0 && model.pctY > 0.0
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    if (model.name === selectedLocation) {
+                                        sameLocationPopup.open()
+                                    } else {
+                                        pendingLocation = model.name
+                                        pendingCpId = model.cpId
+                                        confirmPopup.open()
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
+
+
         }
     }
 
@@ -149,6 +221,34 @@ Item {
         font.pixelSize: 48
         font.bold: true
         color: '#000000'
+        z: 10
+    }
+
+    Rectangle {
+        id: switchButton
+        anchors.top: mapBackground.top
+        anchors.right: mapBackground.right
+        anchors.topMargin: 25
+        anchors.rightMargin: 35
+        width: 140
+        height: 50
+        color: "#3498db"
+        radius: 8
+        z: 10
+        visible: DirectionViewViewModel.availableMaps.length > 1
+
+        Text {
+            anchors.centerIn: parent
+            text: "Switch"
+            color: "white"
+            font.pixelSize: 24
+            font.bold: true
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: mapSwitchPopup.open()
+        }
     }
 
     // ── Auto-home countdown hint ──────────────────────────────────────
@@ -446,6 +546,65 @@ Item {
         }
     }
 
-    // Back button logic is in ContainerBar, but we could add a local one if needed.
-    // For now, it's blank as requested.
+    Popup {
+        id: mapSwitchPopup
+        anchors.centerIn: parent
+        width: 400
+        height: Math.min(DirectionViewViewModel.availableMaps.length * 80 + 100, 600)
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            color: "#f8f9fa"
+            radius: 20
+            border.color: "#dee2e6"
+            border.width: 2
+        }
+
+        Column {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 20
+
+            Text {
+                text: "Select Map"
+                font.pixelSize: 32
+                font.bold: true
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            ListView {
+                width: parent.width
+                height: parent.height - 80
+                model: DirectionViewViewModel.availableMaps
+                clip: true
+                spacing: 10
+
+                delegate: Rectangle {
+                    width: parent.width
+                    height: 70
+                    color: modelData === DirectionViewViewModel.mapId ? "#e9ecef" : "white"
+                    radius: 10
+                    border.color: modelData === DirectionViewViewModel.mapId ? "#3498db" : "#ced4da"
+                    border.width: modelData === DirectionViewViewModel.mapId ? 2 : 1
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: modelData
+                        font.pixelSize: 26
+                        font.bold: modelData === DirectionViewViewModel.mapId
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            DirectionViewViewModel.setMapId(modelData)
+                            mapSwitchPopup.close()
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
