@@ -48,9 +48,9 @@ Item {
         anchors.top: containerBar.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: inputBarBackground.top
+        anchors.bottom: sampleQuestionsRow.visible ? sampleQuestionsRow.top : inputBarBackground.top
         anchors.margins: 20
-        anchors.bottomMargin: 20
+        anchors.bottomMargin: sampleQuestionsRow.visible ? 10 : 20
         color: "white"
         radius: 20
         border.color: '#80e0e0e0'
@@ -182,6 +182,48 @@ Item {
                     color: "#2C2C2C"
                 }
                 Item { height: 10; width: 1 }
+            }
+        }
+    }
+    
+    // ── Sample Questions ──────────────────────────────────────────
+    Row {
+        id: sampleQuestionsRow
+        anchors.bottom: inputBarBackground.top
+        anchors.left: inputBarBackground.left
+        anchors.bottomMargin: 15
+        spacing: 15
+        visible: ChatViewViewModel.isLoaded && !ChatViewViewModel.isThinking && !ChatViewViewModel.isGenerating && !Qt.inputMethod.visible
+
+        Repeater {
+            model: [
+                "What is the established date of UIT?",
+                "Who is Dean of Computer Engineering department?",
+                "Tell me about UIT",
+                "Tell me about faculty of Computer Engineering"
+            ]
+            delegate: Rectangle {
+                height: 50
+                width: questionText.implicitWidth + 40
+                radius: 25
+                color: '#00ffffff'
+                border.color: sampleArea.pressed ? "#007AFF" : "#E0E0E0"
+                border.width: 1
+
+                Text {
+                    id: questionText
+                    anchors.centerIn: parent
+                    text: modelData
+                    font.pixelSize: 16
+                    font.family: "Inter"
+                    color: "#007AFF"
+                }
+
+                MouseArea {
+                    id: sampleArea
+                    anchors.fill: parent
+                    onClicked: ChatViewViewModel.sendMessage(modelData)
+                }
             }
         }
     }
