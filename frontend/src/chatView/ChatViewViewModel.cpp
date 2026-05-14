@@ -265,7 +265,7 @@ void ChatViewViewModel::loadKnowledgeBase() {
     m_knowledgeBase.clear();
     
     // Use absolute path for development on Jetson Xavier
-    QString absolutePath = "/home/kien/Development/frontend_ASIC_MobileRobot/frontend/knowledge.txt";
+    QString absolutePath = QCoreApplication::applicationDirPath() + "/../../frontend/knowledge.txt";
     QFile file(absolutePath);
     
     if (!file.exists()) {
