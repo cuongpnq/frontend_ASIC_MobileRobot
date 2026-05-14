@@ -60,7 +60,7 @@ Item {
         locationModel.clear()
         var locs = DirectionViewViewModel.locations
         if (locs.length === 0) {
-            locationModel.append({ "name": "Waiting for Map...", "cpId": -1, "pctX": 0.0, "pctY": 0.0 })
+            locationModel.append({ "name": "Waiting for Map...", "room": "Waiting for Map...", "cpId": -1, "pctX": 0.0, "pctY": 0.0 })
         } else {
             for (var i = 0; i < locs.length; i++) {
                 locationModel.append(locs[i])
@@ -196,10 +196,10 @@ Item {
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: {
-                                    if (model.name === selectedLocation) {
+                                    if (model.room === selectedLocation) {
                                         sameLocationPopup.open()
                                     } else {
-                                        pendingLocation = model.name
+                                        pendingLocation = model.room
                                         pendingCpId = model.cpId
                                         confirmPopup.open()
                                     }
@@ -271,6 +271,43 @@ Item {
         }
     }
 
+    Rectangle {
+        id: listRoom
+        width: mapBackground.width/3.5
+        height: 200
+        anchors.bottom: mapButton.top
+        anchors.right: mapButton.right
+        anchors.margins: 10
+        color: "#EFEFEF"
+        visible: DirectionViewViewModel.mapId === "a1"
+        radius: 25
+        ListView {
+            anchors.fill: parent
+            anchors.margins: 10
+            model: locationModel
+            clip: true
+            delegate: Item {
+                width: parent.width
+                height: 60
+                
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 15
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: model.name
+                    font.pixelSize: 20
+                    font.family: "Inter"
+                    color: "#2C2C2C"
+                }
+            }
+            
+            ScrollIndicator.vertical: ScrollIndicator {
+                anchors.right: parent.right
+                anchors.margins: 2
+            }
+        }
+    }
+
     Image {
         id: mapButton
         anchors.bottom: mapBackground.bottom
@@ -331,7 +368,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.left: parent.left
                         anchors.leftMargin: 20
-                        text: model.name
+                        text: model.room
                         font.pixelSize: 24
                         color: "#333333"
                     }
@@ -340,11 +377,11 @@ Item {
                         id: mouseArea
                         anchors.fill: parent
                         onClicked: {
-                            if (model.name === selectedLocation) {
+                            if (model.room === selectedLocation) {
                                 locationPopup.close()
                                 sameLocationPopup.open()
                             } else {
-                                pendingLocation = model.name
+                                pendingLocation = model.room
                                 pendingCpId = model.cpId
                                 locationPopup.close()
                                 confirmPopup.open()

@@ -181,7 +181,9 @@ QString NavigationModule::getCheckpointName(int cpId) const {
     for (const auto& cpValue : checkpoints) {
         QJsonObject cp = cpValue.toObject();
         if (cp["id"].toInt() == cpId) {
-            return cp["name"].toString();
+            QString name = cp["name"].toString();
+            if (name.isEmpty()) name = cp["room"].toString();
+            return name;
         }
     }
     
@@ -209,7 +211,12 @@ QVariantList NavigationModule::getLocations() const {
         for (const auto& cpValue : checkpoints) {
             QJsonObject cp = cpValue.toObject();
             QVariantMap loc;
-            loc["name"] = cp["name"].toString();
+            QString room = cp["room"].toString();
+            QString name = cp["name"].toString();
+            if (name.isEmpty()) name = room;
+
+            loc["room"] = room;
+            loc["name"] = name;
             loc["cpId"] = cp["id"].toInt();
             loc["pctX"] = cp["x"].toDouble();
             loc["pctY"] = cp["y"].toDouble();
