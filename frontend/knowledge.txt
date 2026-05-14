@@ -21,3 +21,4 @@ lecturers, staff, professors, faculty names, teaching:Key lecturers include Dr. 
 # Councils & Organizations
 scientific council, research board:The Scientific Council includes Dr. Nguyen Minh Son, Dr. Lam Duc Khai, Dr. Doan Duy, Dr. Trinh Le Huy, and MSc. Le Hoai Nghia.
 union, organization, student association, youth union:Faculty organizations include Trade Union (MSc. Pham Minh Quan), Youth Union (BEng. Nguyen Thanh Nhan), and Student Association (Than Thanh Khoi).
+establishment, establishment date, established, founded: The University of Information Technology (UIT), VNU-HCM was established on June 8th, 2006.

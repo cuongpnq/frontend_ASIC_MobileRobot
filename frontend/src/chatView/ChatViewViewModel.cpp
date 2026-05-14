@@ -137,7 +137,9 @@ void ChatViewViewModel::sendMessage(const QString& message) {
             if (textMatchScore * 0.8f > entryBestScore) entryBestScore = textMatchScore * 0.8f;
         }
 
-        if (entryBestScore > bestScore) {
+        if (entryBestScore > bestScore || (entryBestScore == bestScore && bestScore > 0)) {
+            // If scores are tied, prefer the entry with the longest matching pattern
+            // This ensures "establishment date" (specific) wins over "uit" (generic)
             bestScore = entryBestScore;
             context = entry.response;
         }
