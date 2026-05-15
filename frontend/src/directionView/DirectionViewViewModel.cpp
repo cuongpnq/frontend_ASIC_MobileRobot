@@ -95,7 +95,7 @@ QString DirectionViewViewModel::mapImage() const {
     if (navModule) {
         return navModule->getMapImage();
     }
-    return "images/E6_maplocation.png";
+    return "images/a_maplocation.png";
 }
 
 QVariantList DirectionViewViewModel::locations() const {

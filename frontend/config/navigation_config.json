@@ -40,20 +40,6 @@
           "y": 0.7583
         },
         {
-          "id": 104,
-          "room": "A104",
-          "name": "A104 Phong Dao tao Dai hoc tu xa",
-          "x": 0.5492,
-          "y": 0.7607
-        },
-        {
-          "id": 105,
-          "room": "A105",
-          "name": "A105 Phong To chuc - Hanh chinh",
-          "x": 0.4921,
-          "y": 0.8762
-        },
-        {
           "id": 106,
           "room": "A106",
           "name": "A106 Phong hoc Chuong trinh tien tien",
@@ -61,39 +47,11 @@
           "y": 0.8071
         },
         {
-          "id": 107,
-          "room": "A107",
-          "name": "A107 Phong To chuc - Hanh chinh",
-          "x": 0.4532,
-          "y": 0.8798
-        },
-        {
-          "id": 108,
-          "room": "A108",
-          "name": "A108 Phong Quan tri thiet bi",
-          "x": 0.2889,
-          "y": 0.8048
-        },
-        {
-          "id": 109,
-          "room": "A109",
-          "name": "A109 Phong Pho hieu truong",
-          "x": 0.4071,
-          "y": 0.8786
-        },
-        {
           "id": 110,
           "room": "A110",
           "name": "A110 Phong Thi nghiem He thong thong tin",
           "x": 0.2500,
           "y": 0.7952
-        },
-        {
-          "id": 111,
-          "room": "A111",
-          "name": "A111 Phong Ke hoach - Tai chinh",
-          "x": 0.3254,
-          "y": 0.8762
         },
         {
           "id": 112,
@@ -138,39 +96,11 @@
           "y": 0.4619
         },
         {
-          "id": 118,
-          "room": "A118",
-          "name": "A118 Phong Thanh tra - Phap che - Dam bao chat luong",
-          "x": 0.2738,
-          "y": 0.3929
-        },
-        {
-          "id": 119,
-          "room": "A119",
-          "name": "A119 Phong Pho hieu truong",
-          "x": 0.2865,
-          "y": 0.3333
-        },
-        {
           "id": 120,
           "room": "A120",
           "name": "A120 Phong may Chuong trinh tien tien",
           "x": 0.5135,
           "y": 0.3988
-        },
-        {
-          "id": 121,
-          "room": "A121",
-          "name": "A121 Phong Thanh tra - Phap che - Dam bao chat luong",
-          "x": 0.3310,
-          "y": 0.3345
-        },
-        {
-          "id": 123,
-          "room": "A123",
-          "name": "A123 Phong hop",
-          "x": 0.3960,
-          "y": 0.3369
         },
         {
           "id": 125,

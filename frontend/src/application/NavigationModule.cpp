@@ -151,7 +151,7 @@ void NavigationModule::requestMapId() {
                 auto result = future.get();
                 if (!result.empty()) {
                     std::string path = result[0].as_string();
-                    QString mapId = "e6"; // Fallback to default
+                    QString mapId = "a1"; // Fallback to default
                     
                     if (path.find("_e1.yaml") != std::string::npos) mapId = "e1";
                     else if (path.find("_e6.yaml") != std::string::npos) mapId = "e6";
