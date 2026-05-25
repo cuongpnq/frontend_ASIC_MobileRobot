@@ -236,7 +236,7 @@ Item {
         color: "#3498db"
         radius: 8
         z: 10
-        visible: DirectionViewViewModel.availableMaps.length > 1
+        visible: DirectionViewViewModel.availableMaps.length > 1 && UserManager.currentRole > UserManager.User
 
         Text {
             anchors.centerIn: parent

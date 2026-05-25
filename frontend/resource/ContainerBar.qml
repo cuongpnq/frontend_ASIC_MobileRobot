@@ -61,7 +61,7 @@ Item {
         color: "#000000"
     }
 
-    // ── WiFi + Battery (right side) ──
+    // ── WiFi + Battery + Role badge (right side) ──
     Row {
         id: statusRow
         anchors.right: parent.right
@@ -127,6 +127,16 @@ Item {
                     onConnectedStrengthChanged: wifiIcon.children[0].requestPaint()
                 }
             }
+        }
+
+        // Role indicator — just a clean colored circle representing the current user mode.
+        Rectangle {
+            id: roleIndicator
+            width: 24
+            height: 24
+            radius: 12
+            color: UserManager.roleBadgeColor
+            anchors.verticalCenter: parent.verticalCenter
         }
 
         // Battery group (Text and Icon)

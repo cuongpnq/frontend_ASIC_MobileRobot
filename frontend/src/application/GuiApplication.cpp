@@ -1,5 +1,6 @@
 #include "application/GuiApplication.hpp"
 #include "application/AppStateMachine.hpp"
+#include "application/UserManager.hpp"
 #include "mainView/MainViewViewModel.hpp"
 #include "containerBar/ContainerBarViewModel.hpp"
 #include "runningView/RunningViewViewModel.hpp"
@@ -29,6 +30,11 @@ GuiApplication::GuiApplication(int &argc, char **argv)
     auto monitor = new UserInteractionMonitor(app.get());
     app->installEventFilter(monitor);
     engine->rootContext()->setContextProperty("UserInteraction", monitor);
+
+    // Wire interaction monitor → UserManager inactivity reset (3-min auto-logout)
+    auto& userManager = UserManager::instance();
+    QObject::connect(monitor, &UserInteractionMonitor::interacted,
+                     &userManager, &UserManager::resetInactivityTimer);
 
     // ── ROS 2 Initialization ──────────────────────────────────────
     auto& rosManager = ROSManager::instance();
@@ -144,6 +150,19 @@ GuiApplication::GuiApplication(int &argc, char **argv)
             QQmlEngine::setObjectOwnership(instance, QQmlEngine::CppOwnership);
             return instance;
         });
+
+    qmlRegisterSingletonType<UserManager>("com.asic.mobilerobot.viewmodels", 1, 0, "UserManager",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            auto instance = &UserManager::instance();
+            QQmlEngine::setObjectOwnership(instance, QQmlEngine::CppOwnership);
+            return instance;
+        });
+
+    // Register UserRole enum so QML can compare against UserManager.User etc.
+    qmlRegisterUncreatableType<UserManager>("com.asic.mobilerobot.viewmodels", 1, 0, "UserRole",
+        "UserRole is a namespace for the UserManager role enum");
 
     // Initialize the backend state machine
 
