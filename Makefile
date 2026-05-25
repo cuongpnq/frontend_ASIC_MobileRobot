@@ -40,9 +40,9 @@ setup:
 		qml-module-qtquick-controls2 \
 		qml-module-qtquick-layouts \
 		qml-module-qtgraphicaleffects \
-		wget git cmake build-essential curl
+		wget git cmake build-essential curl zstd
 	@echo "[SETUP] Cloning AI inference core..."
-	chmod +x ./frontend/setup_llama.sh && ./frontend/setup_llama.sh
+	chmod +x ./setup_ollama.sh && ./setup_ollama.sh
 
 # 2. Build GUI & AI Server
 build:

@@ -120,6 +120,9 @@ Item {
             clip: true
             model: ChatViewViewModel.messages
             spacing: 15
+            
+            // Auto scroll to bottom when contents or text wrapper heights expand
+            onContentHeightChanged: mainFlickable.positionViewAtEnd()
 
             // Loading Indicator
             Rectangle {
@@ -197,10 +200,10 @@ Item {
 
         Repeater {
             model: [
+                "How to use this app?",
                 "What is the established date of UIT?",
                 "Who is Dean of Computer Engineering department?",
-                "Tell me about UIT",
-                "Tell me about faculty of Computer Engineering"
+                "Tell me about UIT"
             ]
             delegate: Rectangle {
                 height: 50
@@ -303,8 +306,9 @@ Item {
     Connections {
         target: ChatViewViewModel
         onRequestScrollToBottom: {
-            mainFlickable.positionViewAtEnd()
-            mainFlickable.contentY = Math.max(0, mainFlickable.contentHeight - mainFlickable.height)
+            Qt.callLater(function() {
+                mainFlickable.positionViewAtEnd()
+            })
         }
     }
 }

@@ -1,64 +1,58 @@
 #!/bin/bash
-# Robot AI System Launcher
+# Robot AI System Launcher with Ollama Integration
+
 cleanup() {
     echo "[SYSTEM] Shutting down Robot System..."
-    [ ! -z "$SERVER_PID" ] && kill $SERVER_PID
-    pkill -f llama-server
     exit
 }
 trap cleanup SIGINT SIGTERM EXIT
 
-# Pre-Cleanup: Ensure no existing servers are on port 8080
-pkill -f llama-server
-
-# 2. Build or verify paths
 PROJECT_ROOT=$(pwd)
-SERVER_BIN="$PROJECT_ROOT/build-output/frontend/build-output/llama-server/llama-server"
-MODEL_PATH="$PROJECT_ROOT/frontend/models/phi-3-mini.gguf"
 APP_BIN="$PROJECT_ROOT/build-output/frontend/frontend_app"
 
-if [ ! -f "$SERVER_BIN" ]; then
+# 1. Verify that the QML app binary exists
+if [ ! -f "$APP_BIN" ]; then
     # Fallback to build output root search
-    SERVER_BIN=$(find build-output -type f -name "llama-server" | head -n 1)
+    APP_BIN=$(find build-output -type f -name "frontend_app" | head -n 1)
 fi
 
-if [ ! -x "$SERVER_BIN" ]; then
-    echo "[ERROR] AI Server binary not found or not executable: $SERVER_BIN"
+if [ ! -x "$APP_BIN" ]; then
+    echo "[ERROR] Robot GUI App binary not found or not executable: $APP_BIN"
+    echo "Please build the application first: make build"
     exit 1
 fi
 
-if [ ! -f "$MODEL_PATH" ]; then
-    echo "[ERROR] Model file not found: $MODEL_PATH"
+# 2. Orchestrate Ollama Server
+echo "[SYSTEM] Checking if Ollama Server is running..."
+
+# Pre-check: Verify Ollama is installed
+if ! command -v ollama &>/dev/null; then
+    echo -e "\033[0;31m[ERROR] Ollama is not installed on this system.\033[0m"
+    echo -e "\033[1;33mPlease install and configure Ollama first by running:\033[0m"
+    echo -e "  \033[0;32mmake setup\033[0m"
     exit 1
 fi
 
-echo "[SYSTEM] Starting AI Server in background..."
-# Run the server on port 8080. Using GPU layers if possible.
-# Optimized for Jetson Xavier:
-#   --ctx-size 512:    Prompts are ~300 tokens max. Saves ~576 MiB KV cache vs 2048.
-#   --threads 6:       Xavier NX has 6 ARM cores. Use all of them.
-#   --batch-size 256:  Smaller batch = faster prompt processing on limited RAM.
-#   --ubatch-size 128: Micro-batch optimization for ARM architecture.
-#   --mlock:           Pin model in RAM, prevent OS from swapping to disk.
-#   --no-warmup:       Skip warmup run, saves 1-2s on startup.
-$SERVER_BIN -m "$MODEL_PATH" --port 8080 --host 0.0.0.0 \
-    --ctx-size 512 --threads 6 --n-gpu-layers 33 \
-    --batch-size 256 --ubatch-size 128 \
-    -fa on -np 1 --mlock --no-warmup > llama_server.log 2>&1 &
-SERVER_PID=$!
+if ! curl -s --connect-timeout 2 http://localhost:11434/ >/dev/null; then
+    echo "[SYSTEM] Ollama is not active. Attempting to start Ollama system service..."
+    sudo systemctl start ollama || true
+fi
 
-# Wait for server to be ready
-echo "[SYSTEM] Waiting for AI Server to initialize..."
-while ! curl -s --connect-timeout 2 --max-time 5 http://localhost:8080/health | grep -q "ok"; do
-    if ! kill -0 $SERVER_PID 2>/dev/null; then
-        echo "[ERROR] AI Server process died unexpectedly."
-        echo "Last 10 lines of llama_server.log:"
-        tail -n 10 llama_server.log
-        exit 1
-    fi
+# Wait for Ollama to accept connections
+while ! curl -s --connect-timeout 2 http://localhost:11434/ >/dev/null; do
+    echo "[SYSTEM] Waiting for Ollama Server to be ready on port 11434..."
     sleep 1
 done
-echo "[SYSTEM] AI Server is READY."
+echo "[SYSTEM] Ollama Server is READY."
+
+# Verify that Qwen 2.5 model is downloaded, otherwise pull it
+echo "[SYSTEM] Verifying Qwen 2.5 model availability..."
+if ! ollama list | grep -q "qwen2.5"; then
+    echo "[SYSTEM] qwen2.5 model not found locally. Pulling from Ollama registry..."
+    ollama pull qwen2.5
+else
+    echo "[SYSTEM] qwen2.5 model is ready."
+fi
 
 # 3. Launch Frontend App
 echo "[SYSTEM] Sourcing ROS environment..."
@@ -73,14 +67,8 @@ fi
 echo "[SYSTEM] Launching Robot GUI..."
 export QT_QPA_PLATFORM=xcb
 
-# Disable Shared Memory and increase discovery resilience (fixes "send_goal failed")
-# export RMW_FASTRTPS_USE_SHM=0
-# export FASTRTPS_DEFAULT_PROFILES_FILE=""
-
 # Run Frontend
 $APP_BIN
 
 # 4. Cleanup on exit
 echo "[SYSTEM] Shutting down Robot System..."
-kill $SERVER_PID
-pkill -f llama-server

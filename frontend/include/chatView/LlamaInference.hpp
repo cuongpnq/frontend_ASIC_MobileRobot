@@ -44,6 +44,7 @@ private:
     QNetworkReply* m_currentReply = nullptr;
     bool m_isLoaded = false;
     bool m_isLoading = false;
+    QString m_modelName = "qwen2.5";
 };
 
 #endif // LLAMAINFERENCE_HPP

@@ -94,70 +94,9 @@ ament_target_dependencies(frontend_app
     nav2_msgs
 )
 
-if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/llama.cpp")
-    # --- llama.cpp Integration ---
-    # Support for Jetson Xavier / NVIDIA GPU
-    list(APPEND CMAKE_PREFIX_PATH "/usr/local/cuda")
-    set(CUDAToolkit_ROOT "/usr/local/cuda")
-    find_package(CUDAToolkit QUIET)
-
-    if (CUDAToolkit_FOUND)
-        message(STATUS "CUDA found: ${CUDAToolkit_BIN_DIR}")
-        set(GGML_CUDA ON CACHE BOOL "Enable CUDA for GPU optimization" FORCE)
-        set(LLAMA_CUDA ON CACHE BOOL "Enable CUDA for GPU optimization" FORCE)
-        # Optimize for Xavier if on ARM (AArch64)
-        if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm")
-            set(GGML_CUDA_FORCE_MMV ON CACHE BOOL "Force MMV kernels for Jetson" FORCE)
-            set(CMAKE_CUDA_ARCHITECTURES 72 CACHE STRING "Target Xavier architecture" FORCE)
-        endif()
-    else()
-        message(WARNING "CUDA Toolkit not found. Building for CPU only.")
-        set(GGML_CUDA OFF CACHE BOOL "Enable CUDA for GPU optimization" FORCE)
-        set(LLAMA_CUDA OFF CACHE BOOL "Enable CUDA for GPU optimization" FORCE)
-    endif()
-    
-    set(LLAMA_BUILD_COMMON ON CACHE BOOL "Build llama.cpp common" FORCE)
-    set(LLAMA_BUILD_TOOLS OFF CACHE BOOL "Disable llama.cpp tools to save time" FORCE)
-    set(LLAMA_BUILD_EXAMPLES OFF CACHE BOOL "Disable llama.cpp examples" FORCE)
-    set(LLAMA_BUILD_TESTS OFF CACHE BOOL "Disable llama.cpp tests" FORCE)
-    set(LLAMA_BUILD_SERVER ON CACHE BOOL "Enable llama.cpp server" FORCE)
-    set(LLAMA_BUILD_WEBUI OFF CACHE BOOL "Disable server web UI" FORCE)
-    
-    # Define variable needed by mtmd and other tools when added manually
-    set(LLAMA_INSTALL_VERSION "0.0.0")
-    
-    # Save current flags and mute warnings for 3rdparty
-    set(OLD_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-    set(OLD_CUDA_FLAGS ${CMAKE_CUDA_FLAGS})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -w")
-    
-    add_subdirectory(3rdparty/llama.cpp)
-    
-    # Explicitly add necessary subdirectories to match expected binary paths
-    # Using manual binary directories fixes the path for start_robot_system.sh
-    add_subdirectory(3rdparty/llama.cpp/tools/mtmd build-output/llama-mtmd)
-    add_subdirectory(3rdparty/llama.cpp/tools/server build-output/llama-server)
-    
-    # Restore flags for the project
-    set(CMAKE_CXX_FLAGS ${OLD_CXX_FLAGS})
-    set(CMAKE_CUDA_FLAGS ${OLD_CUDA_FLAGS})
-    
-    # Ensure llama-server is built as it's needed by the start script
-    if (TARGET llama-server)
-        add_dependencies(frontend_app llama-server)
-    endif()
-    
-    target_link_libraries(frontend_app llama ggml)
-    
-    if (GGML_CUDA)
-        target_compile_options(frontend_app PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-w>)
-    endif()
-    message(STATUS "llama.cpp integrated (GGML_CUDA: ${GGML_CUDA}, SERVER: ON)")
-else()
-    message(WARNING "llama.cpp not found in 3rdparty directory. Please run setup_llama.sh")
-endif()
-# -----------------------------
+# --- Ollama REST API Integration ---
+# (External network communication, no local build dependencies)
+# -----------------------------------
 
 if (Qt5VirtualKeyboard_FOUND)
     target_link_libraries(frontend_app Qt5::VirtualKeyboard)

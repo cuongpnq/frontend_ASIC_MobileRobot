@@ -3,6 +3,7 @@
 #include "application/AppStateMachine.hpp"
 #include <QGuiApplication>
 #include <QInputMethod>
+#include <QTimer>
 #include <QFile>
 #include <QTextStream>
 #include <QVariantMap>
@@ -148,27 +149,57 @@ void ChatViewViewModel::sendMessage(const QString& message) {
         qDebug() << "RAG: Matched context =" << context;
     }
 
-    // ── FAST PATH: High-confidence RAG match → bypass LLM entirely ──
-    // When the knowledge base has a near-perfect match, the answer is already
-    // complete. Sending it through the LLM wastes 30-120s for no benefit.
     if (bestScore >= 0.8f) {
-        qDebug() << "RAG FAST PATH: score" << bestScore << ">= 0.8, returning KB answer directly.";
-        addMessage("ASIC Chatbot", context);
+        qDebug() << "RAG FAST PATH: score" << bestScore << ">= 0.8, typing response instantly without thinking bubble.";
+        
         m_isThinking = false;
-        m_isGenerating = false;
+        m_isGenerating = true;
         emit isThinkingChanged();
         emit isGeneratingChanged();
-        emit requestScrollToBottom();
+        
+        // Add an empty message bubble for the typing animation
+        addMessage("ASIC Chatbot", "");
+        
+        // Fast typing timer: appends 2 characters every 15ms for a rapid, sleek appearance
+        QTimer* typingTimer = new QTimer(this);
+        typingTimer->setInterval(15);
+        
+        connect(typingTimer, &QTimer::timeout, this, [this, typingTimer, context, idx = 0]() mutable {
+            if (idx < context.length()) {
+                int charsToAppend = qMin(2, context.length() - idx);
+                QString chunk = context.mid(idx, charsToAppend);
+                idx += charsToAppend;
+                
+                if (!m_messages.isEmpty()) {
+                    QVariantMap lastMsg = m_messages.last().toMap();
+                    if (lastMsg["sender"].toString() == "ASIC Chatbot") {
+                        lastMsg["message"] = lastMsg["message"].toString() + chunk;
+                        m_messages[m_messages.size() - 1] = lastMsg;
+                        emit messagesChanged();
+                        emit requestScrollToBottom();
+                    }
+                }
+            } else {
+                typingTimer->stop();
+                typingTimer->deleteLater();
+                
+                m_isGenerating = false;
+                emit isGeneratingChanged();
+                emit requestScrollToBottom();
+            }
+        });
+        
+        typingTimer->start();
         return;
     }
 
-    // 2. Augment the prompt using the Phi-3 chat template
-    //    System prompt compressed to ~40 tokens (was ~200) to reduce prefill time.
+    // 2. Augment the prompt using standard chat template
+    //    System prompt compressed to ~40 tokens to reduce prefill time.
     QString augmentedPrompt;
     if (bestScore > 0.25f) {
         augmentedPrompt = QString(
             "<|system|>\n"
-            "You are UIT Assistant (ASIC Bot) at UIT VNU-HCM, Faculty of Computer Engineering. "
+            "You are UIT Assistant (ASIC Bot), an autonomous mobile navigation and direction robot at the Faculty of Computer Engineering, UIT. "
             "Answer concisely using the provided context. Reply in English.\n"
             "Context: %1<|end|>\n"
             "<|user|>\n%2<|end|>\n"
@@ -178,7 +209,7 @@ void ChatViewViewModel::sendMessage(const QString& message) {
     } else {
         augmentedPrompt = QString(
             "<|system|>\n"
-            "You are UIT Assistant (ASIC Bot). Answer concisely in English.<|end|>\n"
+            "You are UIT Assistant (ASIC Bot), an autonomous mobile navigation and direction robot. Answer concisely in English.<|end|>\n"
             "<|user|>\n%1<|end|>\n"
             "<|assistant|>\n"
         ).arg(message);
@@ -233,7 +264,7 @@ void ChatViewViewModel::clearHistory() {
 }
 
 void ChatViewViewModel::refreshModel() {
-    m_llama->loadModel("phi-3-mini.gguf");
+    m_llama->loadModel("qwen2.5");
 }
 
 void ChatViewViewModel::stopChat() {
@@ -325,6 +356,7 @@ void ChatViewViewModel::loadKnowledgeBase() {
                     entry.patternWordSets.append(QSet<QString>::fromList(p.split(wordSplitRule, QString::SkipEmptyParts)));
                 }
                 entry.response = responsePart.trimmed();
+                entry.response.replace("\\n", "\n");
                 m_knowledgeBase.append(entry);
             }
         }

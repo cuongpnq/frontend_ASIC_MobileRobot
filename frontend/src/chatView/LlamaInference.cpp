@@ -17,9 +17,19 @@ bool LlamaInference::loadModel(const QString& modelPath) {
     m_isLoading = true;
     emit isLoadingChanged();
     
+    // Parse model name from incoming path (backward compatibility with GUI config references)
+    if (modelPath.contains("qwen", Qt::CaseInsensitive)) {
+        m_modelName = "qwen2.5";
+    } else if (modelPath.contains("llama", Qt::CaseInsensitive)) {
+        m_modelName = "llama3.1";
+    } else {
+        m_modelName = "qwen2.5"; // Default optimized model for Jetson Xavier
+    }
+    
     // Create local manager for thread-safety (loading occurs in separate thread)
     QNetworkAccessManager* manager = new QNetworkAccessManager();
-    QNetworkRequest request(QUrl("http://localhost:8080/health"));
+    // Ollama runs on port 11434 by default. GET http://localhost:11434/ returns 200 OK "Ollama is running"
+    QNetworkRequest request(QUrl("http://localhost:11434/"));
     QNetworkReply* reply = manager->get(request);
     
     QEventLoop loop;
@@ -28,10 +38,10 @@ bool LlamaInference::loadModel(const QString& modelPath) {
     
     if (reply->error() == QNetworkReply::NoError) {
         m_isLoaded = true;
-        qDebug() << "AI Server detected and connected on localhost:8080";
+        qDebug() << "Ollama Server detected on localhost:11434. Target model:" << m_modelName;
     } else {
         m_isLoaded = false;
-        qWarning() << "AI Server not found. Error:" << reply->errorString();
+        qWarning() << "Ollama Server not found on localhost:11434. Error:" << reply->errorString();
     }
     
     m_isLoading = false;
@@ -47,32 +57,62 @@ QFuture<QString> LlamaInference::generateResponse(const QString& prompt) {
     return QtConcurrent::run([this, prompt]() -> QString {
         QNetworkAccessManager manager; // Locally created for thread-safe concurrent usage
         QJsonObject json;
-        json["prompt"] = prompt;
+        json["model"] = m_modelName;
+        json["stream"] = true;
 
-        // ── Optimized generation parameters for Jetson ──
-        // Cap output at 128 tokens — FAQ answers rarely exceed 50 tokens.
-        // The stop tokens will terminate generation *before* hitting this limit.
-        json["n_predict"] = 128;
+        // Parse template structure into standard Ollama system instructions and user prompt
+        QString systemPrompt = "";
+        QString userPrompt = prompt;
 
-        // Stop tokens: instruct the server to stop as soon as the model
-        // emits any of these markers, preventing wasted generation.
+        if (prompt.contains("<|system|>")) {
+            int sysStart = prompt.indexOf("<|system|>") + 10;
+            int sysEnd = prompt.indexOf("<|end|>", sysStart);
+            if (sysEnd == -1) sysEnd = prompt.indexOf("<|endoftext|>", sysStart);
+            if (sysEnd != -1) {
+                systemPrompt = prompt.mid(sysStart, sysEnd - sysStart).trimmed();
+                
+                int userStart = prompt.indexOf("<|user|>\n", sysEnd);
+                if (userStart != -1) {
+                    userStart += 9;
+                    int userEnd = prompt.indexOf("<|end|>", userStart);
+                    if (userEnd == -1) userEnd = prompt.indexOf("<|endoftext|>", userStart);
+                    if (userEnd != -1) {
+                        userPrompt = prompt.mid(userStart, userEnd - userStart).trimmed();
+                    } else {
+                        userPrompt = prompt.mid(userStart).trimmed();
+                        if (userPrompt.endsWith("<|assistant|>")) {
+                            userPrompt.chop(13);
+                            userPrompt = userPrompt.trimmed();
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!systemPrompt.isEmpty()) {
+            json["system"] = systemPrompt;
+        }
+        json["prompt"] = userPrompt;
+
+        // Wrap inference options for Ollama
+        QJsonObject options;
+        options["num_predict"] = 128; // Cap output at 128 tokens for low-latency FAQ
+
         QJsonArray stopTokens;
         stopTokens.append("<|end|>");
         stopTokens.append("<|endoftext|>");
         stopTokens.append("</s>");
         stopTokens.append("\n\n\n");
-        json["stop"] = stopTokens;
+        options["stop"] = stopTokens;
 
-        // Low temperature for factual, deterministic answers (FAQ use-case)
-        json["temperature"] = 0.2;
-        json["top_k"] = 20;
-        json["top_p"] = 0.8;
-        json["repeat_penalty"] = 1.3;
+        options["temperature"] = 0.2;
+        options["top_k"] = 20;
+        options["top_p"] = 0.8;
+        options["repeat_penalty"] = 1.3;
 
-        // Stream for progressive UI updates
-        json["stream"] = true;
+        json["options"] = options;
         
-        QNetworkRequest request(QUrl("http://localhost:8080/completion"));
+        QNetworkRequest request(QUrl("http://localhost:11434/api/generate"));
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
         QNetworkReply* reply = manager.post(request, QJsonDocument(json).toJson());
@@ -85,17 +125,15 @@ QFuture<QString> LlamaInference::generateResponse(const QString& prompt) {
         
         connect(reply, &QNetworkReply::readyRead, [this, reply, &fullContent]() {
             while (reply->canReadLine()) {
-                QByteArray line = reply->readLine();
-                if (line.startsWith("data: ")) {
-                    QByteArray jsonData = line.mid(6);
-                    QJsonDocument doc = QJsonDocument::fromJson(jsonData);
-                    if (!doc.isNull()) {
-                        QString token = doc.object().value("content").toString();
-                        fullContent += token;
-                        QMetaObject::invokeMethod(this, [this, token]() {
-                            emit tokenGenerated(token);
-                        }, Qt::QueuedConnection);
-                    }
+                QByteArray line = reply->readLine().trimmed();
+                if (line.isEmpty()) continue;
+                QJsonDocument doc = QJsonDocument::fromJson(line);
+                if (!doc.isNull()) {
+                    QString token = doc.object().value("response").toString();
+                    fullContent += token;
+                    QMetaObject::invokeMethod(this, [this, token]() {
+                        emit tokenGenerated(token);
+                    }, Qt::QueuedConnection);
                 }
             }
         });
@@ -107,7 +145,7 @@ QFuture<QString> LlamaInference::generateResponse(const QString& prompt) {
 
         QString finalResult = fullContent;
         if (reply->error() != QNetworkReply::NoError && reply->error() != QNetworkReply::OperationCanceledError) {
-            finalResult = "Error: AI Server communication failed.";
+            finalResult = "Error: Ollama Server communication failed.";
         }
         
         reply->deleteLater();
