@@ -16,7 +16,7 @@ ApplicationWindow {
     Timer {
         id: standbyTimer
         interval: 60000 // 1 minute
-        running: !window.isStandby && AppStateMachine.currentState !== "RunningView"
+        running: !window.isStandby && AppStateMachine.currentState !== "RunningView" && !PresentationViewViewModel.isFileViewerOpen
         repeat: false
         onTriggered: {
             if (AppStateMachine.currentState !== "RunningView") {

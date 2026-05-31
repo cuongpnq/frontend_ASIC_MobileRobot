@@ -3,3 +3,4 @@ build*
 llama_server.log
 frontend/3rdparty/
 frontend/models/
+frontend/resource/fileupload/

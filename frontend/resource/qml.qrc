@@ -32,5 +32,7 @@
         <file>images/presentation.png</file>
         <file>images/power_button.png</file>
         <file>images/a_maplocation.png</file>
+        <file>images/delete_icon.png</file>
+        <file>images/refresh_icon.png</file>
     </qresource>
 </RCC>
