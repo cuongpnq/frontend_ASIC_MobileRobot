@@ -83,21 +83,68 @@ Item {
                 Column {
                     anchors.top: diagnosticsTitle.bottom
                     anchors.left: parent.left
-                    anchors.topMargin: 50
+                    anchors.right: parent.right
+                    anchors.topMargin: 30
                     anchors.leftMargin: 20
-                    spacing: 8
+                    anchors.rightMargin: 20
+                    spacing: 14
 
-                    Text {
-                        text: "Battery Health: <b>Good</b>"
-                        font.pixelSize: 40
-                        font.family: "Inter"
-                        color: "#333333"
-                        textFormat: Text.RichText
+                    // CPU row
+                    Column {
+                        width: parent.width
+                        spacing: 4
+                        Text {
+                            text: "CPU: <b>" + DiagnosticsViewViewModel.cpuUsage.toFixed(1) + "%</b>"
+                            font.pixelSize: 36
+                            font.family: "Inter"
+                            color: "#333333"
+                            textFormat: Text.RichText
+                        }
+                        Rectangle {
+                            width: parent.width
+                            height: 8
+                            radius: 4
+                            color: "#C5C3C3"
+                            Rectangle {
+                                width: Math.max(0, parent.width * DiagnosticsViewViewModel.cpuUsage / 100)
+                                height: parent.height
+                                radius: 4
+                                color: DiagnosticsViewViewModel.cpuUsage > 80 ? "#f44336" : DiagnosticsViewViewModel.cpuUsage > 50 ? "#ff9800" : "#4caf50"
+                                Behavior on width { NumberAnimation { duration: 300 } }
+                            }
+                        }
                     }
 
+                    // RAM row
+                    Column {
+                        width: parent.width
+                        spacing: 4
+                        Text {
+                            text: "RAM: <b>" + DiagnosticsViewViewModel.ramUsage.toFixed(1) + "%</b>  (" + (DiagnosticsViewViewModel.ramUsedMB / 1024).toFixed(1) + "/" + (DiagnosticsViewViewModel.ramTotalMB / 1024).toFixed(1) + " GB)"
+                            font.pixelSize: 36
+                            font.family: "Inter"
+                            color: "#333333"
+                            textFormat: Text.RichText
+                        }
+                        Rectangle {
+                            width: parent.width
+                            height: 8
+                            radius: 4
+                            color: "#C5C3C3"
+                            Rectangle {
+                                width: Math.max(0, parent.width * DiagnosticsViewViewModel.ramUsage / 100)
+                                height: parent.height
+                                radius: 4
+                                color: DiagnosticsViewViewModel.ramUsage > 85 ? "#f44336" : DiagnosticsViewViewModel.ramUsage > 60 ? "#ff9800" : "#2196F3"
+                                Behavior on width { NumberAnimation { duration: 300 } }
+                            }
+                        }
+                    }
+
+                    // FPS row
                     Text {
-                        text: "Motors: <b>Stable</b>"
-                        font.pixelSize: 40
+                        text: "FPS: <b>" + DiagnosticsViewViewModel.fps + "</b>"
+                        font.pixelSize: 36
                         font.family: "Inter"
                         color: "#333333"
                         textFormat: Text.RichText

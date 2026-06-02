@@ -8,6 +8,7 @@
         <file>SettingsView.qml</file>
         <file>MapPanelView.qml</file>
         <file>DiagnosticsView.qml</file>
+        <file>DiagnosticCard.qml</file>
         <file>PresentationView.qml</file>
         <file>ChatView.qml</file>
         <file>WiFiSettingView.qml</file>
