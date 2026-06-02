@@ -32,11 +32,13 @@ The robot runs a touch-screen application with the following views:
 
 2. **Presentation View** — Upload and display slide files (.pptx) or text files (.txt) from a mobile phone by scanning a QR code. The robot can render slides on screen.
 
-3. **Control Center** — Monitor robot sensor data, behaviors, and system status. Requires Administrator access.
+3. **Control Center** — Monitor robot sensor data, behaviors, and system status. Also provides access to system diagnostics and map settings. Requires Administrator access.
 
-4. **Settings** — Manage Wi-Fi connections, switch user modes, and access system diagnostics.
+4. **Settings** — Manage Wi-Fi connections and switch user modes.
 
 5. **AI Chat (this view)** — Talk to me directly on the robot's touchscreen. I run locally using a language model via Ollama.
+
+6. **Diagnostics View** — Accessible from the Control Center. Shows real-time monitoring and historical graphs of CPU utilization, RAM usage, frame rate (FPS), network speed, and disk storage capacity.
 
 ## User Access Roles
 There are 3 access levels, shown by a badge icon in the top-right corner of the screen:
