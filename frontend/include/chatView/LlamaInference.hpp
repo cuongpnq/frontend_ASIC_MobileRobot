@@ -6,7 +6,6 @@
 #include <QFuture>
 #include <QtConcurrent>
 
-// Use Qt Network for separate process communication
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -28,7 +27,12 @@ public:
     bool isLoading() const { return m_isLoading; }
 
     bool loadModel(const QString& modelPath);
-    QFuture<QString> generateResponse(const QString& prompt);
+
+    // Send a full message history to /api/chat (maintains conversation context).
+    // systemPrompt  — injected as the very first "system" message
+    // messages      — array of {role, content} objects for the conversation history
+    QFuture<QString> chat(const QString& systemPrompt, const QJsonArray& messages);
+
     void stopInference();
 
 signals:

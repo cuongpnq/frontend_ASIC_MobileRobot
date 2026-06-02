@@ -86,16 +86,40 @@ void PresentationViewViewModel::requestMainView() {
 }
 
 void PresentationViewViewModel::startMobileImport() {
-    QString localIp;
-    const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
-    for (const QHostAddress &address: QNetworkInterface::allAddresses()) {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost) {
-            localIp = address.toString();
-            break;
+    // Collect all non-loopback IPv4 addresses, preferring externally routable
+    // ones over AP/hotspot addresses (e.g. 192.168.4.x used by Jetson AP mode).
+    const QHostAddress localhost(QHostAddress::LocalHost);
+    QStringList allIps;
+    QString preferredIp;
+
+    for (const QNetworkInterface& iface : QNetworkInterface::allInterfaces()) {
+        // Skip loopback and inactive interfaces
+        if (iface.flags().testFlag(QNetworkInterface::IsLoopBack)) continue;
+        if (!iface.flags().testFlag(QNetworkInterface::IsUp))       continue;
+        if (!iface.flags().testFlag(QNetworkInterface::IsRunning))  continue;
+
+        for (const QNetworkAddressEntry& entry : iface.addressEntries()) {
+            const QHostAddress addr = entry.ip();
+            if (addr.protocol() != QAbstractSocket::IPv4Protocol) continue;
+            if (addr == localhost) continue;
+
+            QString ip = addr.toString();
+            allIps << ip;
+
+            // Skip Jetson AP subnet (192.168.4.x) for the QR preferred address
+            // so that same-router clients get the correct routable IP.
+            if (preferredIp.isEmpty() && !ip.startsWith("192.168.4.")) {
+                preferredIp = ip;
+            }
         }
     }
 
-    if (localIp.isEmpty()) {
+    // Fallback: if every address was on the AP subnet, use the first one found
+    if (preferredIp.isEmpty() && !allIps.isEmpty()) {
+        preferredIp = allIps.first();
+    }
+
+    if (preferredIp.isEmpty()) {
         m_uploadStatus = "Error: No network connection detected.";
         emit uploadStatusChanged();
         return;
@@ -108,11 +132,20 @@ void PresentationViewViewModel::startMobileImport() {
     }
 
     if (m_server->startServer(8081)) {
-        QString uploadUrl = QString("http://%1:8081").arg(localIp);
+        QString uploadUrl = QString("http://%1:8081").arg(preferredIp);
         m_qrCodeUrl = QString("https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=%1").arg(uploadUrl);
         m_isMobileImportActive = true;
-        m_uploadStatus = "Waiting for mobile upload...";
-        
+
+        // Show the primary IP; if multiple IPs exist, list them so the user
+        // can manually try an alternative if the QR address doesn't connect.
+        if (allIps.size() > 1) {
+            m_uploadStatus = QString("QR → http://%1:8081\nAlso try: %2")
+                             .arg(preferredIp)
+                             .arg(allIps.join(", "));
+        } else {
+            m_uploadStatus = "Waiting for mobile upload...";
+        }
+
         emit qrCodeUrlChanged();
         emit isMobileImportActiveChanged();
         emit uploadStatusChanged();

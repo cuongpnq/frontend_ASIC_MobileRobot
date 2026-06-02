@@ -5,15 +5,9 @@
 #include <QStringList>
 #include <QVariantList>
 #include <QFutureWatcher>
-#include <QVector>
-#include <QSet>
+#include <QJsonArray>
+#include <QJsonObject>
 #include "LlamaInference.hpp"
-
-struct KnowledgeEntry {
-    QStringList patterns;
-    QVector<QSet<QString>> patternWordSets;
-    QString response;
-};
 
 class ChatViewViewModel : public QObject {
     Q_OBJECT
@@ -65,18 +59,20 @@ private slots:
 
 private:
     void addMessage(const QString& sender, const QString& message);
-    void loadKnowledgeBase();
-    float calculateSimilarity(const QSet<QString>& set1, const QSet<QString>& set2, const QString& s1, const QString& s2);
+    void loadSystemPrompt();
 
-    LlamaInference* m_llama;
-    QVariantList m_messages;
-    bool m_isThinking = false;
+    LlamaInference* m_llama = nullptr;
+    QVariantList m_messages;          // UI display list
+    QJsonArray   m_chatHistory;       // Conversation history sent to the model
+    QString      m_systemPrompt;      // Loaded from knowledge.txt once at startup
+
+    bool m_isThinking  = false;
     bool m_isGenerating = false;
-    QFutureWatcher<QString> m_inferenceWatcher;
-    QVector<KnowledgeEntry> m_knowledgeBase;
     bool m_hasVirtualKeyboard = true;
     bool m_keyboardVisible = false;
     bool m_isActive = false;
+
+    QFutureWatcher<QString> m_inferenceWatcher;
 };
 
 #endif // CHATVIEWVIEWMODEL_HPP

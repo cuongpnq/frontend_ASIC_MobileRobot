@@ -45,13 +45,13 @@ while ! curl -s --connect-timeout 2 http://localhost:11434/ >/dev/null; do
 done
 echo "[SYSTEM] Ollama Server is READY."
 
-# Verify that Qwen 2.5 model is downloaded, otherwise pull it
-echo "[SYSTEM] Verifying Qwen 2.5 model availability..."
-if ! ollama list | grep -q "qwen2.5"; then
-    echo "[SYSTEM] qwen2.5 model not found locally. Pulling from Ollama registry..."
-    ollama pull qwen2.5
+# Verify that Qwen 2.5 0.5B model is downloaded, otherwise pull it
+echo "[SYSTEM] Verifying Qwen 2.5:0.5b model availability..."
+if ! ollama list | grep -q "qwen2.5:0.5b"; then
+    echo "[SYSTEM] qwen2.5:0.5b model not found locally. Pulling from Ollama registry..."
+    ollama pull qwen2.5:0.5b
 else
-    echo "[SYSTEM] qwen2.5 model is ready."
+    echo "[SYSTEM] qwen2.5:0.5b model is ready."
 fi
 
 # 3. Launch Frontend App

@@ -3,6 +3,8 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QString>
+#include <QMap>
+#include <QByteArray>
 
 class SimpleUploadServer : public QTcpServer {
     Q_OBJECT
@@ -22,6 +24,15 @@ private slots:
     void onDisconnected();
 
 private:
+    // Per-socket receive buffer — accumulates chunks until the full
+    // HTTP request (headers + body) has arrived.
+    QMap<QTcpSocket*, QByteArray> m_buffers;
+
     void handleGet(QTcpSocket* socket);
     void handlePost(QTcpSocket* socket, const QByteArray& data);
+
+    // Returns true when the full HTTP request has been received.
+    bool isRequestComplete(const QByteArray& data) const;
+    // Parse Content-Length from raw request headers.
+    qint64 parseContentLength(const QByteArray& data) const;
 };

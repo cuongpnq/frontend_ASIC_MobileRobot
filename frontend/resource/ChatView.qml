@@ -200,7 +200,7 @@ Item {
 
         Repeater {
             model: [
-                "How to use this app?",
+                "What is your responbility here?",
                 "What is the established date of UIT?",
                 "Who is Dean of Computer Engineering department?",
                 "Tell me about UIT"

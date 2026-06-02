@@ -18,6 +18,7 @@ Item {
         Image { anchors.horizontalCenter: parent.horizontalCenter; y: 120; width: 1300; height: 1105; source: "images/UIT_logo.png"; opacity: 0.15 }
     }
 
+
     Text {
         id: settingsText
         anchors.top: containerBar.bottom
@@ -28,7 +29,9 @@ Item {
         font.pixelSize: 96; font.bold: true; font.family: "Inter"; color: "#000000"
     }
 
+    // Settings list — no keyboard needed, so no Flickable required
     Column {
+        id: settingsColumn
         anchors.top: settingsText.bottom
         anchors.left: parent.left
         anchors.leftMargin: 200
@@ -44,23 +47,61 @@ Item {
             MouseArea { anchors.fill: parent; onClicked: SettingsViewViewModel.requestWifiSettingsView() }
         }
 
+        // ── Sleep Timer ───────────────────────────────────────────────────
+        Rectangle {
+            id: sleepTimerRow
+            width: 1500; height: 100; color: "#c9d9d9d9"; radius: 25
+
+            Image {
+                id: timeoutIcon
+                source: "images/timeout_icon.png"
+                anchors.left: parent.left; anchors.leftMargin: 70
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                anchors.left: timeoutIcon.right; anchors.leftMargin: 55
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Sleep Timer"
+                font.pixelSize: 64; font.family: "Inter"; color: "#000000"
+            }
+
+            Row {
+                anchors.right: parent.right; anchors.rightMargin: 70
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 24
+
+                Text {
+                    text: SettingsViewViewModel.sleepTimeout === 0 ? "Never" : SettingsViewViewModel.sleepTimeout + " min"
+                    font.pixelSize: 48; font.bold: true; font.family: "Inter"; color: "#2563eb"
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: sleepPopup.open()
+            }
+        }
+
         // ── User Mode ─────────────────────────────────────────────────────
         Rectangle {
             width: 1500; height: 100; color: "#c9d9d9d9"; radius: 25
 
-            Row {
+            Rectangle {
+                id: userModeIcon
+                height: 52; width: badgeLabel.implicitWidth + 36; radius: 26
                 anchors.left: parent.left; anchors.leftMargin: 70
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 30
+                color: UserManager.roleBadgeColor
+                Text { id: badgeLabel; anchors.centerIn: parent; text: UserManager.roleName; font.pixelSize: 28; font.bold: true; font.family: "Inter"; color: "white" }
+            }
 
-                Text { text: "User Mode"; font.pixelSize: 48; font.family: "Inter"; color: "#000000"; anchors.verticalCenter: parent.verticalCenter }
-
-                Rectangle {
-                    height: 52; width: badgeLabel.implicitWidth + 36; radius: 26
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: UserManager.roleBadgeColor
-                    Text { id: badgeLabel; anchors.centerIn: parent; text: UserManager.roleName; font.pixelSize: 28; font.bold: true; font.family: "Inter"; color: "white" }
-                }
+            Text {
+                anchors.left: userModeIcon.right; anchors.leftMargin: 55
+                anchors.verticalCenter: parent.verticalCenter
+                text: "User Mode"
+                font.pixelSize: 64; font.family: "Inter"; color: "#000000"
             }
 
             Row {
@@ -93,7 +134,7 @@ Item {
                 }
             }
         }
-    }
+    }  // end Column
 
     // ── Two-Step Login Dialog ─────────────────────────────────────────────
     // Using Item instead of Popup to avoid modal event grabbing that blocks
@@ -274,4 +315,103 @@ Item {
             }
         }
     }
+
+    // ── Sleep Timer Popup ─────────────────────────────────────────────────
+    Item {
+        id: sleepPopup
+        anchors.fill: parent
+        z: 60
+        visible: false
+        focus: visible
+
+        function open() {
+            visible = true
+        }
+
+        function close() {
+            visible = false
+        }
+
+        // Dim backdrop
+        Rectangle {
+            anchors.fill: parent
+            color: "#80090d16"
+            MouseArea { anchors.fill: parent; onClicked: sleepPopup.close() }
+        }
+
+        // Popup Dialog Card
+        Rectangle {
+            width: 600
+            height: 750
+            radius: 28; color: "white"; border.color: "#e2e8f0"; border.width: 2
+            anchors.centerIn: parent
+
+            // ListView of options
+            ListView {
+                id: sleepListView
+                anchors.top: parent.top; anchors.topMargin: 30
+                anchors.bottom: parent.bottom; anchors.bottomMargin: 30
+                anchors.left: parent.left; anchors.right: parent.right
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                model: [
+                    { label: "Never", value: 0 },
+                    { label: "1 min", value: 1 },
+                    { label: "2 min", value: 2 },
+                    { label: "3 min", value: 3 },
+                    { label: "5 min", value: 5 },
+                    { label: "10 min", value: 10 },
+                    { label: "15 min", value: 15 }
+                ]
+
+                delegate: Rectangle {
+                    width: parent.width - 60
+                    height: 90
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    radius: 16
+                    color: itemArea.pressed ? "#f1f5f9" : "transparent"
+
+                    // Left-aligned label
+                    Text {
+                        anchors.left: parent.left; anchors.leftMargin: 24
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.label
+                        font.pixelSize: 34; font.family: "Inter"
+                        color: SettingsViewViewModel.sleepTimeout === modelData.value ? "#2563eb" : "#334155"
+                        font.bold: SettingsViewViewModel.sleepTimeout === modelData.value
+                    }
+
+                    // Checkmark on the right if selected
+                    Text {
+                        anchors.right: parent.right; anchors.rightMargin: 24
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "✓"
+                        font.pixelSize: 36
+                        color: "#2563eb"
+                        visible: SettingsViewViewModel.sleepTimeout === modelData.value
+                    }
+
+                    // Divider line
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: "#e2e8f0"
+                        visible: index < sleepListView.count - 1
+                    }
+
+                    MouseArea {
+                        id: itemArea
+                        anchors.fill: parent
+                        onClicked: {
+                            SettingsViewViewModel.sleepTimeout = modelData.value
+                            sleepPopup.close()
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
+
