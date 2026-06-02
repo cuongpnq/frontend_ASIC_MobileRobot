@@ -225,7 +225,11 @@ Item {
                 MouseArea {
                     id: sampleArea
                     anchors.fill: parent
-                    onClicked: ChatViewViewModel.sendMessage(modelData)
+                    onClicked: {
+                        messageField.focus = false
+                        ChatViewViewModel.dismissKeyboard()
+                        ChatViewViewModel.sendMessage(modelData)
+                    }
                 }
             }
         }
@@ -267,6 +271,11 @@ Item {
                     inputMethodHints: Qt.ImhNoPredictiveText
                     background: Rectangle {
                         color: "transparent"
+                    }
+                    onEnabledChanged: {
+                        if (enabled) {
+                            focus = false
+                        }
                     }
                     onAccepted: {
                         ChatViewViewModel.sendMessage(messageField.text)
