@@ -96,28 +96,54 @@ Item {
     }
 
     // ── Two-Step Login Dialog ─────────────────────────────────────────────
-    // Step 1 — choose target role
-    // Step 2 — enter password
-    // All validation is done in C++ (UserManager). QML only shows/hides panels
-    // and reads loginResult to react.
-    Popup {
+    // Using Item instead of Popup to avoid modal event grabbing that blocks
+    // the virtual keyboard. Popup.modal intercepts touch events at QWindow
+    // level regardless of z-order, preventing InputPanel from receiving input.
+    Item {
         id: loginDialog
-        anchors.centerIn: parent
-        width: 720
-        height: step === 1 ? 340 : 440
-        modal: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        anchors.fill: parent
+        z: 50
+        visible: false
+        focus: visible
 
-        property int step: 1   // 1 = choose role, 2 = enter password
+        property int step: 1
 
-        onOpened: {
+        function open() {
             step = 1
             passwordField.text = ""
+            UserManager.resetLoginResult()
+            visible = true
         }
-        onClosed: UserManager.resetLoginResult()
 
-        background: Rectangle {
+        function close() {
+            passwordField.focus = false
+            Qt.inputMethod.hide()
+            visible = false
+            UserManager.resetLoginResult()
+        }
+
+        Keys.onEscapePressed: loginDialog.close()
+
+        // Dim backdrop — closes dialog on tap; keyboard (z:MAX) absorbs its own taps first
+        Rectangle {
+            anchors.fill: parent
+            color: "#80000000"
+            MouseArea { anchors.fill: parent; onClicked: loginDialog.close() }
+        }
+
+        // Dialog card — slides up when the virtual keyboard is visible
+        Rectangle {
+            id: dialogCard
+            width: 720
+            height: loginDialog.step === 1 ? 340 : 440
             radius: 28; color: "white"; border.color: "#e2e8f0"; border.width: 2
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: {
+                var kbH = Qt.inputMethod.visible ? Qt.inputMethod.keyboardRectangle.height : 0
+                return Math.max(20, (parent.height - kbH - height) / 2)
+            }
+            Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
             // ── ← Back button (top-left, step 2 only) ────────────────────
             Rectangle {
@@ -127,7 +153,7 @@ Item {
                 anchors.topMargin: 12; anchors.leftMargin: 12
                 z: 10
                 visible: loginDialog.step === 2
-                Text { anchors.centerIn: parent; text: "\u2190"; font.pixelSize: 28; color: "#94a3b8" }
+                Text { anchors.centerIn: parent; text: "←"; font.pixelSize: 28; color: "#94a3b8" }
                 MouseArea {
                     id: backBtnArea; anchors.fill: parent
                     onClicked: { loginDialog.step = 1; UserManager.resetLoginResult() }
@@ -142,119 +168,109 @@ Item {
                 anchors.top: parent.top; anchors.right: parent.right
                 anchors.topMargin: 12; anchors.rightMargin: 12
                 z: 10
-                Text { anchors.centerIn: parent; text: "\u2715"; font.pixelSize: 28; color: "#94a3b8" }
+                Text { anchors.centerIn: parent; text: "✕"; font.pixelSize: 28; color: "#94a3b8" }
                 MouseArea { id: closeBtnArea; anchors.fill: parent; onClicked: loginDialog.close() }
             }
-        }
 
-        // ── Step 1: Role selection ────────────────────────────────────────
-        Column {
-            anchors.centerIn: parent
-            spacing: 28
-            width: parent.width - 80
-            visible: loginDialog.step === 1
+            // ── Step 1: Role selection ────────────────────────────────────────
+            Column {
+                anchors.centerIn: parent
+                spacing: 28
+                width: parent.width - 80
+                visible: loginDialog.step === 1
 
-            Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Select Mode"; font.pixelSize: 40; font.bold: true; font.family: "Inter"; color: "#1e293b" }
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Select Mode"; font.pixelSize: 40; font.bold: true; font.family: "Inter"; color: "#1e293b" }
 
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 24
+
+                    Rectangle {
+                        width: 280; height: 72; radius: 16
+                        color: adminBtn.pressed ? "#92400e" : "#d97706"
+                        Text { anchors.centerIn: parent; text: "Administrator"; font.pixelSize: 28; font.bold: true; font.family: "Inter"; color: "white" }
+                        MouseArea {
+                            id: adminBtn; anchors.fill: parent
+                            onClicked: {
+                                UserManager.selectTargetRole(UserManager.Administrator)
+                                passwordField.text = ""
+                                loginDialog.step = 2
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: 240; height: 72; radius: 16
+                        color: devBtn.pressed ? "#4c1d95" : "#7c3aed"
+                        Text { anchors.centerIn: parent; text: "Developer"; font.pixelSize: 28; font.bold: true; font.family: "Inter"; color: "white" }
+                        MouseArea {
+                            id: devBtn; anchors.fill: parent
+                            onClicked: {
+                                UserManager.selectTargetRole(UserManager.Developer)
+                                passwordField.text = ""
+                                loginDialog.step = 2
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Step 2: Password entry ────────────────────────────────────────
+            Column {
+                anchors.centerIn: parent
                 spacing: 24
+                width: parent.width - 80
+                visible: loginDialog.step === 2
 
-                // Administrator button
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Enter " + UserManager.targetRoleName + " Password"
+                    font.pixelSize: 34; font.bold: true; font.family: "Inter"; color: "#1e293b"
+                }
+
                 Rectangle {
-                    width: 280; height: 72; radius: 16
-                    color: adminBtn.pressed ? "#92400e" : "#d97706"
-                    Text { anchors.centerIn: parent; text: "Administrator"; font.pixelSize: 28; font.bold: true; font.family: "Inter"; color: "white" }
-                    MouseArea {
-                        id: adminBtn; anchors.fill: parent
-                        onClicked: {
-                            UserManager.selectTargetRole(UserManager.Administrator)
+                    width: parent.width; height: 80; radius: 16
+                    color: "#f1f5f9"
+                    border.color: passwordField.activeFocus ? "#2563eb" : "#cbd5e1"; border.width: 2
+                    TextField {
+                        id: passwordField
+                        anchors.fill: parent; anchors.leftMargin: 20; anchors.rightMargin: 20
+                        placeholderText: "Password..."
+                        echoMode: TextInput.Password
+                        font.pixelSize: 32; font.family: "Inter"
+                        background: Rectangle { color: "transparent" }
+                        onAccepted: UserManager.attemptLogin(passwordField.text)
+                        onTextChanged: { if (UserManager.loginResult === UserManager.Failed) UserManager.resetLoginResult() }
+                    }
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: UserManager.loginResult === UserManager.Failed ? "Incorrect password. Please try again." : ""
+                    font.pixelSize: 26; font.family: "Inter"; color: "#ef4444"
+                    visible: UserManager.loginResult === UserManager.Failed
+                }
+
+                Connections {
+                    target: UserManager
+                    onLoginResultChanged: {
+                        if (UserManager.loginResult === UserManager.Success) {
+                            loginDialog.close()
+                            SettingsViewViewModel.requestMainView()
+                        } else if (UserManager.loginResult === UserManager.Failed) {
                             passwordField.text = ""
-                            loginDialog.step = 2
+                            passwordField.forceActiveFocus()
                         }
                     }
                 }
 
-                // Developer button
                 Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
                     width: 240; height: 72; radius: 16
-                    color: devBtn.pressed ? "#4c1d95" : "#7c3aed"
-                    Text { anchors.centerIn: parent; text: "Developer"; font.pixelSize: 28; font.bold: true; font.family: "Inter"; color: "white" }
-                    MouseArea {
-                        id: devBtn; anchors.fill: parent
-                        onClicked: {
-                            UserManager.selectTargetRole(UserManager.Developer)
-                            passwordField.text = ""
-                            loginDialog.step = 2
-                        }
-                    }
+                    color: confirmBtn.pressed ? "#1d4ed8" : "#2563eb"
+                    Text { anchors.centerIn: parent; text: "Login"; font.pixelSize: 30; font.bold: true; font.family: "Inter"; color: "white" }
+                    MouseArea { id: confirmBtn; anchors.fill: parent; onClicked: UserManager.attemptLogin(passwordField.text) }
                 }
-            }
-
-
-        }
-
-        // ── Step 2: Password entry ────────────────────────────────────────
-        Column {
-            anchors.centerIn: parent
-            spacing: 24
-            width: parent.width - 80
-            visible: loginDialog.step === 2
-
-            // Title
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "Enter " + UserManager.targetRoleName + " Password"
-                font.pixelSize: 34; font.bold: true; font.family: "Inter"; color: "#1e293b"
-            }
-
-            // Password field
-            Rectangle {
-                width: parent.width; height: 80; radius: 16
-                color: "#f1f5f9"
-                border.color: passwordField.activeFocus ? "#2563eb" : "#cbd5e1"; border.width: 2
-                TextField {
-                    id: passwordField
-                    anchors.fill: parent; anchors.leftMargin: 20; anchors.rightMargin: 20
-                    placeholderText: "Password..."
-                    echoMode: TextInput.Password
-                    font.pixelSize: 32; font.family: "Inter"
-                    background: Rectangle { color: "transparent" }
-                    onAccepted: UserManager.attemptLogin(passwordField.text)
-                    // Reset error display when user types
-                    onTextChanged: { if (UserManager.loginResult === UserManager.Failed) UserManager.resetLoginResult() }
-                }
-            }
-
-            // Error / success feedback — driven purely by C++ loginResult property
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: UserManager.loginResult === UserManager.Failed ? "Incorrect password. Please try again." : ""
-                font.pixelSize: 26; font.family: "Inter"; color: "#ef4444"
-                visible: UserManager.loginResult === UserManager.Failed
-            }
-
-            // React to loginResult changes from C++
-            Connections {
-                target: UserManager
-                onLoginResultChanged: {
-                    if (UserManager.loginResult === UserManager.Success) {
-                        loginDialog.close()
-                        SettingsViewViewModel.requestMainView()
-                    } else if (UserManager.loginResult === UserManager.Failed) {
-                        passwordField.text = ""
-                        passwordField.forceActiveFocus()
-                    }
-                }
-            }
-
-            // Confirm button only — close is via the × button
-            Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: 240; height: 72; radius: 16
-                color: confirmBtn.pressed ? "#1d4ed8" : "#2563eb"
-                Text { anchors.centerIn: parent; text: "Login"; font.pixelSize: 30; font.bold: true; font.family: "Inter"; color: "white" }
-                MouseArea { id: confirmBtn; anchors.fill: parent; onClicked: UserManager.attemptLogin(passwordField.text) }
             }
         }
     }
