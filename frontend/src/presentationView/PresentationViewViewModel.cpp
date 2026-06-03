@@ -206,19 +206,35 @@ void PresentationViewViewModel::onFileUploaded(const QString& filePath) {
     QDir().mkpath(destDir);
 
     QFileInfo info(filePath);
-    QString destPath = destDir + "/" + info.fileName();
+    QString ext = info.suffix().toLower();
+    QString receivedName = info.fileName();
 
-    if (QFile::exists(destPath)) {
-        QFile::remove(destPath);
-    }
-
-    if (QFile::copy(filePath, destPath)) {
-        qDebug() << "Copied uploaded file to" << destPath;
+    if (ext == "pptx" || ext == "ppt") {
+        QString convertedPdf;
+        QString convertError;
+        if (convertToPdf(filePath, destDir, &convertedPdf, &convertError)) {
+            m_uploadStatus = "File converted to PDF: " + QFileInfo(convertedPdf).fileName();
+            qDebug() << "Converted uploaded file to" << convertedPdf;
+        } else {
+            m_uploadStatus = "Conversion failed: " + receivedName + "\n" + convertError;
+            qWarning() << "Failed to convert uploaded file to PDF:" << receivedName << convertError;
+        }
     } else {
-        qWarning() << "Failed to copy uploaded file to" << destPath;
+        QString destPath = destDir + "/" + info.fileName();
+
+        if (QFile::exists(destPath)) {
+            QFile::remove(destPath);
+        }
+
+        if (QFile::copy(filePath, destPath)) {
+            qDebug() << "Copied uploaded file to" << destPath;
+            m_uploadStatus = "File received: " + info.fileName();
+        } else {
+            qWarning() << "Failed to copy uploaded file to" << destPath;
+            m_uploadStatus = "Failed to save file: " + info.fileName();
+        }
     }
 
-    m_uploadStatus = "File received: " + info.fileName();
     emit uploadStatusChanged();
     refreshFileList();
     
@@ -233,7 +249,7 @@ void PresentationViewViewModel::refreshFileList() {
     d.mkpath(".");
 
     QStringList filters;
-    filters << "*.txt" << "*.pptx" << "*.ppt";
+    filters << "*.txt" << "*.pdf";
     QStringList files = d.entryList(filters, QDir::Files, QDir::Name | QDir::IgnoreCase);
 
     if (m_fileList != files) {
@@ -260,7 +276,7 @@ void PresentationViewViewModel::deleteAllFiles() {
     QString dir = fileUploadDir();
     QDir d(dir);
     QStringList filters;
-    filters << "*.txt" << "*.pptx" << "*.ppt";
+    filters << "*.txt" << "*.pdf";
     QStringList files = d.entryList(filters, QDir::Files);
 
     for (const QString& f : files) {
@@ -300,9 +316,8 @@ void PresentationViewViewModel::openFile(const QString& fileName) {
         emit isSlideModeChanged();
         emit isConvertingChanged();
         emit isFileViewerOpenChanged();
-    } else if (fileName.endsWith(".pptx", Qt::CaseInsensitive) ||
-               fileName.endsWith(".ppt", Qt::CaseInsensitive)) {
-        // --- Presentation file ---
+    } else if (fileName.endsWith(".pdf", Qt::CaseInsensitive)) {
+        // --- PDF slide file ---
         m_isSlideMode = true;
         m_isConverting = true;
         m_isFileViewerOpen = true;
@@ -318,7 +333,7 @@ void PresentationViewViewModel::openFile(const QString& fileName) {
         emit totalSlidesChanged();
         emit currentSlideImageChanged();
 
-        convertPptxToImages(fullPath);
+        convertPdfToImages(fullPath);
     }
 }
 
@@ -358,68 +373,83 @@ void PresentationViewViewModel::prevSlide() {
 }
 
 // ---------------------------------------------------------------------------
-// PPTX → PDF → PNG conversion (async, chained QProcesses)
+// Blocking conversion at upload time: PPT/PPTX -> PDF
 // ---------------------------------------------------------------------------
-void PresentationViewViewModel::convertPptxToImages(const QString& filePath) {
+bool PresentationViewViewModel::convertToPdf(const QString& inputPath,
+                                             const QString& outputDir,
+                                             QString* outPdfPath,
+                                             QString* outError) {
+    QFileInfo inputInfo(inputPath);
+    QString pdfPath = QDir(outputDir).filePath(inputInfo.completeBaseName() + ".pdf");
+
+    if (QFile::exists(pdfPath)) {
+        QFile::remove(pdfPath);
+    }
+
+    QProcess lo;
+    lo.start("libreoffice", {"--headless", "--convert-to", "pdf",
+                              "--outdir", outputDir, inputPath});
+
+    if (!lo.waitForFinished(120000)) {
+        lo.kill();
+        lo.waitForFinished();
+        if (outError) {
+            *outError = "LibreOffice timed out while converting.";
+        }
+        return false;
+    }
+
+    if (lo.exitStatus() != QProcess::NormalExit || lo.exitCode() != 0 || !QFile::exists(pdfPath)) {
+        QString stderrText = QString::fromUtf8(lo.readAllStandardError()).trimmed();
+        if (outError) {
+            *outError = stderrText.isEmpty()
+                ? QString("Install LibreOffice: sudo apt install libreoffice-impress")
+                : stderrText;
+        }
+        return false;
+    }
+
+    if (outPdfPath) {
+        *outPdfPath = pdfPath;
+    }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// PDF -> PNG conversion for slide viewer (async)
+// ---------------------------------------------------------------------------
+void PresentationViewViewModel::convertPdfToImages(const QString& pdfPath) {
     cleanupSlideImages();
 
     m_slideTempDir = QDir::tempPath() + "/presentation_slides_"
                    + QString::number(QDateTime::currentMSecsSinceEpoch());
     QDir().mkpath(m_slideTempDir);
 
-    // Step 1: libreoffice --headless --convert-to pdf
-    QProcess* lo = new QProcess(this);
-    QString tmpDir = m_slideTempDir;            // capture for lambda
-    QString baseName = QFileInfo(filePath).completeBaseName();
+    QProcess* ppm = new QProcess(this);
+    QString prefix = m_slideTempDir + "/slide";
 
-    connect(lo, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, [this, lo, tmpDir, baseName](int exitCode, QProcess::ExitStatus) {
-        lo->deleteLater();
-        QString pdfPath = tmpDir + "/" + baseName + ".pdf";
-
-        if (exitCode != 0 || !QFile::exists(pdfPath)) {
+    connect(ppm, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, ppm](int code, QProcess::ExitStatus) {
+        ppm->deleteLater();
+        if (code != 0) {
             m_isConverting = false;
-            m_viewerContent = "Conversion failed.\nInstall LibreOffice:\n  sudo apt install libreoffice-impress";
+            m_viewerContent = "Image conversion failed.\nInstall poppler-utils:\n  sudo apt install poppler-utils";
             emit isConvertingChanged();
             emit viewerContentChanged();
             return;
         }
-
-        // Step 2: pdftoppm -png -r 200 <pdf> <prefix>
-        QProcess* ppm = new QProcess(this);
-        QString prefix = tmpDir + "/slide";
-        connect(ppm, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-                this, [this, ppm](int code, QProcess::ExitStatus) {
-            ppm->deleteLater();
-            if (code != 0) {
-                m_isConverting = false;
-                m_viewerContent = "Image conversion failed.\nInstall poppler-utils:\n  sudo apt install poppler-utils";
-                emit isConvertingChanged();
-                emit viewerContentChanged();
-                return;
-            }
-            collectSlideImages();
-        });
-        connect(ppm, &QProcess::errorOccurred, this, [this, ppm](QProcess::ProcessError) {
-            ppm->deleteLater();
-            m_isConverting = false;
-            m_viewerContent = "pdftoppm not found.\n  sudo apt install poppler-utils";
-            emit isConvertingChanged();
-            emit viewerContentChanged();
-        });
-        ppm->start("pdftoppm", {"-png", "-r", "200", pdfPath, prefix});
+        collectSlideImages();
     });
 
-    connect(lo, &QProcess::errorOccurred, this, [this, lo](QProcess::ProcessError) {
-        lo->deleteLater();
+    connect(ppm, &QProcess::errorOccurred, this, [this, ppm](QProcess::ProcessError) {
+        ppm->deleteLater();
         m_isConverting = false;
-        m_viewerContent = "LibreOffice not found.\n  sudo apt install libreoffice-impress";
+        m_viewerContent = "pdftoppm not found.\n  sudo apt install poppler-utils";
         emit isConvertingChanged();
         emit viewerContentChanged();
     });
 
-    lo->start("libreoffice", {"--headless", "--convert-to", "pdf",
-                              "--outdir", tmpDir, filePath});
+    ppm->start("pdftoppm", {"-png", "-r", "200", pdfPath, prefix});
 }
 
 void PresentationViewViewModel::collectSlideImages() {

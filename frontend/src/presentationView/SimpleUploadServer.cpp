@@ -213,9 +213,9 @@ void SimpleUploadServer::handleGet(QTcpSocket* socket) {
         "</style></head><body>"
         "<div class='card'>"
         "<h1>Robot File Import</h1>"
-        "<p>Select a .txt or .pptx file to upload to the robot</p>"
+        "<p>Upload .txt, .pdf, .ppt, or .pptx files. Presentation files are converted to PDF after upload.</p>"
         "<form method='POST' enctype='multipart/form-data'>"
-        "<input type='file' name='file' accept='.txt,.pptx' required><br>"
+        "<input type='file' name='file' accept='.txt,.pdf,.ppt,.pptx' required><br>"
         "<button type='submit'>Upload to Robot</button>"
         "</form>"
         "</div>"
@@ -291,6 +291,16 @@ void SimpleUploadServer::handlePost(QTcpSocket* socket, const QByteArray& data) 
     }
 
     QString filename = QString::fromUtf8(data.mid(filenamePos, filenameEnd - filenamePos));
+    QString lower = filename.toLower();
+
+    if (!(lower.endsWith(".txt") || lower.endsWith(".pdf") ||
+          lower.endsWith(".ppt") || lower.endsWith(".pptx"))) {
+        sendStatusPage(socket, false,
+            "Upload Failed",
+            "Unsupported file type. Please upload .txt, .pdf, .ppt, or .pptx.",
+            filename);
+        return;
+    }
 
     // ---- find the start of the file content (double CRLF after part headers) ----
     int contentStart = data.indexOf("\r\n\r\n", filenameEnd);

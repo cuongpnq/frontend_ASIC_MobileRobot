@@ -80,7 +80,8 @@ private slots:
     void onFileUploaded(const QString& filePath);
 
 private:
-    void convertPptxToImages(const QString& filePath);
+    bool convertToPdf(const QString& inputPath, const QString& outputDir, QString* outPdfPath, QString* outError = nullptr);
+    void convertPdfToImages(const QString& pdfPath);
     void collectSlideImages();
     void cleanupSlideImages();
 
