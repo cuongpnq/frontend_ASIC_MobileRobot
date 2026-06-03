@@ -40,6 +40,7 @@ setup:
 		qml-module-qtquick-controls2 \
 		qml-module-qtquick-layouts \
 		qml-module-qtgraphicaleffects \
+		libreoffice-impress \
 		wget git cmake build-essential curl zstd
 	@echo "[SETUP] Cloning AI inference core..."
 	chmod +x ./setup_ollama.sh && ./setup_ollama.sh
