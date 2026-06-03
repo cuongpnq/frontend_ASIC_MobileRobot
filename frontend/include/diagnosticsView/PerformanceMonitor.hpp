@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QVariantList>
+#include <QString>
 
 /**
  * @brief PerformanceMonitor polls OS-specific APIs for system metrics.
@@ -72,6 +73,8 @@ private:
     void pollRam();
     void pollNet();
     void pollDisk();
+    QString resolveActiveInterface() const;
+    bool readInterfaceBytes(const QString &iface, quint64 &rxBytes, quint64 &txBytes) const;
 
     QTimer m_timer;
 
@@ -93,6 +96,8 @@ private:
     quint64 m_prevRxBytes = 0;
     quint64 m_prevTxBytes = 0;
     bool    m_netFirstPoll = true;
+    QString m_monitoredNetIface;
+    int     m_ifaceRefreshCountdown = 0;
 
     // Disk
     double m_diskUsage = 0.0;

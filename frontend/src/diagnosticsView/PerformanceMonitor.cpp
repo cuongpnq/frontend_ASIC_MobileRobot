@@ -4,6 +4,11 @@
 #include <QTextStream>
 #include <QStringList>
 #include <QStorageInfo>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusObjectPath>
+#include <QDBusReply>
+#include <QDBusVariant>
 #include <QDebug>
 
 // ═══════════════════════════════════════════════════════════════════
@@ -111,14 +116,12 @@ void PerformanceMonitor::pollRam()
 #ifdef Q_OS_LINUX
     QFile f("/proc/meminfo");
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "[PerfMon] RAM: cannot open /proc/meminfo";
         return;
     }
 
     quint64 totalKB = 0, availableKB = 0;
 
     QTextStream in(&f);
-    static int debugCount = 0;
     while (true) {
         QString line = in.readLine();
         if (line.isNull())
@@ -128,17 +131,12 @@ void PerformanceMonitor::pollRam()
         if (line.startsWith("MemTotal:")) {
             QString valueStr = line.section(':', 1).trimmed().split(' ').first();
             totalKB = valueStr.toULongLong();
-            if (debugCount < 2)
-                qDebug() << "[PerfMon] MemTotal raw:" << line << "-> parsed:" << totalKB;
         } else if (line.startsWith("MemAvailable:")) {
             QString valueStr = line.section(':', 1).trimmed().split(' ').first();
             availableKB = valueStr.toULongLong();
-            if (debugCount < 2)
-                qDebug() << "[PerfMon] MemAvailable raw:" << line << "-> parsed:" << availableKB;
         }
     }
     f.close();
-    debugCount++;
 
     if (totalKB == 0) {
         return;
@@ -167,30 +165,53 @@ void PerformanceMonitor::pollRam()
 void PerformanceMonitor::pollNet()
 {
 #ifdef Q_OS_LINUX
-    QFile f("/proc/net/dev");
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
-        return;
-
-    quint64 rxTotal = 0, txTotal = 0;
-    QTextStream in(&f);
-    while (!in.atEnd()) {
-        QString line = in.readLine().trimmed();
-        if (!line.contains(':'))
-            continue;
-
-        QString iface = line.section(':', 0, 0).trimmed();
-        // Skip loopback
-        if (iface == "lo")
-            continue;
-
-        QStringList cols = line.section(':', 1).trimmed().split(QRegExp("\\s+"), QString::SkipEmptyParts);
-        if (cols.size() < 9)
-            continue;
-
-        rxTotal += cols[0].toULongLong();   // bytes received
-        txTotal += cols[8].toULongLong();   // bytes transmitted
+    // Refresh active interface periodically in case connection changes.
+    if (m_ifaceRefreshCountdown <= 0 || m_monitoredNetIface.isEmpty()) {
+        const QString iface = resolveActiveInterface();
+        if (iface != m_monitoredNetIface) {
+            m_monitoredNetIface = iface;
+            m_netFirstPoll = true;
+        }
+        m_ifaceRefreshCountdown = 5;
+    } else {
+        --m_ifaceRefreshCountdown;
     }
-    f.close();
+
+    quint64 rxTotal = 0;
+    quint64 txTotal = 0;
+
+    if (!m_monitoredNetIface.isEmpty()) {
+        if (!readInterfaceBytes(m_monitoredNetIface, rxTotal, txTotal)) {
+            // Interface may have disappeared; force re-discovery next poll.
+            m_monitoredNetIface.clear();
+            m_ifaceRefreshCountdown = 0;
+            m_netFirstPoll = true;
+            return;
+        }
+    } else {
+        QFile f("/proc/net/dev");
+        if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+            return;
+
+        QTextStream in(&f);
+        while (!in.atEnd()) {
+            QString line = in.readLine().trimmed();
+            if (!line.contains(':'))
+                continue;
+
+            QString iface = line.section(':', 0, 0).trimmed();
+            if (iface == "lo")
+                continue;
+
+            QStringList cols = line.section(':', 1).trimmed().split(QRegExp("\\s+"), QString::SkipEmptyParts);
+            if (cols.size() < 9)
+                continue;
+
+            rxTotal += cols[0].toULongLong();
+            txTotal += cols[8].toULongLong();
+        }
+        f.close();
+    }
 
     if (m_netFirstPoll) {
         m_prevRxBytes  = rxTotal;
@@ -210,6 +231,95 @@ void PerformanceMonitor::pollNet()
     m_totalTxMB = double(txTotal) / (1024.0 * 1024.0);
 
     emit netUsageChanged();
+#endif
+}
+
+QString PerformanceMonitor::resolveActiveInterface() const
+{
+#ifdef Q_OS_LINUX
+    const char *nmService = "org.freedesktop.NetworkManager";
+    const char *nmPath = "/org/freedesktop/NetworkManager";
+    const char *nmIface = "org.freedesktop.NetworkManager";
+    const char *nmDeviceIface = "org.freedesktop.NetworkManager.Device";
+    const char *propsIface = "org.freedesktop.DBus.Properties";
+
+    QDBusInterface nm(nmService, nmPath, nmIface, QDBusConnection::systemBus());
+    if (!nm.isValid())
+        return QString();
+
+    const uint deviceTypeWifi = 2;
+    const uint deviceStateActivated = 100;
+
+    QDBusReply<QList<QDBusObjectPath>> devicesReply = nm.call("GetDevices");
+    if (!devicesReply.isValid())
+        return QString();
+
+    QString firstActivatedIface;
+    for (const QDBusObjectPath &devicePath : devicesReply.value()) {
+        QDBusInterface props(nmService, devicePath.path(), propsIface, QDBusConnection::systemBus());
+        if (!props.isValid())
+            continue;
+
+        QDBusReply<QVariant> typeReply = props.call("Get", nmDeviceIface, "DeviceType");
+        QDBusReply<QVariant> stateReply = props.call("Get", nmDeviceIface, "State");
+        QDBusReply<QVariant> ifaceReply = props.call("Get", nmDeviceIface, "IpInterface");
+
+        if (!typeReply.isValid() || !stateReply.isValid() || !ifaceReply.isValid())
+            continue;
+
+        const QVariant typeVar = qvariant_cast<QDBusVariant>(typeReply.value()).variant();
+        const QVariant stateVar = qvariant_cast<QDBusVariant>(stateReply.value()).variant();
+        const QVariant ifaceVar = qvariant_cast<QDBusVariant>(ifaceReply.value()).variant();
+
+        if (stateVar.toUInt() != deviceStateActivated)
+            continue;
+
+        const QString iface = ifaceVar.toString();
+        if (iface.isEmpty() || iface == "lo")
+            continue;
+
+        if (firstActivatedIface.isEmpty())
+            firstActivatedIface = iface;
+
+        if (typeVar.toUInt() == deviceTypeWifi)
+            return iface;
+    }
+
+    return firstActivatedIface;
+#else
+    return QString();
+#endif
+}
+
+bool PerformanceMonitor::readInterfaceBytes(const QString &iface, quint64 &rxBytes, quint64 &txBytes) const
+{
+#ifdef Q_OS_LINUX
+    QFile f("/proc/net/dev");
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    QTextStream in(&f);
+    const QString prefix = iface + ":";
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        if (!line.startsWith(prefix))
+            continue;
+
+        QStringList cols = line.section(':', 1).trimmed().split(QRegExp("\\s+"), QString::SkipEmptyParts);
+        if (cols.size() < 9)
+            return false;
+
+        rxBytes = cols[0].toULongLong();
+        txBytes = cols[8].toULongLong();
+        return true;
+    }
+
+    return false;
+#else
+    Q_UNUSED(iface)
+    Q_UNUSED(rxBytes)
+    Q_UNUSED(txBytes)
+    return false;
 #endif
 }
 
