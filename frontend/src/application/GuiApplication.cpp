@@ -13,12 +13,16 @@
 #include "chatView/ChatViewViewModel.hpp"
 #include "wifiSettingView/WifiSettingViewViewModel.hpp"
 #include "presentationView/PresentationViewViewModel.hpp"
+#include "preCheckView/SysCheckViewModel.hpp"
 #include "wifiManager/WifiManager.hpp"
 #include "application/ROSManager.hpp"
 #include "application/NavigationModule.hpp"
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QEvent>
+
+// Global pointer so ControlCenterViewViewModel can open the overlay
+SysCheckViewModel* g_sysCheckViewModel = nullptr;
 
 GuiApplication::GuiApplication(int &argc, char **argv)
 {
@@ -140,6 +144,15 @@ GuiApplication::GuiApplication(int &argc, char **argv)
             Q_UNUSED(engine)
             Q_UNUSED(scriptEngine)
             return new WifiManager();
+        });
+
+    qmlRegisterSingletonType<SysCheckViewModel>("com.asic.mobilerobot.viewmodels", 1, 0, "SysCheckViewModel",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            auto *vm = new SysCheckViewModel();
+            g_sysCheckViewModel = vm;  // store global reference
+            return vm;
         });
 
     qmlRegisterSingletonType<AppStateMachine>("com.asic.mobilerobot.viewmodels", 1, 0, "AppStateMachine",

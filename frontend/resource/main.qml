@@ -21,6 +21,7 @@ ApplicationWindow {
                  && AppStateMachine.currentState !== "RunningView"
                  && !PresentationViewViewModel.isFileViewerOpen
                  && !PresentationViewViewModel.isMobileImportActive
+                 && SysCheckViewModel.isStartupCheckDone   // don't sleep during boot check
         repeat: false
         onTriggered: {
             if (AppStateMachine.currentState !== "RunningView") {
@@ -69,7 +70,19 @@ ApplicationWindow {
     StandbyView {
         id: standbyView
         anchors.fill: parent
-        visible: window.isStandby
-        z: 100 // High z-index to cover everything
+        visible: window.isStandby && SysCheckViewModel.isStartupCheckDone
+        z: 100
+    }
+
+    // ── System Check Boot Overlay ─────────────────────────────────
+    // Shown once at startup; auto-runs sys_check.sh.
+    // Dismissed by user tapping "Continue" (or "Skip (dev)" for dev builds).
+    // Bypass entirely: launch app with --no-syscheck
+    Loader {
+        id: sysCheckBootLoader
+        anchors.fill: parent
+        active: !SysCheckViewModel.isStartupCheckDone
+        source: active ? "SysCheckView.qml" : ""
+        z: 150  // above everything except CustomKeyboard (which has no z)
     }
 }

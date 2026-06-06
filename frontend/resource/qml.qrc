@@ -3,6 +3,7 @@
         <file>main.qml</file>
         <file>MainView.qml</file>
         <file>ControlCenterView.qml</file>
+        <file>SysCheckView.qml</file>
         <file>RunningView.qml</file>
         <file>DirectionView.qml</file>
         <file>SettingsView.qml</file>

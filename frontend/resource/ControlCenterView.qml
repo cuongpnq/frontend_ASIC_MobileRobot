@@ -58,12 +58,12 @@ Item {
             rightPadding: 80
             anchors.top: modeSwitchContainer.bottom
             anchors.topMargin: 100
-            spacing: 100
+            spacing: 60
 
             // ── Diagnostics Panel ───────────────────────────────────
             Rectangle {
                 id: diagnosticsPanel
-                width: (parent.width - 80 * 2 - 100) / 2
+                width: (parent.width - 80 * 2 - 120) / 3
                 height: 320
                 radius: 32
                 color: "#DAD8D8"
@@ -163,7 +163,7 @@ Item {
             // ── Map Panel ───────────────────────────────────────────
             Rectangle {
                 id: mapPanel
-                width: (parent.width - 80 * 2 - 100) / 2
+                width: (parent.width - 80 * 2 - 120) / 3
                 height: 320
                 radius: 32
                 color: "#DAD8D8"
@@ -208,6 +208,120 @@ Item {
                     }
                 }
             }
+
+            // ── Pre-Flight Check Panel ──────────────────────────────
+            Rectangle {
+                id: preCheckPanel
+                width: (parent.width - 80 * 2 - 120) / 3
+                height: 320
+                radius: 32
+                color: "#DAD8D8"
+                opacity: 0.8
+
+                Text {
+                    id: preCheckTitle
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.margins: 20
+                    text: "System Check"
+                    font.pixelSize: 48
+                    font.bold: true
+                    font.family: "Inter"
+                    color: "#000000"
+                }
+
+                // Status badge — mirrors the last run result
+                Rectangle {
+                    id: statusBadge
+                    anchors.top: preCheckTitle.bottom
+                    anchors.left: parent.left
+                    anchors.leftMargin: 20
+                    anchors.topMargin: 10
+                    width: badgeText.implicitWidth + 24
+                    height: 36
+                    radius: 18
+                    color: {
+                        var s = SysCheckViewModel.status
+                        if (s === "ready")    return "#0d2e0d"
+                        if (s === "warnings") return "#2e1f00"
+                        if (s === "failed")   return "#2e0808"
+                        return "#1a1a1a"
+                    }
+                    border.color: {
+                        var s = SysCheckViewModel.status
+                        if (s === "ready")    return "#4caf50"
+                        if (s === "warnings") return "#ff9800"
+                        if (s === "failed")   return "#f44336"
+                        return "#555555"
+                    }
+                    border.width: 1
+                    Text {
+                        id: badgeText
+                        anchors.centerIn: parent
+                        text: {
+                            var s = SysCheckViewModel.status
+                            if (s === "ready")    return "✓ READY"
+                            if (s === "warnings") return "⚠ WARNINGS"
+                            if (s === "failed")   return "✕ FAILED"
+                            if (s === "running")  return "● RUNNING"
+                            return "NOT RUN"
+                        }
+                        font.pixelSize: 15
+                        font.bold: true
+                        font.family: "Inter"
+                        color: {
+                            var s = SysCheckViewModel.status
+                            if (s === "ready")    return "#4caf50"
+                            if (s === "warnings") return "#ff9800"
+                            if (s === "failed")   return "#f44336"
+                            return "#888888"
+                        }
+                    }
+                }
+
+                // Mini counters
+                Column {
+                    anchors.top: statusBadge.bottom
+                    anchors.left: parent.left
+                    anchors.leftMargin: 20
+                    anchors.topMargin: 18
+                    spacing: 8
+                    Row {
+                        spacing: 16
+                        Text {
+                            text: "✓ " + SysCheckViewModel.passCount + " PASS"
+                            font.pixelSize: 26; font.family: "Inter"
+                            color: "#2e7d32"; font.bold: true
+                        }
+                        Text {
+                            text: "⚠ " + SysCheckViewModel.warnCount + " WARN"
+                            font.pixelSize: 26; font.family: "Inter"
+                            color: "#e65100"; font.bold: true
+                        }
+                    }
+                    Text {
+                        text: "✕ " + SysCheckViewModel.failCount + " FAIL"
+                        font.pixelSize: 26; font.family: "Inter"
+                        color: SysCheckViewModel.failCount > 0 ? "#b71c1c" : "#555555"
+                        font.bold: true
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: ControlCenterViewViewModel.requestSysCheckView()
+                }
+            }
         }
+    }
+
+    // ── System Check overlay (ControlCenter manual re-run) ─────────────
+    Loader {
+        id: sysCheckLoader
+        anchors.fill: parent
+        active: SysCheckViewModel.isVisible
+        source: active ? "SysCheckView.qml" : ""
+        z: 200
     }
 }

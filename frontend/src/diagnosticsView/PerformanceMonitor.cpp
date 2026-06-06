@@ -10,6 +10,9 @@
 #include <QDBusReply>
 #include <QDBusVariant>
 #include <QDebug>
+#include <QNetworkInterface>
+#include <QNetworkAddressEntry>
+#include <QAbstractSocket>
 
 // ═══════════════════════════════════════════════════════════════════
 //  Construction
@@ -236,59 +239,21 @@ void PerformanceMonitor::pollNet()
 
 QString PerformanceMonitor::resolveActiveInterface() const
 {
-#ifdef Q_OS_LINUX
-    const char *nmService = "org.freedesktop.NetworkManager";
-    const char *nmPath = "/org/freedesktop/NetworkManager";
-    const char *nmIface = "org.freedesktop.NetworkManager";
-    const char *nmDeviceIface = "org.freedesktop.NetworkManager.Device";
-    const char *propsIface = "org.freedesktop.DBus.Properties";
-
-    QDBusInterface nm(nmService, nmPath, nmIface, QDBusConnection::systemBus());
-    if (!nm.isValid())
-        return QString();
-
-    const uint deviceTypeWifi = 2;
-    const uint deviceStateActivated = 100;
-
-    QDBusReply<QList<QDBusObjectPath>> devicesReply = nm.call("GetDevices");
-    if (!devicesReply.isValid())
-        return QString();
-
-    QString firstActivatedIface;
-    for (const QDBusObjectPath &devicePath : devicesReply.value()) {
-        QDBusInterface props(nmService, devicePath.path(), propsIface, QDBusConnection::systemBus());
-        if (!props.isValid())
-            continue;
-
-        QDBusReply<QVariant> typeReply = props.call("Get", nmDeviceIface, "DeviceType");
-        QDBusReply<QVariant> stateReply = props.call("Get", nmDeviceIface, "State");
-        QDBusReply<QVariant> ifaceReply = props.call("Get", nmDeviceIface, "IpInterface");
-
-        if (!typeReply.isValid() || !stateReply.isValid() || !ifaceReply.isValid())
-            continue;
-
-        const QVariant typeVar = qvariant_cast<QDBusVariant>(typeReply.value()).variant();
-        const QVariant stateVar = qvariant_cast<QDBusVariant>(stateReply.value()).variant();
-        const QVariant ifaceVar = qvariant_cast<QDBusVariant>(ifaceReply.value()).variant();
-
-        if (stateVar.toUInt() != deviceStateActivated)
-            continue;
-
-        const QString iface = ifaceVar.toString();
-        if (iface.isEmpty() || iface == "lo")
-            continue;
-
-        if (firstActivatedIface.isEmpty())
-            firstActivatedIface = iface;
-
-        if (typeVar.toUInt() == deviceTypeWifi)
-            return iface;
+    // Find first non-loopback, active (up and running) interface that has an IPv4 address
+    for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
+        QNetworkInterface::InterfaceFlags flags = iface.flags();
+        if (flags.testFlag(QNetworkInterface::IsUp) &&
+            flags.testFlag(QNetworkInterface::IsRunning) &&
+            !flags.testFlag(QNetworkInterface::IsLoopBack)) {
+            
+            for (const QNetworkAddressEntry &entry : iface.addressEntries()) {
+                if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) {
+                    return iface.name();
+                }
+            }
+        }
     }
-
-    return firstActivatedIface;
-#else
     return QString();
-#endif
 }
 
 bool PerformanceMonitor::readInterfaceBytes(const QString &iface, quint64 &rxBytes, quint64 &txBytes) const

@@ -1,5 +1,6 @@
 #include "controlCenterView/ControlCenterViewViewModel.hpp"
 #include "application/AppStateMachine.hpp"
+#include "preCheckView/SysCheckViewModel.hpp"
 
 ControlCenterViewViewModel::ControlCenterViewViewModel(QObject* parent) 
     : QObject(parent), m_isActive(false)
@@ -26,6 +27,11 @@ void ControlCenterViewViewModel::requestMapPanelView() {
 
 void ControlCenterViewViewModel::requestDiagnosticsView() {
     AppStateMachine::instance().goToDiagnostics();
+}
+
+void ControlCenterViewViewModel::requestSysCheckView() {
+    extern SysCheckViewModel* g_sysCheckViewModel;
+    if (g_sysCheckViewModel) g_sysCheckViewModel->open();
 }
 
 void ControlCenterViewViewModel::onStateMachineChanged() {

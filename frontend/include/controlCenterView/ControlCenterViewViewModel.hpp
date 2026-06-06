@@ -15,6 +15,7 @@ public:
     Q_INVOKABLE void requestMainView();
     Q_INVOKABLE void requestMapPanelView();
     Q_INVOKABLE void requestDiagnosticsView();
+    Q_INVOKABLE void requestSysCheckView();
 
 signals:
     void isActiveChanged();
