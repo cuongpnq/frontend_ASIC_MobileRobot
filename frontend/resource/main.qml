@@ -37,6 +37,17 @@ ApplicationWindow {
         }
     }
 
+    // Skip standby after boot: go directly to MainView when the boot overlay
+    // auto-dismisses (or user taps Continue early).
+    Connections {
+        target: SysCheckViewModel
+        onIsStartupCheckDoneChanged: {
+            if (SysCheckViewModel.isStartupCheckDone) {
+                window.isStandby = false
+            }
+        }
+    }
+
     // Dynamic View Loader (State-Driven)
     Loader {
         id: viewLoader

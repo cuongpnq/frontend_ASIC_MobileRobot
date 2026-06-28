@@ -1,6 +1,7 @@
 #include "chatView/ChatViewViewModel.hpp"
 #include "chatView/LlamaInference.hpp"
 #include "application/AppStateMachine.hpp"
+#include "application/SessionLogger.hpp"
 #include <QGuiApplication>
 #include <QInputMethod>
 #include <QTimer>
@@ -120,6 +121,16 @@ void ChatViewViewModel::sendMessage(const QString& message) {
 
     m_inferenceWatcher.setFuture(m_llama->chat(m_systemPrompt, historyToSend));
 
+    // ── Telemetry: start chat timer and log query ────────────────────────
+    m_chatTimer.start();
+    m_tokenCount       = 0;
+    m_firstToken       = true;
+    m_pendingQuestion  = message.trimmed();
+    SessionLogger::instance().logEvent(QStringLiteral("chat"),
+                                       QStringLiteral("query_start"),
+                                       { { QStringLiteral("question"),       m_pendingQuestion },
+                                         { QStringLiteral("history_turns"),  m_chatHistory.size() - 1 } });
+
     emit requestScrollToBottom();
 }
 
@@ -137,6 +148,16 @@ void ChatViewViewModel::onTokenGenerated(const QString& token) {
         emit isThinkingChanged();
         emit isGeneratingChanged();
     }
+
+    // ── Telemetry: capture time-to-first-token ────────────────────────
+    if (m_firstToken) {
+        m_firstToken = false;
+        const double ttftMs = double(m_chatTimer.elapsed());
+        SessionLogger::instance().logEvent(QStringLiteral("chat"),
+                                           QStringLiteral("first_token"),
+                                           { { QStringLiteral("ttft_ms"), ttftMs } });
+    }
+    ++m_tokenCount;
 
     // Stream token into the last bot bubble
     QVariantMap lastMsg = m_messages.last().toMap();
@@ -156,10 +177,11 @@ void ChatViewViewModel::onInferenceFinished() {
     emit requestScrollToBottom();
 
     // Append the bot's complete reply to conversation history so context is maintained
+    QString reply;
     if (!m_messages.isEmpty()) {
         QVariantMap lastMsg = m_messages.last().toMap();
         if (lastMsg["sender"].toString() == "ASIC Chatbot") {
-            QString reply = lastMsg["message"].toString();
+            reply = lastMsg["message"].toString();
             if (!reply.isEmpty() && reply != "[The response was interrupted]") {
                 QJsonObject assistantMsg;
                 assistantMsg["role"]    = "assistant";
@@ -168,6 +190,22 @@ void ChatViewViewModel::onInferenceFinished() {
             }
         }
     }
+
+    // ── Telemetry: log generation complete stats ────────────────────────
+    const double totalMs     = double(m_chatTimer.elapsed());
+    const double tokensPerSec = (totalMs > 0 && m_tokenCount > 0)
+                                ? double(m_tokenCount) / (totalMs / 1000.0)
+                                : 0.0;
+    const bool   interrupted = reply.endsWith(QStringLiteral("[The response was interrupted]"));
+
+    SessionLogger::instance().logEvent(QStringLiteral("chat"),
+                                       QStringLiteral("complete"),
+                                       { { QStringLiteral("question"),        m_pendingQuestion },
+                                         { QStringLiteral("token_count"),     m_tokenCount     },
+                                         { QStringLiteral("total_ms"),        totalMs          },
+                                         { QStringLiteral("tokens_per_sec"),  tokensPerSec     },
+                                         { QStringLiteral("interrupted"),     interrupted      },
+                                         { QStringLiteral("answer_len_chars"),reply.length()   } });
 }
 
 // ---------------------------------------------------------------------------

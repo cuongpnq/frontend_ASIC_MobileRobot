@@ -51,6 +51,11 @@ class SysCheckViewModel : public QObject {
     Q_PROPERTY(int warnCount READ warnCount NOTIFY countersChanged)
     Q_PROPERTY(int failCount READ failCount NOTIFY countersChanged)
 
+    // ── Navigation process (run_nav.sh) ──────────────────────────────
+    Q_PROPERTY(bool    isNavRunning READ isNavRunning NOTIFY isNavRunningChanged)
+    Q_PROPERTY(QString navStatus    READ navStatus    NOTIFY navStatusChanged)
+    Q_PROPERTY(QString navFloor     READ navFloor     NOTIFY navStatusChanged)
+
 public:
     explicit SysCheckViewModel(QObject *parent = nullptr);
     ~SysCheckViewModel() override;
@@ -66,6 +71,9 @@ public:
     int          passCount()          const;
     int          warnCount()          const;
     int          failCount()          const;
+    bool         isNavRunning()       const;
+    QString      navStatus()          const;
+    QString      navFloor()           const;
 
     // ── QML-callable ─────────────────────────────────────────────
 
@@ -87,6 +95,8 @@ public:
                                  bool skipBuild   = true,
                                  bool checkTopics = false);
     Q_INVOKABLE void cancelSysCheck();
+    Q_INVOKABLE void launchNavigation(const QString& floor = QStringLiteral("a1"));
+    Q_INVOKABLE void stopNavigation();
 
 signals:
     void isStartupCheckDoneChanged();
@@ -96,10 +106,13 @@ signals:
     void resultsChanged();
     void rawLogChanged();
     void countersChanged();
+    void isNavRunningChanged();
+    void navStatusChanged();
 
 private slots:
     void onReadyRead();
     void onFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void onNavFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
 private:
     void autoStartBootCheck();
@@ -107,6 +120,9 @@ private:
     void setStatus(const QString &s);
     void resetState();
     static QString scriptPath();
+    static QString navScriptPath();
+    void startNavProcess();
+    void setNavStatus(const QString& s);
 
     bool         m_isStartupCheckDone = false;
     bool         m_isVisible          = false;
@@ -119,5 +135,11 @@ private:
     int          m_warnCount = 0;
     int          m_failCount = 0;
 
-    QProcess    *m_process   = nullptr;
+    QProcess    *m_process      = nullptr;
+
+    // Navigation process state
+    QProcess    *m_navProcess   = nullptr;
+    bool         m_isNavRunning = false;
+    QString      m_navStatus    = QStringLiteral("idle");
+    QString      m_currentFloor = QStringLiteral("a1");
 };

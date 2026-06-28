@@ -1,4 +1,5 @@
 #include "preCheckView/SysCheckViewModel.hpp"
+#include "application/SessionLogger.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -7,6 +8,7 @@
 #include <QDebug>
 #include <QRegularExpression>
 #include <QVariantMap>
+#include <QProcessEnvironment>
 
 // ═══════════════════════════════════════════════════════════════════
 //  Helpers — ANSI stripping + tag colours
@@ -51,6 +53,20 @@ QString SysCheckViewModel::scriptPath() {
     return c;
 }
 
+QString SysCheckViewModel::navScriptPath() {
+    const QString name = QStringLiteral("run_nav.sh");
+    const QString binDir = QCoreApplication::applicationDirPath();
+
+    QString c = QDir(binDir).absoluteFilePath(name);
+    if (QFile::exists(c)) return c;
+
+    c = QDir::cleanPath(QDir(binDir).absoluteFilePath(QStringLiteral("../../") + name));
+    if (QFile::exists(c)) return c;
+
+    c = QDir::cleanPath(QDir::homePath() + QStringLiteral("/mbrobot_ws/../") + name);
+    return c;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 //  Construction / Destruction
 // ═══════════════════════════════════════════════════════════════════
@@ -77,6 +93,12 @@ SysCheckViewModel::~SysCheckViewModel() {
         m_process->kill();
         m_process->waitForFinished(1000);
     }
+    if (m_navProcess) {
+        m_navProcess->terminate();
+        m_navProcess->waitForFinished(2000);
+        if (m_navProcess->state() != QProcess::NotRunning)
+            m_navProcess->kill();
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -93,6 +115,9 @@ QString      SysCheckViewModel::rawLog()             const { return m_rawLog; }
 int          SysCheckViewModel::passCount()          const { return m_passCount; }
 int          SysCheckViewModel::warnCount()          const { return m_warnCount; }
 int          SysCheckViewModel::failCount()          const { return m_failCount; }
+bool         SysCheckViewModel::isNavRunning()       const { return m_isNavRunning; }
+QString      SysCheckViewModel::navStatus()          const { return m_navStatus; }
+QString      SysCheckViewModel::navFloor()           const { return m_currentFloor; }
 
 // ═══════════════════════════════════════════════════════════════════
 //  Boot mode
@@ -143,6 +168,9 @@ void SysCheckViewModel::runSysCheck(const QString &floor, bool skipBuild, bool c
         qDebug() << "[SysCheckVM] Already running — ignoring";
         return;
     }
+
+    // Remember which floor this check is for (used later to launch run_nav.sh)
+    m_currentFloor = floor.isEmpty() ? QStringLiteral("a1") : floor;
 
     resetState();
 
@@ -214,6 +242,23 @@ void SysCheckViewModel::onFinished(int exitCode, QProcess::ExitStatus) {
         setStatus(QStringLiteral("warnings"));
     else
         setStatus(QStringLiteral("ready"));
+
+    // ── Telemetry: record sys-check result (will be logged once session starts) ──
+    // We store it; SessionLogger::startSession is called by startNavProcess below.
+    // Log immediately — startSession may already be active on re-run.
+    SessionLogger::instance().logEvent(QStringLiteral("boot"),
+                                       QStringLiteral("syscheck_complete"),
+                                       { { QStringLiteral("pass"),  m_passCount },
+                                         { QStringLiteral("warn"),  m_warnCount },
+                                         { QStringLiteral("fail"),  m_failCount },
+                                         { QStringLiteral("exit"),  exitCode    } });
+
+    // Boot mode: launch run_nav.sh immediately, then auto-dismiss overlay after 2 s
+    // (2 s lets the user see the final pass/warn/fail result before MainView appears)
+    if (m_isBootMode) {
+        launchNavigation(m_currentFloor);
+        QTimer::singleShot(2000, this, &SysCheckViewModel::dismissStartupCheck);
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -250,6 +295,87 @@ void SysCheckViewModel::parseLine(const QString &line) {
 
 void SysCheckViewModel::setStatus(const QString &s) {
     if (m_status != s) { m_status = s; emit statusChanged(); }
+}
+
+void SysCheckViewModel::setNavStatus(const QString &s) {
+    if (m_navStatus != s) { m_navStatus = s; emit navStatusChanged(); }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  Navigation process
+// ═══════════════════════════════════════════════════════════════════
+
+void SysCheckViewModel::launchNavigation(const QString &floor) {
+    m_currentFloor = floor.isEmpty() ? QStringLiteral("a1") : floor;
+
+    if (m_navProcess && m_navProcess->state() != QProcess::NotRunning) {
+        // Graceful stop; restart after 2 s to let ROS nodes clean up
+        qDebug() << "[SysCheckVM] Stopping existing nav process before relaunch";
+        disconnect(m_navProcess, nullptr, this, nullptr);
+        m_navProcess->terminate();
+        QTimer::singleShot(2000, this, [this]() {
+            if (m_navProcess && m_navProcess->state() != QProcess::NotRunning)
+                m_navProcess->kill();
+            startNavProcess();
+        });
+    } else {
+        startNavProcess();
+    }
+}
+
+void SysCheckViewModel::startNavProcess() {
+    delete m_navProcess;
+    m_navProcess = new QProcess(this);
+
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert(QStringLiteral("FLOOR"), m_currentFloor);
+    m_navProcess->setProcessEnvironment(env);
+    m_navProcess->setProgram(QStringLiteral("bash"));
+    m_navProcess->setArguments(QStringList() << navScriptPath());
+    m_navProcess->setProcessChannelMode(QProcess::MergedChannels);
+
+    connect(m_navProcess,
+            QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, &SysCheckViewModel::onNavFinished);
+
+    m_navProcess->start();
+    m_isNavRunning = true;
+    emit isNavRunningChanged();
+    setNavStatus(QStringLiteral("running"));
+    qDebug() << "[SysCheckVM] Navigation started:" << navScriptPath() << "FLOOR=" << m_currentFloor;
+
+    // ── Telemetry: open a new session log file ──────────────────────
+    SessionLogger::instance().startSession(m_currentFloor, m_currentFloor);
+    SessionLogger::instance().logEvent(QStringLiteral("boot"),
+                                       QStringLiteral("nav_process_started"),
+                                       { { QStringLiteral("floor"),  m_currentFloor },
+                                         { QStringLiteral("script"), navScriptPath() } });
+}
+
+void SysCheckViewModel::stopNavigation() {
+    if (m_navProcess && m_navProcess->state() != QProcess::NotRunning) {
+        m_navProcess->terminate();
+        QTimer::singleShot(2000, this, [this]() {
+            if (m_navProcess && m_navProcess->state() != QProcess::NotRunning)
+                m_navProcess->kill();
+        });
+    }
+    m_isNavRunning = false;
+    emit isNavRunningChanged();
+    setNavStatus(QStringLiteral("stopped"));
+}
+
+void SysCheckViewModel::onNavFinished(int exitCode, QProcess::ExitStatus) {
+    qDebug() << "[SysCheckVM] Navigation process finished, exit:" << exitCode;
+    m_isNavRunning = false;
+    emit isNavRunningChanged();
+    setNavStatus(QStringLiteral("stopped"));
+
+    // ── Telemetry: close session log ────────────────────────────────
+    SessionLogger::instance().logEvent(QStringLiteral("boot"),
+                                       QStringLiteral("nav_process_stopped"),
+                                       { { QStringLiteral("exit_code"), exitCode } });
+    SessionLogger::instance().endSession();
 }
 
 void SysCheckViewModel::resetState() {

@@ -1,6 +1,7 @@
 #include "application/GuiApplication.hpp"
 #include "application/AppStateMachine.hpp"
 #include "application/UserManager.hpp"
+#include "application/SessionLogger.hpp"
 #include "mainView/MainViewViewModel.hpp"
 #include "containerBar/ContainerBarViewModel.hpp"
 #include "runningView/RunningViewViewModel.hpp"
@@ -169,6 +170,17 @@ GuiApplication::GuiApplication(int &argc, char **argv)
             Q_UNUSED(engine)
             Q_UNUSED(scriptEngine)
             auto instance = &UserManager::instance();
+            QQmlEngine::setObjectOwnership(instance, QQmlEngine::CppOwnership);
+            return instance;
+        });
+
+    // SessionLogger — exposed to QML so interaction-start timestamps can be
+    // recorded right at the button-press level.
+    qmlRegisterSingletonType<SessionLogger>("com.asic.mobilerobot.viewmodels", 1, 0, "SessionLogger",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            auto instance = &SessionLogger::instance();
             QQmlEngine::setObjectOwnership(instance, QQmlEngine::CppOwnership);
             return instance;
         });

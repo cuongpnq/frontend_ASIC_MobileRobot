@@ -129,9 +129,9 @@ Item {
             text: {
                 var s = SysCheckViewModel.status
                 if (s === "running")  return "Running checks… (" + SysCheckViewModel.passCount + " pass / " + SysCheckViewModel.failCount + " fail)"
-                if (s === "ready")    return "✓  All checks passed — tap Continue"
-                if (s === "warnings") return "⚠  Checks done with warnings — tap Continue"
-                if (s === "failed")   return "✕  " + SysCheckViewModel.failCount + " checks failed — tap Continue anyway"
+                if (s === "ready")    return "✓  All checks passed"
+                if (s === "warnings") return "⚠  Checks done with warnings"
+                if (s === "failed")   return "✕  " + SysCheckViewModel.failCount + " checks failed"
                 return ""
             }
             font.pixelSize: 22; font.family: "Inter"
@@ -142,6 +142,17 @@ Item {
                 if (s === "failed") return "#f44336"
                 return "#555555"
             }
+        }
+
+        // ── Navigation started indicator ────────────────────────
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 42
+            visible: SysCheckViewModel.isNavRunning
+            text: "▶  Navigation started — FLOOR: " + SysCheckViewModel.navFloor
+            font.pixelSize: 20; font.family: "Inter"
+            color: "#4caf50"
         }
 
         // ── Continue button (bottom-center, active when done) ───

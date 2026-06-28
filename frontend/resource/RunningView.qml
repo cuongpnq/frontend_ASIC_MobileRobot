@@ -189,7 +189,10 @@ Item {
                         id: stopArea
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: RunningViewViewModel.stopRobot()
+                        onClicked: {
+                            SessionLogger.logInteractionStart("emergency_stop")
+                            RunningViewViewModel.stopRobot()
+                        }
                     }
                 }
 
@@ -216,7 +219,10 @@ Item {
                         id: resetArea
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: RunningViewViewModel.resetToDirectionView()
+                        onClicked: {
+                            SessionLogger.logInteractionStart("reset_direction")
+                            RunningViewViewModel.resetToDirectionView()
+                        }
                     }
                 }
 
@@ -243,7 +249,10 @@ Item {
                         id: continueArea
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: RunningViewViewModel.resumeRobot()
+                        onClicked: {
+                            SessionLogger.logInteractionStart("emergency_resume")
+                            RunningViewViewModel.resumeRobot()
+                        }
                     }
                 }
 

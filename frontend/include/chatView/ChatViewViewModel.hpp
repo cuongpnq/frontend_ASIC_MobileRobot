@@ -7,6 +7,7 @@
 #include <QFutureWatcher>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QElapsedTimer>
 #include "LlamaInference.hpp"
 
 class ChatViewViewModel : public QObject {
@@ -73,6 +74,12 @@ private:
     bool m_isActive = false;
 
     QFutureWatcher<QString> m_inferenceWatcher;
+
+    // ── Chat telemetry ──────────────────────────────────────────────
+    QElapsedTimer m_chatTimer;        // started when sendMessage() is called
+    int           m_tokenCount = 0;   // tokens received in current generation
+    bool          m_firstToken = true;// true until the first token arrives
+    QString       m_pendingQuestion;  // question text stored for the log entry
 };
 
 #endif // CHATVIEWVIEWMODEL_HPP
