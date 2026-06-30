@@ -128,7 +128,7 @@ private:
     QTimer* m_mapUpdateTimer;
     bool m_connected;
     int m_currentCheckpoint = -1;
-    QString m_mapId = "a1";
+    QString m_mapId = "e6";
     QString m_robotState = "IDLE";
     QString m_statusMessage = "Ready";
     QJsonObject m_config;

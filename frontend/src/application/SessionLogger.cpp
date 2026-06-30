@@ -49,8 +49,7 @@ void SessionLogger::startSession(const QString& floor, const QString& mapId)
     m_floor  = floor.isEmpty()  ? QStringLiteral("unknown") : floor;
     m_mapId  = mapId.isEmpty()  ? m_floor : mapId;
 
-    m_events.~QJsonArray();
-    new (&m_events) QJsonArray();
+    m_categoryEvents.clear();
 
     m_checkpointCount = 0;
     m_emergencyStops  = 0;
@@ -58,7 +57,7 @@ void SessionLogger::startSession(const QString& floor, const QString& mapId)
     m_visitedCps.clear();
     m_interactionStartNs.clear();
 
-    m_filePath = buildFilePath(m_floor);
+    m_sessionTimestamp = QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMdd_HHmmss"));
     m_active   = true;
 
     const QString startTs = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
@@ -69,10 +68,22 @@ void SessionLogger::startSession(const QString& floor, const QString& mapId)
         { QStringLiteral("mapId"),  m_mapId  }
     };
 
-    qDebug() << "[SessionLogger] Session started →" << m_filePath;
+    qDebug() << "[SessionLogger] Session started with timestamp" << m_sessionTimestamp;
 
-    // Write file header immediately so the file exists even if the app crashes
-    flushToDisk();
+    // Initialize all known feature categories so their empty log files exist with session headers
+    const QStringList categories = {
+        QStringLiteral("boot"),
+        QStringLiteral("navigation"),
+        QStringLiteral("ui"),
+        QStringLiteral("ui_latency"),
+        QStringLiteral("perf"),
+        QStringLiteral("chat"),
+        QStringLiteral("error")
+    };
+    for (const auto& cat : categories) {
+        m_categoryEvents[cat] = QJsonArray();
+        flushToDisk(cat);
+    }
 }
 
 void SessionLogger::endSession()
@@ -102,8 +113,10 @@ void SessionLogger::endSession()
     // (m_sessionMeta already has start/floor/mapId)
     m_sessionMeta[QStringLiteral("summary")] = summary;
 
-    flushToDisk();
-    qDebug() << "[SessionLogger] Session ended →" << m_filePath;
+    for (auto it = m_categoryEvents.begin(); it != m_categoryEvents.end(); ++it) {
+        flushToDisk(it.key());
+    }
+    qDebug() << "[SessionLogger] Session ended for timestamp" << m_sessionTimestamp;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -128,7 +141,7 @@ void SessionLogger::logEvent(const QString& category,
     for (auto it = payload.cbegin(); it != payload.cend(); ++it)
         entry[it.key()] = QJsonValue::fromVariant(it.value());
 
-    appendEvent(entry);
+    appendEvent(category, entry);
 
     // Update summary counters
     if (category == QLatin1String("navigation")) {
@@ -170,7 +183,7 @@ void SessionLogger::logPerformanceSample(double cpu, double ram,
         { QStringLiteral("fps"),      fps }
     };
 
-    appendEvent(entry);
+    appendEvent(QStringLiteral("perf"), entry);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -216,7 +229,7 @@ void SessionLogger::logInteractionEnd(const QString& actionId,
     if (!description.isEmpty())
         entry[QStringLiteral("desc")] = description;
 
-    appendEvent(entry);
+    appendEvent(QStringLiteral("ui_latency"), entry);
 
     qDebug() << "[SessionLogger] UI latency [" << actionId << "] ="
              << QString::number(elapsedMs, 'f', 2) << "ms";
@@ -226,31 +239,32 @@ void SessionLogger::logInteractionEnd(const QString& actionId,
 //  Internal helpers
 // ═══════════════════════════════════════════════════════════════════
 
-void SessionLogger::appendEvent(const QJsonObject& entry)
+void SessionLogger::appendEvent(const QString& category, const QJsonObject& entry)
 {
     // Caller must already hold m_mutex
-    m_events.append(entry);
+    m_categoryEvents[category].append(entry);
 
     // Flush every 50 events to protect against crash data loss
-    if (m_events.size() % 50 == 0)
-        flushToDisk();
+    if (m_categoryEvents[category].size() % 50 == 0)
+        flushToDisk(category);
 }
 
-void SessionLogger::flushToDisk()
+void SessionLogger::flushToDisk(const QString& category)
 {
     // Caller must already hold m_mutex (or called from endSession / startSession)
-    if (m_filePath.isEmpty())
+    const QString filePath = buildFilePath(category);
+    if (filePath.isEmpty())
         return;
 
     QJsonObject root;
     root[QStringLiteral("session")] = m_sessionMeta;
-    root[QStringLiteral("events")]  = m_events;
+    root[QStringLiteral("events")]  = m_categoryEvents.value(category);
 
     QJsonDocument doc(root);
 
-    QFile f(m_filePath);
+    QFile f(filePath);
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qWarning() << "[SessionLogger] Cannot write log file:" << m_filePath << f.errorString();
+        qWarning() << "[SessionLogger] Cannot write log file:" << filePath << f.errorString();
         return;
     }
     f.write(doc.toJson(QJsonDocument::Indented));
@@ -271,10 +285,8 @@ QString SessionLogger::resolveLogDir() const
     return binDir;
 }
 
-QString SessionLogger::buildFilePath(const QString& floor) const
+QString SessionLogger::buildFilePath(const QString& category) const
 {
-    const QString ts = QDateTime::currentDateTimeUtc()
-                           .toString(QStringLiteral("yyyyMMdd_HHmmss"));
-    const QString name = QStringLiteral("session_%1_%2.json").arg(ts, floor);
+    const QString name = QStringLiteral("session_%1_%2_%3.json").arg(m_sessionTimestamp, m_floor, category);
     return resolveLogDir() + QStringLiteral("/") + name;
 }

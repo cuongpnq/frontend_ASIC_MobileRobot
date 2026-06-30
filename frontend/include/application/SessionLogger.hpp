@@ -77,16 +77,16 @@ private:
     explicit SessionLogger(QObject* parent = nullptr);
     ~SessionLogger() override;
 
-    void appendEvent(const QJsonObject& entry);
-    void flushToDisk();
+    void appendEvent(const QString& category, const QJsonObject& entry);
+    void flushToDisk(const QString& category);
     QString resolveLogDir() const;
-    QString buildFilePath(const QString& floor) const;
+    QString buildFilePath(const QString& category) const;
 
     bool         m_active     = false;
     QString      m_floor;
     QString      m_mapId;
-    QString      m_filePath;
-    QJsonArray   m_events;                       // in-memory buffer
+    QString      m_sessionTimestamp;
+    QHash<QString, QJsonArray> m_categoryEvents; // category -> event array
     QJsonObject  m_sessionMeta;
 
     // Session-level summary counters

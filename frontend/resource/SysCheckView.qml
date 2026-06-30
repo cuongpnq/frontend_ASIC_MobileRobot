@@ -8,7 +8,7 @@ Item {
 
     Component.onCompleted: {
         if (SysCheckViewModel.isBootMode && SysCheckViewModel.status === "idle")
-            SysCheckViewModel.runSysCheck("a1", true, false)
+            SysCheckViewModel.runSysCheck("e6", true, false)
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -322,7 +322,7 @@ Item {
                 color: rrA.containsMouse ? "#2e7d32" : "#1b5e20"; border.color: "#4caf50"; border.width: 1
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Text { anchors.centerIn: parent; text: SysCheckViewModel.isRunning ? "⏳  Running…" : "▶  Re-run"; font.pixelSize: 18; font.family: "Inter"; color: "#e0e0e0" }
-                MouseArea { id: rrA; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: SysCheckViewModel.runSysCheck("a1",true,false) }
+                MouseArea { id: rrA; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: SysCheckViewModel.runSysCheck("e6",true,false) }
             }
         }
 

@@ -125,7 +125,7 @@ QString      SysCheckViewModel::navFloor()           const { return m_currentFlo
 
 void SysCheckViewModel::autoStartBootCheck() {
     qDebug() << "[SysCheckVM] Auto-starting boot check";
-    runSysCheck(QStringLiteral("a1"), /*skipBuild=*/true, /*checkTopics=*/false);
+    runSysCheck(QStringLiteral("e6"), /*skipBuild=*/true, /*checkTopics=*/false);
 }
 
 void SysCheckViewModel::dismissStartupCheck() {
@@ -170,7 +170,7 @@ void SysCheckViewModel::runSysCheck(const QString &floor, bool skipBuild, bool c
     }
 
     // Remember which floor this check is for (used later to launch run_nav.sh)
-    m_currentFloor = floor.isEmpty() ? QStringLiteral("a1") : floor;
+    m_currentFloor = floor.isEmpty() ? QStringLiteral("e6") : floor;
 
     resetState();
 
@@ -306,7 +306,7 @@ void SysCheckViewModel::setNavStatus(const QString &s) {
 // ═══════════════════════════════════════════════════════════════════
 
 void SysCheckViewModel::launchNavigation(const QString &floor) {
-    m_currentFloor = floor.isEmpty() ? QStringLiteral("a1") : floor;
+    m_currentFloor = floor.isEmpty() ? QStringLiteral("e6") : floor;
 
     if (m_navProcess && m_navProcess->state() != QProcess::NotRunning) {
         // Graceful stop; restart after 2 s to let ROS nodes clean up

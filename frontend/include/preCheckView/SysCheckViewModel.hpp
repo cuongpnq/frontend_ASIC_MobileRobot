@@ -87,15 +87,15 @@ public:
 
     /**
      * Run the system check script.
-     * @param floor       Floor identifier passed to sys_check.sh (default "a1")
+     * @param floor       Floor identifier passed to sys_check.sh (default "e6")
      * @param skipBuild   Append --skip-build (default true)
      * @param checkTopics Append --check-topics (default false)
      */
-    Q_INVOKABLE void runSysCheck(const QString &floor = QStringLiteral("a1"),
+    Q_INVOKABLE void runSysCheck(const QString &floor = QStringLiteral("e6"),
                                  bool skipBuild   = true,
                                  bool checkTopics = false);
     Q_INVOKABLE void cancelSysCheck();
-    Q_INVOKABLE void launchNavigation(const QString& floor = QStringLiteral("a1"));
+    Q_INVOKABLE void launchNavigation(const QString& floor = QStringLiteral("e6"));
     Q_INVOKABLE void stopNavigation();
 
 signals:
@@ -141,5 +141,5 @@ private:
     QProcess    *m_navProcess   = nullptr;
     bool         m_isNavRunning = false;
     QString      m_navStatus    = QStringLiteral("idle");
-    QString      m_currentFloor = QStringLiteral("a1");
+    QString      m_currentFloor = QStringLiteral("e6");
 };
