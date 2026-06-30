@@ -143,3 +143,6 @@ private:
     QString      m_navStatus    = QStringLiteral("idle");
     QString      m_currentFloor = QStringLiteral("e6");
 };
+
+extern SysCheckViewModel* g_sysCheckViewModel;
+

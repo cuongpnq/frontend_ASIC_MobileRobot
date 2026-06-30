@@ -6,9 +6,6 @@
 #include "preCheckView/SysCheckViewModel.hpp"
 #include <QDebug>
 
-// Global nav process controller (owned by GuiApplication)
-extern SysCheckViewModel* g_sysCheckViewModel;
-
 static DirectionViewViewModel* s_instance = nullptr;
 
 DirectionViewViewModel* DirectionViewViewModel::instance() {

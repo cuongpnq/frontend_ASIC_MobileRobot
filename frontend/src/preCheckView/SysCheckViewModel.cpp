@@ -1,6 +1,8 @@
 #include "preCheckView/SysCheckViewModel.hpp"
 #include "application/SessionLogger.hpp"
 
+SysCheckViewModel* g_sysCheckViewModel = nullptr;
+
 #include <QDir>
 #include <QFile>
 #include <QCoreApplication>

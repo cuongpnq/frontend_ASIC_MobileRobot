@@ -30,7 +30,6 @@ void ControlCenterViewViewModel::requestDiagnosticsView() {
 }
 
 void ControlCenterViewViewModel::requestSysCheckView() {
-    extern SysCheckViewModel* g_sysCheckViewModel;
     if (g_sysCheckViewModel) g_sysCheckViewModel->open();
 }
 

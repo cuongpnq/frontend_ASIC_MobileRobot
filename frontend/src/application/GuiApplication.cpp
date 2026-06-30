@@ -22,9 +22,6 @@
 #include <QQmlEngine>
 #include <QEvent>
 
-// Global pointer so ControlCenterViewViewModel can open the overlay
-SysCheckViewModel* g_sysCheckViewModel = nullptr;
-
 GuiApplication::GuiApplication(int &argc, char **argv)
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
