@@ -10,6 +10,13 @@ trap cleanup SIGINT SIGTERM EXIT
 PROJECT_ROOT=$(pwd)
 APP_BIN="$PROJECT_ROOT/build-output/frontend/frontend_app"
 
+# Request sudo privileges upfront to cache credentials for system/hardware checks
+echo "[SYSTEM] Requesting administrator access for system checks..."
+if ! sudo -v; then
+    echo "[ERROR] Administrator privileges are required to run system checks."
+    exit 1
+fi
+
 # 1. Verify that the QML app binary exists
 if [ ! -f "$APP_BIN" ]; then
     # Fallback to build output root search

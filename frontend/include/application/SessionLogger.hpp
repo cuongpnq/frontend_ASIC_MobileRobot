@@ -68,10 +68,9 @@ public:
     Q_INVOKABLE void logInteractionStart(const QString& actionId);
 
     /**
-     * Call from C++ at the top of the ViewModel handler that processes the
-     * action. Records elapsed_ms since logInteractionStart.
+     * Call from C++ or QML. Records elapsed_ms since logInteractionStart.
      */
-    void logInteractionEnd(const QString& actionId, const QString& description = {});
+    Q_INVOKABLE void logInteractionEnd(const QString& actionId, const QString& description = {});
 
 private:
     explicit SessionLogger(QObject* parent = nullptr);
@@ -98,6 +97,10 @@ private:
     // UI latency tracking
     QHash<QString, qint64>  m_interactionStartNs; // actionId → start ns
     QElapsedTimer            m_elapsedTimer;       // monotonic clock
+
+    // Last known system performance metrics
+    double       m_lastCpuPct       = 0.0;
+    double       m_lastRamPct       = 0.0;
 
     mutable QMutex m_mutex;
 };

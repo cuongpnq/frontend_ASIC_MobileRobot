@@ -17,6 +17,11 @@ public:
     Q_INVOKABLE void requestDiagnosticsView();
     Q_INVOKABLE void requestSysCheckView();
 
+    /** Start run_nav.sh for the currently selected floor (from DirectionView). */
+    Q_INVOKABLE void requestStartNavigation();
+    /** Stop the running run_nav.sh process. */
+    Q_INVOKABLE void requestStopNavigation();
+
 signals:
     void isActiveChanged();
 
@@ -26,3 +31,4 @@ private slots:
 private:
     bool m_isActive = false;
 };
+

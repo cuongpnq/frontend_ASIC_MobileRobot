@@ -228,6 +228,12 @@ phase2_hardware() {
     printf "%s\n" "$(printf '─%.0s' {1..60})"
     printf "%s\n" "$phase_label" >> "$LOG_FILE"
 
+    if [[ "$MOCK_HARDWARE" == "1" ]]; then
+        log_pass "Mock hardware mode: skipping device and ping checks."
+        store PASS "Mock hardware checks skipped"
+        return 0
+    fi
+
     # ── Helper: check device exists + permissions ─────────────────────────────
     _check_device() {
         local dev="$1" desc="$2"
@@ -241,7 +247,7 @@ phase2_hardware() {
 
         if [[ ! -r "$dev" || ! -w "$dev" ]]; then
             log_autofix "Applying chmod a+rw $dev"
-            chmod a+rw "$dev" 2>/dev/null
+            sudo chmod a+rw "$dev" 2>/dev/null
             store AUTOFIX "chmod a+rw $dev"
             printf "[$(  _ts)] [AUTO-FIX] chmod a+rw %s\n" "$dev" >> "$LOG_FILE"
         fi
@@ -274,7 +280,7 @@ phase2_hardware() {
 
         if [[ ! -r "/dev/i2c-8" || ! -w "/dev/i2c-8" ]]; then
             log_autofix "Applying chmod a+rw /dev/i2c-8"
-            chmod a+rw /dev/i2c-8 2>/dev/null
+            sudo chmod a+rw /dev/i2c-8 2>/dev/null
             store AUTOFIX "chmod a+rw /dev/i2c-8"
             printf "[$(  _ts)] [AUTO-FIX] chmod a+rw /dev/i2c-8\n" >> "$LOG_FILE"
         fi

@@ -5,8 +5,14 @@ This document provides comprehensive test cases for validating all non-chatbot s
 ---
 
 ## Telemetry Log Reference
-All actions in these test cases trigger specific entries in your JSON log files (`~/.local/share/frontend_app/logs/session_*.json`).
-- Look for `cat: "boot"`, `cat: "navigation"`, `cat: "ui"`, `cat: "ui_latency"`, and `cat: "perf"`.
+All actions in these test cases trigger specific entries in your JSON log files (located in `~/.local/share/frontend_app/logs/`):
+- `boot.json` (Category `boot`)
+- `navigation.json` (Category `navigation`)
+- `ui.json` (Category `ui`)
+- `ui_latency.json` (Category `ui_latency`)
+- `perf.json` (Category `perf`)
+- `chat.json` (Category `chat`)
+- `error.json` (Category `error`)
 
 ---
 
@@ -16,8 +22,8 @@ Tests the startup check automation, script triggering, and initial logging file 
 
 | ID | Test Scenario | Steps | Expected UI / Hardware Result | Telemetry Output |
 |---|---|---|---|---|
-| **BC1** | Cold Boot Sequence (Ready) | 1. Launch the application.<br>2. Observe the Pre-Check screen. | - Progress bar completes automatically.<br>- No failures detected.<br>- App automatically navigates to `MainView` after 2s. | - Log file created with header.<br>- `cat: "boot"`, `event: "syscheck_complete"` (pass count, 0 failures). |
-| **BC2** | Boot Pre-Check Failure | 1. Simulate a missing sensor or script failure.<br>2. Restart the app. | - Progress bar halts.<br>- Failed systems show a red indicator.<br>- App remains locked on the Pre-Check screen. | - `syscheck_complete` logged with `fail` count > 0.<br>- No navigation start. |
+| **BC1** | Cold Boot Sequence (Ready) | 1. Launch the application.<br>2. Observe the Pre-Check screen. | - Progress bar completes automatically.<br>- No failures detected.<br>- App automatically navigates to `MainView` after 2s. | - `boot.json`: `cat: "boot"`, `event: "syscheck_complete"` containing `pass` (24), `warn` (4), `fail` (6), `exit` (1), `cpu_pct`, and `ram_pct`.<br>- `ui.json`: `cat: "ui"`, `event: "state_transition"` (`from: "Unknown"`, `to: "MainView"`).<br>- `ui_latency.json`: `cat: "ui_latency"`, `event: "load_view_MainView"`, `elapsed_ms` (150), `desc`. |
+| **BC2** | Boot Pre-Check Failure | 1. Simulate a missing sensor or script failure.<br>2. Restart the app. | - Progress bar halts.<br>- Failed systems show a red indicator.<br>- App remains locked on the Pre-Check screen. | - `boot.json`: `syscheck_complete` logged with `fail` count > 0.<br>- No navigation start. |
 | **BC3** | Manual Nav Launch / Relaunch | 1. In settings, stop navigation.<br>2. Re-trigger "Launch Navigation". | - `run_nav.sh` script executes.<br>- State transitions to running. | - `event: "nav_process_started"`.<br>- Previous session closes and new session file is generated. |
 
 ---
@@ -29,7 +35,7 @@ Tests map interactions, room/checkpoint selection, floor switches, and confirm p
 | ID | Test Scenario | Steps | Expected UI / Hardware Result | Telemetry Output |
 |---|---|---|---|---|
 | **DV1** | Floor Switching | 1. Tap the floor switch icon.<br>2. Select a different floor (e.g., F1 → F2). | - Map background updates to new floor map.<br>- Checkpoints list updates for the new floor. | - `cat: "ui"`, `event: "state_transition"` (if view restarts). |
-| **DV2** | Room Navigation Request | 1. Tap a checkpoint or room name on the screen.<br>2. Tap "Yes" in the confirmation popup. | - Confirmation popup disappears.<br>- App shifts to `RunningView`. | - `cat: "ui_latency"`, `action: "navigate_to_cp"` recorded.<br>- `cat: "navigation"`, `event: "navigate_command"` with target cpId. |
+| **DV2** | Room Navigation Request | 1. Tap a checkpoint or room name on the screen.<br>2. Tap "Yes" in the confirmation popup. | - Confirmation popup disappears.<br>- App shifts to `RunningView`. | - `ui_latency.json`: `cat: "ui_latency"`, `action: "navigate_to_cp"`, `elapsed_ms`, `desc` ("Navigate confirmed in DirectionView").<br>- `navigation.json`: `cat: "navigation"`, `event: "navigate_command"` containing `cpId`, `name`, `cpu_pct`, `ram_pct`. |
 | **DV3** | Confirmation Cancel | 1. Tap a checkpoint.<br>2. Tap "No" / Cancel in the popup. | - Popup closes.<br>- App remains on `DirectionView`. | - No navigation command sent. |
 | **DV4** | Auto-Home Timeout Timer | 1. Stay idle on `DirectionView` for 15s.<br>2. Watch the home countdown timer. | - Confirmation popup for home navigation displays.<br>- Timer counts down and triggers home navigation. | - `action: "navigate_to_cp"` with `cpId: 0` (Home). |
 

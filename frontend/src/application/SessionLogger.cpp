@@ -133,9 +133,11 @@ void SessionLogger::logEvent(const QString& category,
         return;
 
     QJsonObject entry{
-        { QStringLiteral("t"),     QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs) },
-        { QStringLiteral("cat"),   category },
-        { QStringLiteral("event"), event }
+        { QStringLiteral("t"),       QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs) },
+        { QStringLiteral("cat"),     category },
+        { QStringLiteral("event"),   event },
+        { QStringLiteral("cpu_pct"), qRound(m_lastCpuPct * 10) / 10.0 },
+        { QStringLiteral("ram_pct"), qRound(m_lastRamPct * 10) / 10.0 }
     };
 
     for (auto it = payload.cbegin(); it != payload.cend(); ++it)
@@ -169,6 +171,9 @@ void SessionLogger::logPerformanceSample(double cpu, double ram,
                                           int fps)
 {
     QMutexLocker lock(&m_mutex);
+
+    m_lastCpuPct = cpu;
+    m_lastRamPct = ram;
 
     if (!m_active)
         return;
@@ -244,9 +249,8 @@ void SessionLogger::appendEvent(const QString& category, const QJsonObject& entr
     // Caller must already hold m_mutex
     m_categoryEvents[category].append(entry);
 
-    // Flush every 50 events to protect against crash data loss
-    if (m_categoryEvents[category].size() % 50 == 0)
-        flushToDisk(category);
+    // Flush immediately to guarantee real-time logging and crash resilience
+    flushToDisk(category);
 }
 
 void SessionLogger::flushToDisk(const QString& category)
@@ -287,6 +291,6 @@ QString SessionLogger::resolveLogDir() const
 
 QString SessionLogger::buildFilePath(const QString& category) const
 {
-    const QString name = QStringLiteral("session_%1_%2_%3.json").arg(m_sessionTimestamp, m_floor, category);
+    const QString name = QStringLiteral("%1.json").arg(category);
     return resolveLogDir() + QStringLiteral("/") + name;
 }

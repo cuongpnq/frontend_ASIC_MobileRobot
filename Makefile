@@ -2,24 +2,26 @@
 SHELL := /bin/bash
 BUILD_DIR ?= build-output
 
-.PHONY: help setup build run run-only clean distclean
+.PHONY: help setup build run run-only clean distclean test-native test-real
 
 # Default: Show help
 help:
 	@echo "===================================================="
 	@echo "      ASIC MOBILE ROBOT AI SYSTEM CONTROL"
 	@echo "===================================================="
-	@echo "  make setup     - Install system deps & AI core"
-	@echo "  make build     - Compile the entire system (GUI + AI)"
-	@echo "  make run       - Execute system orchestration (uses flags)"
+	@echo "  make setup       - Install system deps & AI core"
+	@echo "  make build       - Compile the entire system (GUI + AI)"
+	@echo "  make run         - Execute system orchestration (uses flags)"
+	@echo "  make test-native - Run headless native automation tests"
+	@echo "  make test-real   - Run interactive real-device tests"
 	@echo ""
 	@echo "  Flags for 'make run':"
-	@echo "    BUILD=ON    - Forces a rebuild before running"
-	@echo "    RUN_APP=ON   - Launches only the QML GUI"
+	@echo "    BUILD=ON      - Forces a rebuild before running"
+	@echo "    RUN_APP=ON     - Launches only the QML GUI"
 	@echo ""
 	@echo "  Example: make run BUILD=ON"
-	@echo "  make clean     - Remove build folders and logs"
-	@echo "  make distclean - Reset project (Deletes AI source code)"
+	@echo "  make clean       - Remove build folders and logs"
+	@echo "  make distclean   - Reset project (Deletes AI source code)"
 	@echo "===================================================="
 
 # Flags (OFF by default)
@@ -69,6 +71,17 @@ shortcut:
 	@chmod +x ~/Desktop/RobotControl.desktop
 	@gio set ~/Desktop/RobotControl.desktop metadata::trusted true || true
 	@echo "Shortcut created and enabled on Desktop."
+
+# 5. Testing and Validation
+test-native:
+	@echo "[TEST] Running Headless Native Automation Tests..."
+	@chmod +x ./run_native_automation_tests.py
+	@./run_native_automation_tests.py
+
+test-real:
+	@echo "[TEST] Running Interactive Real Device Verification..."
+	@chmod +x ./run_real_device_interactive_tests.py
+	@./run_real_device_interactive_tests.py
 
 # 4. Cleanup
 clean:

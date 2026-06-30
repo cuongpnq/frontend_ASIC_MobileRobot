@@ -164,11 +164,12 @@ void DirectionViewViewModel::setMapId(const QString& mapId) {
     if (navModule) {
         navModule->setMapId(mapId);
     }
-    // Re-launch run_nav.sh with FLOOR matching the newly selected map.
-    // The map ID directly maps to the FLOOR param (a1 → a1, e1 → e1, e6 → e6).
+    // Notify SysCheckViewModel that the map changed so it can update the
+    // pending floor and set navNeedsRestart. The operator starts/restarts
+    // navigation manually from the ControlCenter Navigation panel.
     if (g_sysCheckViewModel) {
-        qDebug() << "DirectionViewViewModel: Relaunching navigation with FLOOR=" << mapId;
-        g_sysCheckViewModel->launchNavigation(mapId);
+        qDebug() << "DirectionViewViewModel: Map switched to" << mapId << "— nav restart required";
+        g_sysCheckViewModel->onMapSwitched(mapId);
     }
 }
 

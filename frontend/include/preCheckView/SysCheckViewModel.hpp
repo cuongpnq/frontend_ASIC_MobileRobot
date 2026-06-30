@@ -5,6 +5,8 @@
 #include <QProcess>
 #include <QString>
 
+class QTimer;
+
 /**
  * SysCheckViewModel — runs sys_check.sh and streams results to QML.
  *
@@ -52,9 +54,11 @@ class SysCheckViewModel : public QObject {
     Q_PROPERTY(int failCount READ failCount NOTIFY countersChanged)
 
     // ── Navigation process (run_nav.sh) ──────────────────────────────
-    Q_PROPERTY(bool    isNavRunning READ isNavRunning NOTIFY isNavRunningChanged)
-    Q_PROPERTY(QString navStatus    READ navStatus    NOTIFY navStatusChanged)
-    Q_PROPERTY(QString navFloor     READ navFloor     NOTIFY navStatusChanged)
+    Q_PROPERTY(bool    isNavRunning    READ isNavRunning    NOTIFY isNavRunningChanged)
+    Q_PROPERTY(QString navStatus       READ navStatus       NOTIFY navStatusChanged)
+    Q_PROPERTY(QString navFloor        READ navFloor        NOTIFY navFloorChanged)
+    // true when DirectionView switched map but nav hasn't been restarted yet
+    Q_PROPERTY(bool    navNeedsRestart READ navNeedsRestart NOTIFY navNeedsRestartChanged)
 
 public:
     explicit SysCheckViewModel(QObject *parent = nullptr);
@@ -74,6 +78,7 @@ public:
     bool         isNavRunning()       const;
     QString      navStatus()          const;
     QString      navFloor()           const;
+    bool         navNeedsRestart()    const;
 
     // ── QML-callable ─────────────────────────────────────────────
 
@@ -97,6 +102,8 @@ public:
     Q_INVOKABLE void cancelSysCheck();
     Q_INVOKABLE void launchNavigation(const QString& floor = QStringLiteral("e6"));
     Q_INVOKABLE void stopNavigation();
+    /** Called by DirectionViewViewModel when the operator switches map. */
+    void onMapSwitched(const QString& newMapId);
 
 signals:
     void isStartupCheckDoneChanged();
@@ -108,21 +115,25 @@ signals:
     void countersChanged();
     void isNavRunningChanged();
     void navStatusChanged();
+    void navFloorChanged();
+    void navNeedsRestartChanged();
 
 private slots:
     void onReadyRead();
     void onFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void onNavFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void checkExternalNavStatus();
 
 private:
     void autoStartBootCheck();
     void parseLine(const QString &line);
     void setStatus(const QString &s);
+    void setNavStatus(const QString& s);
+    void setNavFloor(const QString& floor);
     void resetState();
     static QString scriptPath();
     static QString navScriptPath();
     void startNavProcess();
-    void setNavStatus(const QString& s);
 
     bool         m_isStartupCheckDone = false;
     bool         m_isVisible          = false;
@@ -138,10 +149,12 @@ private:
     QProcess    *m_process      = nullptr;
 
     // Navigation process state
-    QProcess    *m_navProcess   = nullptr;
-    bool         m_isNavRunning = false;
-    QString      m_navStatus    = QStringLiteral("idle");
-    QString      m_currentFloor = QStringLiteral("e6");
+    QProcess    *m_navProcess      = nullptr;
+    bool         m_isNavRunning    = false;
+    QString      m_navStatus       = QStringLiteral("idle");
+    QString      m_currentFloor    = QStringLiteral("e6");
+    bool         m_navNeedsRestart = false;
+    QTimer      *m_navStatusTimer  = nullptr;
 };
 
 extern SysCheckViewModel* g_sysCheckViewModel;

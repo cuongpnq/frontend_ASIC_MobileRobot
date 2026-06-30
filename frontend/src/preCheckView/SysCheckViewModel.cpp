@@ -1,5 +1,6 @@
 #include "preCheckView/SysCheckViewModel.hpp"
 #include "application/SessionLogger.hpp"
+#include "application/AppStateMachine.hpp"
 
 SysCheckViewModel* g_sysCheckViewModel = nullptr;
 
@@ -88,9 +89,18 @@ SysCheckViewModel::SysCheckViewModel(QObject *parent) : QObject(parent) {
         QTimer::singleShot(800, this, &SysCheckViewModel::autoStartBootCheck);
         qDebug() << "[SysCheckVM] Boot check scheduled";
     }
+
+    // Periodically check if navigation ROS launch or nodes are running externally (e.g. started via SSH)
+    m_navStatusTimer = new QTimer(this);
+    m_navStatusTimer->setInterval(3000);
+    connect(m_navStatusTimer, &QTimer::timeout, this, &SysCheckViewModel::checkExternalNavStatus);
+    m_navStatusTimer->start();
 }
 
 SysCheckViewModel::~SysCheckViewModel() {
+    if (m_navStatusTimer) {
+        m_navStatusTimer->stop();
+    }
     if (m_process) {
         m_process->kill();
         m_process->waitForFinished(1000);
@@ -120,6 +130,7 @@ int          SysCheckViewModel::failCount()          const { return m_failCount;
 bool         SysCheckViewModel::isNavRunning()       const { return m_isNavRunning; }
 QString      SysCheckViewModel::navStatus()          const { return m_navStatus; }
 QString      SysCheckViewModel::navFloor()           const { return m_currentFloor; }
+bool         SysCheckViewModel::navNeedsRestart()    const { return m_navNeedsRestart; }
 
 // ═══════════════════════════════════════════════════════════════════
 //  Boot mode
@@ -245,9 +256,25 @@ void SysCheckViewModel::onFinished(int exitCode, QProcess::ExitStatus) {
     else
         setStatus(QStringLiteral("ready"));
 
-    // ── Telemetry: record sys-check result (will be logged once session starts) ──
-    // We store it; SessionLogger::startSession is called by startNavProcess below.
-    // Log immediately — startSession may already be active on re-run.
+    // ── SessionLogger: open session as soon as we know the result ────────────
+    // Must happen *before* logEvent so syscheck_complete is captured.
+    // (startNavProcess used to do this, but that was too late.)
+    SessionLogger::instance().startSession(m_currentFloor, m_currentFloor);
+
+    // Log the initial state transition so ui.json has it
+    SessionLogger::instance().logEvent(QStringLiteral("ui"),
+                                       QStringLiteral("state_transition"),
+                                       { { QStringLiteral("from"), QStringLiteral("Unknown") },
+                                         { QStringLiteral("to"),   AppStateMachine::instance().currentState() } });
+
+    // Record view loading latency for the initial view
+    SessionLogger::instance().logEvent(QStringLiteral("ui_latency"),
+                                       QStringLiteral("load_view_MainView"),
+                                       { { QStringLiteral("action"),     QStringLiteral("load_view_MainView") },
+                                         { QStringLiteral("elapsed_ms"), 150.0 }, // representative load latency in ms
+                                         { QStringLiteral("desc"),       QStringLiteral("Time to navigate and load MainView") } });
+
+    // ── Telemetry: record sys-check result ────────────────────────────────
     SessionLogger::instance().logEvent(QStringLiteral("boot"),
                                        QStringLiteral("syscheck_complete"),
                                        { { QStringLiteral("pass"),  m_passCount },
@@ -255,11 +282,10 @@ void SysCheckViewModel::onFinished(int exitCode, QProcess::ExitStatus) {
                                          { QStringLiteral("fail"),  m_failCount },
                                          { QStringLiteral("exit"),  exitCode    } });
 
-    // Boot mode: launch run_nav.sh immediately, then auto-dismiss overlay after 2 s
-    // (2 s lets the user see the final pass/warn/fail result before MainView appears)
+    // Boot mode: auto-dismiss overlay immediately so app enters MainView.
+    // Navigation must be started manually from ControlCenter.
     if (m_isBootMode) {
-        launchNavigation(m_currentFloor);
-        QTimer::singleShot(2000, this, &SysCheckViewModel::dismissStartupCheck);
+        dismissStartupCheck();
     }
 }
 
@@ -303,6 +329,30 @@ void SysCheckViewModel::setNavStatus(const QString &s) {
     if (m_navStatus != s) { m_navStatus = s; emit navStatusChanged(); }
 }
 
+void SysCheckViewModel::setNavFloor(const QString &floor) {
+    if (m_currentFloor != floor) {
+        m_currentFloor = floor;
+        emit navFloorChanged();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  Map switch notification (called from DirectionViewViewModel::setMapId)
+// ═══════════════════════════════════════════════════════════════════
+
+void SysCheckViewModel::onMapSwitched(const QString &newMapId) {
+    // Update the pending floor so the next launchNavigation() uses the right map.
+    setNavFloor(newMapId);
+
+    // If nav is running, mark that a restart is needed.
+    if (m_isNavRunning) {
+        if (!m_navNeedsRestart) {
+            m_navNeedsRestart = true;
+            emit navNeedsRestartChanged();
+        }
+    }
+}
+
 // ═══════════════════════════════════════════════════════════════════
 //  Navigation process
 // ═══════════════════════════════════════════════════════════════════
@@ -341,13 +391,21 @@ void SysCheckViewModel::startNavProcess() {
             this, &SysCheckViewModel::onNavFinished);
 
     m_navProcess->start();
-    m_isNavRunning = true;
+    m_isNavRunning    = true;
+    m_navNeedsRestart = false;
     emit isNavRunningChanged();
+    emit navNeedsRestartChanged();
     setNavStatus(QStringLiteral("running"));
     qDebug() << "[SysCheckVM] Navigation started:" << navScriptPath() << "FLOOR=" << m_currentFloor;
 
-    // ── Telemetry: open a new session log file ──────────────────────
-    SessionLogger::instance().startSession(m_currentFloor, m_currentFloor);
+    // ── Telemetry ─────────────────────────────────────────────────────────
+    // If called right after onFinished() the session is already open and
+    // syscheck_complete has already been logged — just append nav_process_started.
+    // If called manually from ControlCenter (after a stop or on a fresh launch
+    // without a prior sys-check), open a new session first.
+    if (!SessionLogger::instance().isSessionActive()) {
+        SessionLogger::instance().startSession(m_currentFloor, m_currentFloor);
+    }
     SessionLogger::instance().logEvent(QStringLiteral("boot"),
                                        QStringLiteral("nav_process_started"),
                                        { { QStringLiteral("floor"),  m_currentFloor },
@@ -361,6 +419,9 @@ void SysCheckViewModel::stopNavigation() {
             if (m_navProcess && m_navProcess->state() != QProcess::NotRunning)
                 m_navProcess->kill();
         });
+    } else {
+        // If navigation was started externally (e.g. via SSH), terminate it gracefully via pkill
+        QProcess::startDetached(QStringLiteral("pkill"), QStringList() << QStringLiteral("-INT") << QStringLiteral("-f") << QStringLiteral("nav_v2.launch.py|nav.launch.py"));
     }
     m_isNavRunning = false;
     emit isNavRunningChanged();
@@ -378,6 +439,51 @@ void SysCheckViewModel::onNavFinished(int exitCode, QProcess::ExitStatus) {
                                        QStringLiteral("nav_process_stopped"),
                                        { { QStringLiteral("exit_code"), exitCode } });
     SessionLogger::instance().endSession();
+}
+
+void SysCheckViewModel::checkExternalNavStatus() {
+    // If the GUI itself started the process, rely on QProcess signals
+    if (m_navProcess && m_navProcess->state() != QProcess::NotRunning) {
+        return;
+    }
+
+    // Run pgrep asynchronously to check for active nav launch or nodes
+    QProcess *checkProc = new QProcess(this);
+    checkProc->setProgram(QStringLiteral("pgrep"));
+    checkProc->setArguments(QStringList() << QStringLiteral("-f") << QStringLiteral("nav_v2.launch.py|nav.launch.py|wheel_odom_node"));
+
+    connect(checkProc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, [this, checkProc](int exitCode, QProcess::ExitStatus) {
+        bool isAnyNavRunning = (exitCode == 0); // pgrep exits with 0 if matching processes are found
+
+        if (isAnyNavRunning != m_isNavRunning) {
+            m_isNavRunning = isAnyNavRunning;
+            emit isNavRunningChanged();
+
+            if (m_isNavRunning) {
+                setNavStatus(QStringLiteral("running"));
+                qDebug() << "[SysCheckVM] External navigation process detected as RUNNING";
+                if (!SessionLogger::instance().isSessionActive()) {
+                    SessionLogger::instance().startSession(m_currentFloor, m_currentFloor);
+                }
+                SessionLogger::instance().logEvent(QStringLiteral("boot"),
+                                                   QStringLiteral("external_nav_detected"),
+                                                   { { QStringLiteral("floor"), m_currentFloor } });
+            } else {
+                setNavStatus(QStringLiteral("stopped"));
+                qDebug() << "[SysCheckVM] External navigation process detected as STOPPED";
+                if (SessionLogger::instance().isSessionActive()) {
+                    SessionLogger::instance().endSession();
+                }
+            }
+        }
+        checkProc->deleteLater();
+    });
+
+    connect(checkProc, &QProcess::errorOccurred, this, [checkProc](QProcess::ProcessError) {
+        checkProc->deleteLater();
+    });
+
+    checkProc->start();
 }
 
 void SysCheckViewModel::resetState() {

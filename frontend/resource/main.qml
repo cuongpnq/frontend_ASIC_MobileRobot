@@ -67,6 +67,16 @@ ApplicationWindow {
                 default:                  return "MainView.qml"
             }
         }
+
+        onSourceChanged: {
+            if (source !== "") {
+                SessionLogger.logInteractionStart("load_view_" + AppStateMachine.currentState)
+            }
+        }
+
+        onLoaded: {
+            SessionLogger.logInteractionEnd("load_view_" + AppStateMachine.currentState, "Time to navigate and load " + AppStateMachine.currentState)
+        }
     }
 
     // Global Virtual Keyboard

@@ -129,9 +129,9 @@ Item {
             text: {
                 var s = SysCheckViewModel.status
                 if (s === "running")  return "Running checks… (" + SysCheckViewModel.passCount + " pass / " + SysCheckViewModel.failCount + " fail)"
-                if (s === "ready")    return "✓  All checks passed"
-                if (s === "warnings") return "⚠  Checks done with warnings"
-                if (s === "failed")   return "✕  " + SysCheckViewModel.failCount + " checks failed"
+                if (s === "ready")    return "✓  All checks passed — launching app…"
+                if (s === "warnings") return "⚠  Checks done with warnings — launching app…"
+                if (s === "failed")   return "✕  " + SysCheckViewModel.failCount + " checks failed — launching app…"
                 return ""
             }
             font.pixelSize: 22; font.family: "Inter"
@@ -142,39 +142,6 @@ Item {
                 if (s === "failed") return "#f44336"
                 return "#555555"
             }
-        }
-
-        // ── Navigation started indicator ────────────────────────
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 42
-            visible: SysCheckViewModel.isNavRunning
-            text: "▶  Navigation started — FLOOR: " + SysCheckViewModel.navFloor
-            font.pixelSize: 20; font.family: "Inter"
-            color: "#4caf50"
-        }
-
-        // ── Continue button (bottom-center, active when done) ───
-        Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 10
-            width: contLbl.implicitWidth + 60; height: 64; radius: 32
-            visible: !SysCheckViewModel.isRunning && SysCheckViewModel.status !== "idle"
-            color: SysCheckViewModel.status === "failed"
-                   ? (contMa2.containsMouse ? "#d32f2f" : "#f44336")
-                   : (contMa2.containsMouse ? "#388e3c" : "#4caf50")
-            border.color: SysCheckViewModel.status === "failed" ? "#f44336" : "#4caf50"
-            border.width: 1
-            Behavior on color { ColorAnimation { duration: 150 } }
-            Text {
-                id: contLbl; anchors.centerIn: parent
-                text: SysCheckViewModel.status === "failed" ? "Continue anyway  →" : "Continue  →"
-                font.pixelSize: 26; font.bold: true; font.family: "Inter"; color: "#FFFFFF"
-            }
-            MouseArea { id: contMa2; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                onClicked: SysCheckViewModel.dismissStartupCheck() }
         }
 
         // ── Developer skip (bottom-right corner) ───────────────

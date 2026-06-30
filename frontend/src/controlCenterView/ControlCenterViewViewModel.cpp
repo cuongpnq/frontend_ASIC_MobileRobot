@@ -1,6 +1,7 @@
 #include "controlCenterView/ControlCenterViewViewModel.hpp"
 #include "application/AppStateMachine.hpp"
 #include "preCheckView/SysCheckViewModel.hpp"
+#include "directionView/DirectionViewViewModel.hpp"
 
 ControlCenterViewViewModel::ControlCenterViewViewModel(QObject* parent) 
     : QObject(parent), m_isActive(false)
@@ -31,6 +32,20 @@ void ControlCenterViewViewModel::requestDiagnosticsView() {
 
 void ControlCenterViewViewModel::requestSysCheckView() {
     if (g_sysCheckViewModel) g_sysCheckViewModel->open();
+}
+
+void ControlCenterViewViewModel::requestStartNavigation() {
+    if (!g_sysCheckViewModel) return;
+    // Use the floor currently selected in DirectionView.
+    // DirectionViewViewModel::instance() is set in its constructor.
+    const QString floor = DirectionViewViewModel::instance()
+                          ? DirectionViewViewModel::instance()->mapId()
+                          : QStringLiteral("e6");
+    g_sysCheckViewModel->launchNavigation(floor);
+}
+
+void ControlCenterViewViewModel::requestStopNavigation() {
+    if (g_sysCheckViewModel) g_sysCheckViewModel->stopNavigation();
 }
 
 void ControlCenterViewViewModel::onStateMachineChanged() {

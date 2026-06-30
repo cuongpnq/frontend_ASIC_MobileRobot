@@ -58,12 +58,12 @@ Item {
             rightPadding: 80
             anchors.top: modeSwitchContainer.bottom
             anchors.topMargin: 100
-            spacing: 60
+            spacing: 40
 
             // ── Diagnostics Panel ───────────────────────────────────
             Rectangle {
                 id: diagnosticsPanel
-                width: (parent.width - 80 * 2 - 120) / 3
+                width: (parent.width - 80 * 2 - 120) / 4
                 height: 320
                 radius: 32
                 color: "#DAD8D8"
@@ -163,7 +163,7 @@ Item {
             // ── Map Panel ───────────────────────────────────────────
             Rectangle {
                 id: mapPanel
-                width: (parent.width - 80 * 2 - 120) / 3
+                width: (parent.width - 80 * 2 - 120) / 4
                 height: 320
                 radius: 32
                 color: "#DAD8D8"
@@ -212,7 +212,7 @@ Item {
             // ── Pre-Flight Check Panel ──────────────────────────────
             Rectangle {
                 id: preCheckPanel
-                width: (parent.width - 80 * 2 - 120) / 3
+                width: (parent.width - 80 * 2 - 120) / 4
                 height: 320
                 radius: 32
                 color: "#DAD8D8"
@@ -311,6 +311,173 @@ Item {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: ControlCenterViewViewModel.requestSysCheckView()
+                }
+            }
+
+            // ── Navigation Panel ────────────────────────────────────
+            Rectangle {
+                id: navPanel
+                width: (parent.width - 80 * 2 - 120) / 4
+                height: 320
+                radius: 32
+                color: "#DAD8D8"
+                opacity: 0.8
+
+                // Title
+                Text {
+                    id: navPanelTitle
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.margins: 20
+                    text: "Navigation"
+                    font.pixelSize: 48
+                    font.bold: true
+                    font.family: "Inter"
+                    color: "#000000"
+                }
+
+                // Nav status badge
+                Rectangle {
+                    id: navStatusBadge
+                    anchors.top: navPanelTitle.bottom
+                    anchors.left: parent.left
+                    anchors.leftMargin: 20
+                    anchors.topMargin: 10
+                    width: navBadgeTxt.implicitWidth + 24
+                    height: 36
+                    radius: 18
+                    color: SysCheckViewModel.isNavRunning ? "#0a1f2a" : "#1a1a1a"
+                    border.color: SysCheckViewModel.isNavRunning ? "#2196F3" : "#555555"
+                    border.width: 1
+                    Text {
+                        id: navBadgeTxt
+                        anchors.centerIn: parent
+                        text: SysCheckViewModel.isNavRunning ? "▶ RUNNING" : (SysCheckViewModel.navStatus === "stopped" ? "■ STOPPED" : "— IDLE")
+                        font.pixelSize: 15
+                        font.bold: true
+                        font.family: "Inter"
+                        color: SysCheckViewModel.isNavRunning ? "#2196F3" : "#888888"
+                    }
+                }
+
+                // Active floor label
+                Text {
+                    id: navFloorLabel
+                    anchors.top: navStatusBadge.bottom
+                    anchors.left: parent.left
+                    anchors.leftMargin: 20
+                    anchors.topMargin: 10
+                    text: "Floor: <b>" + DirectionViewViewModel.mapId + "</b>"
+                    font.pixelSize: 26
+                    font.family: "Inter"
+                    color: "#333333"
+                    textFormat: Text.RichText
+                }
+
+                // Map-switch reminder banner
+                Rectangle {
+                    id: navRestartBanner
+                    anchors.top: navFloorLabel.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.leftMargin: 16
+                    anchors.rightMargin: 16
+                    anchors.topMargin: 8
+                    height: 44
+                    radius: 10
+                    visible: SysCheckViewModel.navNeedsRestart
+                    color: "#2e1f00"
+                    border.color: "#ff9800"
+                    border.width: 1
+
+                    SequentialAnimation on opacity {
+                        running: SysCheckViewModel.navNeedsRestart
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 0.55; duration: 700; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1.0;  duration: 700; easing.type: Easing.InOutSine }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "⚠  Map changed — restart nav"
+                        font.pixelSize: 18
+                        font.bold: true
+                        font.family: "Inter"
+                        color: "#ff9800"
+                    }
+                }
+
+                // Start / Stop buttons
+                Row {
+                    id: navButtonRow
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.leftMargin: 20
+                    anchors.rightMargin: 20
+                    anchors.bottomMargin: 20
+                    spacing: 12
+
+                    // Start button — disabled while nav is running
+                    Rectangle {
+                        id: startNavBtn
+                        width: (parent.width - 12) / 2
+                        height: 56
+                        radius: 14
+                        // Highlight with orange border when map changed and nav needs restart
+                        color: startNavMa.containsMouse ? "#1565C0" : "#1976D2"
+                        opacity: SysCheckViewModel.isNavRunning ? 0.38 : 1.0
+                        border.color: SysCheckViewModel.navNeedsRestart ? "#ff9800" : "transparent"
+                        border.width: SysCheckViewModel.navNeedsRestart ? 2 : 0
+                        Behavior on color { ColorAnimation { duration: 150 } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "▶  Start"
+                            font.pixelSize: 22
+                            font.bold: true
+                            font.family: "Inter"
+                            color: "#FFFFFF"
+                        }
+
+                        MouseArea {
+                            id: startNavMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: SysCheckViewModel.isNavRunning ? Qt.ArrowCursor : Qt.PointingHandCursor
+                            enabled: !SysCheckViewModel.isNavRunning
+                            onClicked: ControlCenterViewViewModel.requestStartNavigation()
+                        }
+                    }
+
+                    // Stop button — disabled while nav is not running
+                    Rectangle {
+                        id: stopNavBtn
+                        width: (parent.width - 12) / 2
+                        height: 56
+                        radius: 14
+                        color: stopNavMa.containsMouse ? "#B71C1C" : "#C62828"
+                        opacity: SysCheckViewModel.isNavRunning ? 1.0 : 0.38
+                        Behavior on color { ColorAnimation { duration: 150 } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "■  Stop"
+                            font.pixelSize: 22
+                            font.bold: true
+                            font.family: "Inter"
+                            color: "#FFFFFF"
+                        }
+
+                        MouseArea {
+                            id: stopNavMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: SysCheckViewModel.isNavRunning ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            enabled: SysCheckViewModel.isNavRunning
+                            onClicked: ControlCenterViewViewModel.requestStopNavigation()
+                        }
+                    }
                 }
             }
         }
