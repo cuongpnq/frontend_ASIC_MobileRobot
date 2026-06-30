@@ -28,6 +28,11 @@ void ControlCenterViewViewModel::requestDiagnosticsView() {
     AppStateMachine::instance().goToDiagnostics();
 }
 
+void ControlCenterViewViewModel::requestSysCheckView() {
+    extern SysCheckViewModel* g_sysCheckViewModel;
+    if (g_sysCheckViewModel) g_sysCheckViewModel->open();
+}
+
 void ControlCenterViewViewModel::onStateMachineChanged() {
     bool active = (AppStateMachine::instance().currentState() == "ControlCenterView");
     if (m_isActive != active) {

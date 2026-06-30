@@ -20,6 +20,7 @@ Item {
             if (autoHomeSeconds <= 1) {
                 autoHomeTimer.stop()
                 selectedLocation = "Home"
+                SessionLogger.logInteractionStart("navigate_to_cp")
                 DirectionViewViewModel.startNavigation(0)
                 DirectionViewViewModel.requestRunningView()
             } else {
@@ -587,6 +588,7 @@ Item {
                                 selectedLocation = pendingLocation
                                 confirmPopup.close()
                                 pendingLocation = ""
+                                SessionLogger.logInteractionStart("navigate_to_cp")
                                 DirectionViewViewModel.startNavigation(pendingCpId)
                                 pendingCpId = -1
                                 DirectionViewViewModel.requestRunningView()

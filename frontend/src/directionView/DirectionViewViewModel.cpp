@@ -2,6 +2,8 @@
 #include "application/AppStateMachine.hpp"
 #include "application/ROSManager.hpp"
 #include "application/NavigationModule.hpp"
+#include "application/SessionLogger.hpp"
+#include "preCheckView/SysCheckViewModel.hpp"
 #include <QDebug>
 
 static DirectionViewViewModel* s_instance = nullptr;
@@ -69,8 +71,17 @@ void DirectionViewViewModel::requestRunningView() {
 }
 
 void DirectionViewViewModel::startNavigation(int cpId) {
+    // ── Telemetry: UI latency end + navigate command ──────────────────
+    SessionLogger::instance().logInteractionEnd(
+        QStringLiteral("navigate_to_cp"), QStringLiteral("Navigate confirmed in DirectionView"));
+
     auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
     if (navModule) {
+        const QString cpName = navModule->getCheckpointName(cpId);
+        SessionLogger::instance().logEvent(QStringLiteral("navigation"),
+                                           QStringLiteral("navigate_command"),
+                                           { { QStringLiteral("cpId"),  cpId   },
+                                             { QStringLiteral("name"),  cpName } });
         navModule->navigateToCheckpoint(cpId);
     }
 }
@@ -152,6 +163,12 @@ void DirectionViewViewModel::setMapId(const QString& mapId) {
     auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
     if (navModule) {
         navModule->setMapId(mapId);
+    }
+    // Re-launch run_nav.sh with FLOOR matching the newly selected map.
+    // The map ID directly maps to the FLOOR param (a1 → a1, e1 → e1, e6 → e6).
+    if (g_sysCheckViewModel) {
+        qDebug() << "DirectionViewViewModel: Relaunching navigation with FLOOR=" << mapId;
+        g_sysCheckViewModel->launchNavigation(mapId);
     }
 }
 

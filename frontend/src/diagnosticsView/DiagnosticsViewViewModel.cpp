@@ -1,6 +1,7 @@
 #include "diagnosticsView/DiagnosticsViewViewModel.hpp"
 #include "diagnosticsView/PerformanceMonitor.hpp"
 #include "application/AppStateMachine.hpp"
+#include "application/SessionLogger.hpp"
 
 #include <QGuiApplication>
 #include <QQuickWindow>
@@ -145,4 +146,12 @@ void DiagnosticsViewViewModel::onFpsTimerFired()
     m_fpsHistory.removeFirst();
     m_fpsHistory.append(m_fps);
     emit fpsHistoryChanged();
+
+    // ── Telemetry: record 1-second performance sample ────────────────────
+    SessionLogger::instance().logPerformanceSample(
+        m_perfMonitor->cpuUsage(),
+        m_perfMonitor->ramUsage(),
+        m_perfMonitor->netRxKBps(),
+        m_perfMonitor->netTxKBps(),
+        m_fps);
 }

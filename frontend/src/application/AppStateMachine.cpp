@@ -1,4 +1,5 @@
 #include "application/AppStateMachine.hpp"
+#include "application/SessionLogger.hpp"
 #include <QDebug>
 
 AppStateMachine::AppStateMachine(QObject* parent) 
@@ -121,7 +122,14 @@ void AppStateMachine::updateState()
     }
 
     if (m_currentState != newState) {
+        const QString previousState = m_currentState;
         m_currentState = newState;
         emit currentStateChanged();
+
+        // ── Telemetry: record UI view transition ────────────────────────
+        SessionLogger::instance().logEvent(QStringLiteral("ui"),
+                                           QStringLiteral("state_transition"),
+                                           { { QStringLiteral("from"), previousState },
+                                             { QStringLiteral("to"),   m_currentState } });
     }
 }
