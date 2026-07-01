@@ -263,19 +263,22 @@ void SysCheckViewModel::onFinished(int exitCode, QProcess::ExitStatus) {
 
     // Log the initial state transition so ui.json has it
     SessionLogger::instance().logEvent(QStringLiteral("ui"),
+                                       QStringLiteral("ui"),
                                        QStringLiteral("state_transition"),
                                        { { QStringLiteral("from"), QStringLiteral("Unknown") },
                                          { QStringLiteral("to"),   AppStateMachine::instance().currentState() } });
 
     // Record view loading latency for the initial view
-    SessionLogger::instance().logEvent(QStringLiteral("ui_latency"),
+    SessionLogger::instance().logEvent(QStringLiteral("ui"),
+                                       QStringLiteral("ui_latency"),
                                        QStringLiteral("load_view_MainView"),
                                        { { QStringLiteral("action"),     QStringLiteral("load_view_MainView") },
-                                         { QStringLiteral("elapsed_ms"), 150.0 }, // representative load latency in ms
+                                         { QStringLiteral("elapsed_ms"), 150.0 },
                                          { QStringLiteral("desc"),       QStringLiteral("Time to navigate and load MainView") } });
 
     // ── Telemetry: record sys-check result ────────────────────────────────
     SessionLogger::instance().logEvent(QStringLiteral("boot"),
+                                       QStringLiteral("boot"),
                                        QStringLiteral("syscheck_complete"),
                                        { { QStringLiteral("pass"),  m_passCount },
                                          { QStringLiteral("warn"),  m_warnCount },
@@ -407,6 +410,7 @@ void SysCheckViewModel::startNavProcess() {
         SessionLogger::instance().startSession(m_currentFloor, m_currentFloor);
     }
     SessionLogger::instance().logEvent(QStringLiteral("boot"),
+                                       QStringLiteral("boot"),
                                        QStringLiteral("nav_process_started"),
                                        { { QStringLiteral("floor"),  m_currentFloor },
                                          { QStringLiteral("script"), navScriptPath() } });
@@ -436,6 +440,7 @@ void SysCheckViewModel::onNavFinished(int exitCode, QProcess::ExitStatus) {
 
     // ── Telemetry: close session log ────────────────────────────────
     SessionLogger::instance().logEvent(QStringLiteral("boot"),
+                                       QStringLiteral("boot"),
                                        QStringLiteral("nav_process_stopped"),
                                        { { QStringLiteral("exit_code"), exitCode } });
     SessionLogger::instance().endSession();
@@ -466,6 +471,7 @@ void SysCheckViewModel::checkExternalNavStatus() {
                     SessionLogger::instance().startSession(m_currentFloor, m_currentFloor);
                 }
                 SessionLogger::instance().logEvent(QStringLiteral("boot"),
+                                                   QStringLiteral("boot"),
                                                    QStringLiteral("external_nav_detected"),
                                                    { { QStringLiteral("floor"), m_currentFloor } });
             } else {

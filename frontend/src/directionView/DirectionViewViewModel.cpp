@@ -78,7 +78,8 @@ void DirectionViewViewModel::startNavigation(int cpId) {
     auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
     if (navModule) {
         const QString cpName = navModule->getCheckpointName(cpId);
-        SessionLogger::instance().logEvent(QStringLiteral("navigation"),
+        SessionLogger::instance().logEvent(QStringLiteral("direction_view"),
+                                           QStringLiteral("navigation"),
                                            QStringLiteral("navigate_command"),
                                            { { QStringLiteral("cpId"),  cpId   },
                                              { QStringLiteral("name"),  cpName } });

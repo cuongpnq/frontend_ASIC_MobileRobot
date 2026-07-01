@@ -1,8 +1,7 @@
 # ASIC Bot — Chatbot Test Scenarios
 
-> **Model**: `qwen2.5:0.5b` via Ollama on Jetson Xavier NX  
-> **Knowledge base**: `knowledge.txt` (57 lines about UIT/FCE/app)  
-> **Session log**: `~/.local/share/frontend_app/logs/session_*.json`  
+> **Knowledge base**: `knowledge.txt` (about UIT/FCE/app)  
+> **Session log**: `~/.local/share/frontend_app/logs/chat.json`  
 > Events to look for: `cat: "chat"` → events `query_start`, `first_token`, `complete`
 
 ---
@@ -144,8 +143,8 @@ Run these **in sequence without clearing history**:
 ## How to Read Results from Session Log
 
 ```bash
-# Show all chat events from last session
-cat ~/.local/share/frontend_app/logs/session_*.json \
+# Show all chat events from chat.json log
+cat ~/.local/share/frontend_app/logs/chat.json \
   | python3 -c "
 import json, sys
 data = json.load(sys.stdin)
@@ -176,17 +175,16 @@ for e in data['events']:
 ### Quick analysis script:
 
 ```python
-import json, glob, statistics
+import json, os, statistics
 
-files = glob.glob(
-    os.path.expanduser("~/.local/share/frontend_app/logs/session_*.json"))
-for path in files:
+path = os.path.expanduser("~/.local/share/frontend_app/logs/chat.json")
+if os.path.exists(path):
     with open(path) as f:
         data = json.load(f)
 
-    ttfts   = [e["ttft_ms"]       for e in data["events"]
+    ttfts   = [e["ttft_ms"]       for e in data.get("events", [])
                if e.get("cat") == "chat" and e.get("event") == "first_token"]
-    tps     = [e["tokens_per_sec"] for e in data["events"]
+    tps     = [e["tokens_per_sec"] for e in data.get("events", [])
                if e.get("cat") == "chat" and e.get("event") == "complete"]
 
     print(f"\n=== {path} ===")

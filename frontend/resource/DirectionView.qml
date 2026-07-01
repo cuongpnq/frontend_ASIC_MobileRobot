@@ -20,7 +20,7 @@ Item {
             if (autoHomeSeconds <= 1) {
                 autoHomeTimer.stop()
                 selectedLocation = "Home"
-                SessionLogger.logInteractionStart("navigate_to_cp")
+                SessionLogger.logInteractionStart("navigate_to_cp", "direction_view")
                 DirectionViewViewModel.startNavigation(0)
                 DirectionViewViewModel.requestRunningView()
             } else {
@@ -588,7 +588,7 @@ Item {
                                 selectedLocation = pendingLocation
                                 confirmPopup.close()
                                 pendingLocation = ""
-                                SessionLogger.logInteractionStart("navigate_to_cp")
+                                SessionLogger.logInteractionStart("navigate_to_cp", "direction_view")
                                 DirectionViewViewModel.startNavigation(pendingCpId)
                                 pendingCpId = -1
                                 DirectionViewViewModel.requestRunningView()
@@ -652,9 +652,114 @@ Item {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
-                            DirectionViewViewModel.setMapId(modelData)
-                            mapSwitchPopup.close()
+                            if (modelData !== DirectionViewViewModel.mapId) {
+                                DirectionViewViewModel.setMapId(modelData)
+                                mapSwitchPopup.close()
+                                navReminderPopup.open()
+                            } else {
+                                mapSwitchPopup.close()
+                            }
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    // Map Switch Reminder Popup
+    Popup {
+        id: navReminderPopup
+        anchors.centerIn: parent
+        width: parent.width * 0.5
+        height: 280
+        modal: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        // Automatically close when standby is triggered
+        Connections {
+            target: window
+            onIsStandbyChanged: {
+                if (window.isStandby) navReminderPopup.close()
+            }
+        }
+
+        background: Rectangle {
+            color: "#ffffff"
+            radius: 24
+            border.color: "#dee2e6"
+            border.width: 1
+
+            // Soft drop shadow
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -4
+                color: "transparent"
+                border.color: "#18000000"
+                border.width: 4
+                radius: 28
+                z: -1
+            }
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 24
+            width: parent.width - 60
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 16
+                
+                // Alert symbol
+                Text {
+                    text: "⚠"
+                    font.pixelSize: 42
+                    color: "#f39c12"
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                Text {
+                    text: "Navigation Restart Required"
+                    font.pixelSize: 28
+                    font.bold: true
+                    color: "#2c3e50"
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+
+            Text {
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                text: "The active map has been switched. Please start or restart the navigation process in the Control Center to apply the changes."
+                font.pixelSize: 20
+                color: "#5f6c7b"
+                wrapMode: Text.WordWrap
+            }
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 20
+
+                // OK button
+                Rectangle {
+                    width: 160
+                    height: 52
+                    radius: 12
+                    color: okButtonArea.pressed ? "#e2e8f0" : "#f1f5f9"
+                    border.color: "#cbd5e1"
+                    border.width: 1
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "OK"
+                        font.pixelSize: 20
+                        color: "#475569"
+                    }
+
+                    MouseArea {
+                        id: okButtonArea
+                        anchors.fill: parent
+                        onClicked: navReminderPopup.close()
                     }
                 }
             }

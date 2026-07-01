@@ -6,13 +6,13 @@ This document provides comprehensive test cases for validating all non-chatbot s
 
 ## Telemetry Log Reference
 All actions in these test cases trigger specific entries in your JSON log files (located in `~/.local/share/frontend_app/logs/`):
-- `boot.json` (Category `boot`)
-- `navigation.json` (Category `navigation`)
-- `ui.json` (Category `ui`)
-- `ui_latency.json` (Category `ui_latency`)
-- `perf.json` (Category `perf`)
-- `chat.json` (Category `chat`)
-- `error.json` (Category `error`)
+- `boot.json` (Feature: `boot`)
+- `direction_view.json` (Feature: `direction_view`)
+- `running_view.json` (Feature: `running_view`)
+- `chat.json` (Feature: `chat`)
+- `control_center.json` (Feature: `control_center`)
+- `ui.json` (Feature: `ui`)
+- `error.json` (Feature: `error`)
 
 ---
 
@@ -22,9 +22,9 @@ Tests the startup check automation, script triggering, and initial logging file 
 
 | ID | Test Scenario | Steps | Expected UI / Hardware Result | Telemetry Output |
 |---|---|---|---|---|
-| **BC1** | Cold Boot Sequence (Ready) | 1. Launch the application.<br>2. Observe the Pre-Check screen. | - Progress bar completes automatically.<br>- No failures detected.<br>- App automatically navigates to `MainView` after 2s. | - `boot.json`: `cat: "boot"`, `event: "syscheck_complete"` containing `pass` (24), `warn` (4), `fail` (6), `exit` (1), `cpu_pct`, and `ram_pct`.<br>- `ui.json`: `cat: "ui"`, `event: "state_transition"` (`from: "Unknown"`, `to: "MainView"`).<br>- `ui_latency.json`: `cat: "ui_latency"`, `event: "load_view_MainView"`, `elapsed_ms` (150), `desc`. |
+| **BC1** | Cold Boot Sequence (Ready) | 1. Launch the application.<br>2. Observe the Pre-Check screen. | - Progress bar completes automatically.<br>- No failures detected.<br>- App automatically navigates to `MainView` after 2s. | - `boot.json`: `cat: "boot"`, `event: "syscheck_complete"` containing `pass` (24), `warn` (4), `fail` (6), `exit` (1), `cpu_pct`, and `ram_pct`.<br>- `ui.json`: `cat: "ui"`, `event: "state_transition"` (`from: "Unknown"`, `to: "MainView"`).<br>- `ui.json`: `cat: "ui_latency"`, `event: "load_view_MainView"`, `elapsed_ms` (150), `desc`. |
 | **BC2** | Boot Pre-Check Failure | 1. Simulate a missing sensor or script failure.<br>2. Restart the app. | - Progress bar halts.<br>- Failed systems show a red indicator.<br>- App remains locked on the Pre-Check screen. | - `boot.json`: `syscheck_complete` logged with `fail` count > 0.<br>- No navigation start. |
-| **BC3** | Manual Nav Launch / Relaunch | 1. In settings, stop navigation.<br>2. Re-trigger "Launch Navigation". | - `run_nav.sh` script executes.<br>- State transitions to running. | - `event: "nav_process_started"`.<br>- Previous session closes and new session file is generated. |
+| **BC3** | Manual Nav Launch / Relaunch | 1. In settings, stop navigation.<br>2. Re-trigger "Launch Navigation". | - `run_nav.sh` script executes.<br>- State transitions to running. | - `boot.json`: `event: "nav_process_started"`.<br>- Previous session closes and new session file is generated. |
 
 ---
 
@@ -34,10 +34,10 @@ Tests map interactions, room/checkpoint selection, floor switches, and confirm p
 
 | ID | Test Scenario | Steps | Expected UI / Hardware Result | Telemetry Output |
 |---|---|---|---|---|
-| **DV1** | Floor Switching | 1. Tap the floor switch icon.<br>2. Select a different floor (e.g., F1 → F2). | - Map background updates to new floor map.<br>- Checkpoints list updates for the new floor. | - `cat: "ui"`, `event: "state_transition"` (if view restarts). |
-| **DV2** | Room Navigation Request | 1. Tap a checkpoint or room name on the screen.<br>2. Tap "Yes" in the confirmation popup. | - Confirmation popup disappears.<br>- App shifts to `RunningView`. | - `ui_latency.json`: `cat: "ui_latency"`, `action: "navigate_to_cp"`, `elapsed_ms`, `desc` ("Navigate confirmed in DirectionView").<br>- `navigation.json`: `cat: "navigation"`, `event: "navigate_command"` containing `cpId`, `name`, `cpu_pct`, `ram_pct`. |
+| **DV1** | Floor Switching | 1. Tap the floor switch icon.<br>2. Select a different floor (e.g., F1 → F2). | - Map background updates to new floor map.<br>- Checkpoints list updates for the new floor.<br>- Displays a popup warning to start/restart navigation. | - `ui.json`: `cat: "ui"`, `event: "state_transition"` (if view restarts). |
+| **DV2** | Room Navigation Request | 1. Tap a checkpoint or room name on the screen.<br>2. Tap "Yes" in the confirmation popup. | - Confirmation popup disappears.<br>- App shifts to `RunningView`. | - `direction_view.json`: `cat: "ui_latency"`, `action: "navigate_to_cp"`, `elapsed_ms`, `desc` ("Navigate confirmed in DirectionView").<br>- `direction_view.json`: `cat: "navigation"`, `event: "navigate_command"` containing `cpId`, `name`, `cpu_pct`, `ram_pct`. |
 | **DV3** | Confirmation Cancel | 1. Tap a checkpoint.<br>2. Tap "No" / Cancel in the popup. | - Popup closes.<br>- App remains on `DirectionView`. | - No navigation command sent. |
-| **DV4** | Auto-Home Timeout Timer | 1. Stay idle on `DirectionView` for 15s.<br>2. Watch the home countdown timer. | - Confirmation popup for home navigation displays.<br>- Timer counts down and triggers home navigation. | - `action: "navigate_to_cp"` with `cpId: 0` (Home). |
+| **DV4** | Auto-Home Timeout Timer | 1. Stay idle on `DirectionView` for 15s.<br>2. Watch the home countdown timer. | - Confirmation popup for home navigation displays.<br>- Timer counts down and triggers home navigation. | - `direction_view.json`: `action: "navigate_to_cp"` with `cpId: 0` (Home). |
 
 ---
 
@@ -47,11 +47,11 @@ Tests control mechanisms while the robot is in motion (state changes, resets, em
 
 | ID | Test Scenario | Steps | Expected UI / Hardware Result | Telemetry Output |
 |---|---|---|---|---|
-| **RV1** | Live Progress Updates | 1. Trigger navigation to room.<br>2. Observe active status cards. | - UI shows current moving speed and destination.<br>- Status message updates. | - `cat: "navigation"`, `event: "status"` updates.<br>- `cat: "navigation"`, `event: "state_changed"`. |
-| **RV2** | Emergency Stop | 1. While robot is moving, tap the big red "Stop" button. | - Robot immediately halts physical movement.<br>- Stop button changes to a green "Continue" button.<br>- Background colors alert user. | - `cat: "ui_latency"`, `action: "emergency_stop"`.<br>- `cat: "navigation"`, `event: "emergency_stop"` (`active: true`). |
-| **RV3** | Emergency Resume | 1. Tap the green "Continue" button after an emergency stop. | - Robot resumes moving toward its original target.<br>- Continue button toggles back to red "Stop" button. | - `cat: "ui_latency"`, `action: "emergency_resume"`.<br>- `cat: "navigation"`, `event: "emergency_stop"` (`active: false`). |
-| **RV4** | Reset Mid-Navigation | 1. While moving, tap the "Reset" button. | - Robot halts and aborts task.<br>- App transitions back to `DirectionView`. | - `cat: "ui_latency"`, `action: "reset_direction"`.<br>- `cat: "navigation"`, `event: "reset_requested"`. |
-| **RV5** | Arrival at Checkpoint | 1. Let the robot reach the targeted checkpoint. | - App shows "Arrived at destination".<br>- 15-second countdown timer starts.<br>- App returns to `DirectionView` when timer hits zero. | - `cat: "navigation"`, `event: "checkpoint_arrived"`. |
+| **RV1** | Live Progress Updates | 1. Trigger navigation to room.<br>2. Observe active status cards. | - UI shows current moving speed and destination.<br>- Status message updates. | - `running_view.json`: `cat: "navigation"`, `event: "status"` updates.<br>- `running_view.json`: `cat: "navigation"`, `event: "state_changed"`. |
+| **RV2** | Emergency Stop | 1. While robot is moving, tap the big red "Stop" button. | - Robot immediately halts physical movement.<br>- Stop button changes to a green "Continue" button.<br>- Background colors alert user. | - `running_view.json`: `cat: "ui_latency"`, `action: "emergency_stop"`.<br>- `running_view.json`: `cat: "navigation"`, `event: "emergency_stop"` (`active: true`). |
+| **RV3** | Emergency Resume | 1. Tap the green "Continue" button after an emergency stop. | - Robot resumes moving toward its original target.<br>- Continue button toggles back to red "Stop" button. | - `running_view.json`: `cat: "ui_latency"`, `action: "emergency_resume"`.<br>- `running_view.json`: `cat: "navigation"`, `event: "emergency_stop"` (`active: false`). |
+| **RV4** | Reset Mid-Navigation | 1. While moving, tap the "Reset" button. | - Robot halts and aborts task.<br>- App transitions back to `DirectionView`. | - `running_view.json`: `cat: "ui_latency"`, `action: "reset_direction"`.<br>- `running_view.json`: `cat: "navigation"`, `event: "reset_requested"`. |
+| **RV5** | Arrival at Checkpoint | 1. Let the robot reach the targeted checkpoint. | - App shows "Arrived at destination".<br>- 15-second countdown timer starts.<br>- App returns to `DirectionView` when timer hits zero. | - `running_view.json`: `cat: "navigation"`, `event: "checkpoint_arrived"`. |
 
 ---
 
@@ -74,9 +74,9 @@ Tests security gates, performance logging fidelity, and sensor diagnostic displa
 
 | ID | Test Scenario | Steps | Expected UI / Hardware Result | Telemetry Output |
 |---|---|---|---|---|
-| **CC1** | Admin Gate Protection | 1. Ensure role is `User`.<br>2. Tap "Control Center". | - Access denied prompt / login request displays.<br>- Prevent transition to diagnostics. | - Unauthorized access attempt warning in Qt logs (captured by `SessionLogger` msg handler). |
-| **CC2** | Live Performance Polling | 1. Navigate to Diagnostics View (requires Admin/Developer). | - Interactive line graphs of CPU, RAM, Network, and FPS load update every second. | - `cat: "perf"` records added to JSON log at 1Hz showing exact matching graph values. |
-| **CC3** | Low FPS Alert Validation | 1. Simulate low system performance / CPU stress. | - Diagnostics page updates.<br>- App flags warning if FPS drops below 15. | - `cat: "perf"`, `fps` value recorded reflects drops.<br>- Warning caught in `cat: "error"`. |
+| **CC1** | Admin Gate Protection | 1. Ensure role is `User`.<br>2. Tap "Control Center". | - Access denied prompt / login request displays.<br>- Prevent transition to diagnostics. | - Unauthorized access attempt warning in Qt logs (captured by `SessionLogger` msg handler in `error.json`). |
+| **CC2** | Live Performance Polling | 1. Navigate to Diagnostics View (requires Admin/Developer). | - Interactive line graphs of CPU, RAM, Network, and FPS load update every second. | - `control_center.json`: `cat: "perf"` records added to JSON log at 1Hz showing exact matching graph values. |
+| **CC3** | Low FPS Alert Validation | 1. Simulate low system performance / CPU stress. | - Diagnostics page updates.<br>- App flags warning if FPS drops below 15. | - `control_center.json`: `cat: "perf"`, `fps` value recorded reflects drops.<br>- Warning caught in `error.json`. |
 
 ---
 
@@ -92,15 +92,26 @@ Tests credentials verification, wifi hookup, and session inactivity timeout thre
 
 ---
 
-## Recommended Complete System Test Sequence
+## How to Execute Tests
 
-To test all components while logging a clean telemetry file:
+Non-chatbot system scenarios in this document are covered by the real-device interactive test runner:
 
-1. **Start System:** Power on, wait for `SysCheckView` to successfully pass (starts telemetry recording).
-2. **Settings check:** Elevate role to `Admin`, inspect wifi settings.
-3. **Diagnostics check:** Open `Control Center` → `Diagnostics` and watch graphs populate for 10 seconds.
-4. **Trigger Nav:** Return to `Direction View`, select a Room, and confirm.
-5. **Run tests:** During navigation, test `Emergency Stop`, wait 3s, then `Continue`.
-6. **Arrive:** Let the robot arrive at the destination, wait for the auto-return timer to bring it home.
-7. **Presentation:** Open `Presentation View`, upload a test file, and scroll through 3 slides.
-8. **End:** Stop the application. Retrieve the output `.json` file from XDG data path and run the validator script.
+```bash
+make test-real
+# or: python3 run_real_device_interactive_tests.py
+```
+
+The script walks through **core hardware & UI sections** (BC → DV → RV → PV → CC → US), monitors telemetry logs automatically, and prompts for manual confirmation as a fallback.
+A Markdown report is written to `artifacts/real_device_test_report.md` at the end of each run.
+
+Chatbot features are tested independently using the automated chatbot test suite:
+
+```bash
+make test-chat
+# or: python3 run_chatbot_tests.py
+```
+
+This runs factual validation, context retention turns, and performance checks, saving a report to `artifacts/chatbot_test_report.md`.
+
+> **This document is a reference specification only. Do not use it as a manual test checklist — use the script instead.**
+

@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 BUILD_DIR ?= build-output
 
-.PHONY: help setup build run run-only clean distclean test-native test-real
+.PHONY: help setup build run run-only clean clear_log distclean test-native test-real test-chat
 
 # Default: Show help
 help:
@@ -21,6 +21,7 @@ help:
 	@echo ""
 	@echo "  Example: make run BUILD=ON"
 	@echo "  make clean       - Remove build folders and logs"
+	@echo "  make clear_log   - Clear application telemetry log JSON files"
 	@echo "  make distclean   - Reset project (Deletes AI source code)"
 	@echo "===================================================="
 
@@ -79,15 +80,25 @@ test-native:
 	@./run_native_automation_tests.py
 
 test-real:
-	@echo "[TEST] Running Interactive Real Device Verification..."
+	@echo "[TEST] Running Interactive Real Device Verification (BC/DV/RV/PV/CC/US)..."
 	@chmod +x ./run_real_device_interactive_tests.py
 	@./run_real_device_interactive_tests.py
+
+test-chat:
+	@echo "[TEST] Running Chatbot Test Suite..."
+	@chmod +x ./run_chatbot_tests.py
+	@./run_chatbot_tests.py
 
 # 4. Cleanup
 clean:
 	@echo "[CLEAN] Removing build files and logs..."
 	rm -rf $(BUILD_DIR)
 	rm -f llama_server.log
+
+clear_log:
+	@echo "[CLEAR_LOG] Clearing application telemetry log files..."
+	rm -rf ~/.local/share/frontend_app/logs/*.json
+	rm -rf ./logs/*.json
 
 distclean: clean
 	@echo "[DISTCLEAN] Removing AI source code..."

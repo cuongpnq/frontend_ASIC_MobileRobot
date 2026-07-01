@@ -70,7 +70,7 @@ ApplicationWindow {
 
         onSourceChanged: {
             if (source !== "") {
-                SessionLogger.logInteractionStart("load_view_" + AppStateMachine.currentState)
+                SessionLogger.logInteractionStart("load_view_" + AppStateMachine.currentState, "ui")
             }
         }
 

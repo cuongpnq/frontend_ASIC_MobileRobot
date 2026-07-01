@@ -127,6 +127,7 @@ void ChatViewViewModel::sendMessage(const QString& message) {
     m_firstToken       = true;
     m_pendingQuestion  = message.trimmed();
     SessionLogger::instance().logEvent(QStringLiteral("chat"),
+                                       QStringLiteral("chat"),
                                        QStringLiteral("query_start"),
                                        { { QStringLiteral("question"),       m_pendingQuestion },
                                          { QStringLiteral("history_turns"),  m_chatHistory.size() - 1 } });
@@ -154,6 +155,7 @@ void ChatViewViewModel::onTokenGenerated(const QString& token) {
         m_firstToken = false;
         const double ttftMs = double(m_chatTimer.elapsed());
         SessionLogger::instance().logEvent(QStringLiteral("chat"),
+                                           QStringLiteral("chat"),
                                            QStringLiteral("first_token"),
                                            { { QStringLiteral("ttft_ms"), ttftMs } });
     }
@@ -199,6 +201,7 @@ void ChatViewViewModel::onInferenceFinished() {
     const bool   interrupted = reply.endsWith(QStringLiteral("[The response was interrupted]"));
 
     SessionLogger::instance().logEvent(QStringLiteral("chat"),
+                                       QStringLiteral("chat"),
                                        QStringLiteral("complete"),
                                        { { QStringLiteral("question"),        m_pendingQuestion },
                                          { QStringLiteral("token_count"),     m_tokenCount     },

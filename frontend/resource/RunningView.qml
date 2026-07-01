@@ -190,7 +190,7 @@ Item {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            SessionLogger.logInteractionStart("emergency_stop")
+                            SessionLogger.logInteractionStart("emergency_stop", "running_view")
                             RunningViewViewModel.stopRobot()
                         }
                     }
@@ -220,7 +220,7 @@ Item {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            SessionLogger.logInteractionStart("reset_direction")
+                            SessionLogger.logInteractionStart("reset_direction", "running_view")
                             RunningViewViewModel.resetToDirectionView()
                         }
                     }
@@ -250,7 +250,7 @@ Item {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            SessionLogger.logInteractionStart("emergency_resume")
+                            SessionLogger.logInteractionStart("emergency_resume", "running_view")
                             RunningViewViewModel.resumeRobot()
                         }
                     }

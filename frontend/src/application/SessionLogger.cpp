@@ -50,6 +50,7 @@ void SessionLogger::startSession(const QString& floor, const QString& mapId)
     m_mapId  = mapId.isEmpty()  ? m_floor : mapId;
 
     m_categoryEvents.clear();
+    m_categorySessions.clear();
 
     m_checkpointCount = 0;
     m_emergencyStops  = 0;
@@ -70,19 +71,46 @@ void SessionLogger::startSession(const QString& floor, const QString& mapId)
 
     qDebug() << "[SessionLogger] Session started with timestamp" << m_sessionTimestamp;
 
-    // Initialize all known feature categories so their empty log files exist with session headers
-    const QStringList categories = {
+    // Initialize all known feature log files so they exist from session start
+    const QStringList features = {
         QStringLiteral("boot"),
-        QStringLiteral("navigation"),
-        QStringLiteral("ui"),
-        QStringLiteral("ui_latency"),
-        QStringLiteral("perf"),
+        QStringLiteral("direction_view"),
+        QStringLiteral("running_view"),
         QStringLiteral("chat"),
+        QStringLiteral("control_center"),
+        QStringLiteral("ui"),
         QStringLiteral("error")
     };
-    for (const auto& cat : categories) {
-        m_categoryEvents[cat] = QJsonArray();
-        flushToDisk(cat);
+
+    for (const auto& feat : features) {
+        const QString filePath = buildFilePath(feat);
+        QJsonArray existingEvents;
+        QJsonArray existingSessions;
+
+        QFile f(filePath);
+        if (f.exists() && f.open(QIODevice::ReadOnly)) {
+            QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
+            f.close();
+            if (doc.isObject()) {
+                QJsonObject root = doc.object();
+                if (root.contains(QStringLiteral("events"))) {
+                    existingEvents = root.value(QStringLiteral("events")).toArray();
+                }
+                if (root.contains(QStringLiteral("sessions"))) {
+                    existingSessions = root.value(QStringLiteral("sessions")).toArray();
+                } else if (root.contains(QStringLiteral("session"))) {
+                    existingSessions.append(root.value(QStringLiteral("session")).toObject());
+                }
+            }
+        }
+
+        m_categoryEvents[feat] = existingEvents;
+
+        // Append current session meta to the loaded sessions
+        existingSessions.append(m_sessionMeta);
+        m_categorySessions[feat] = existingSessions;
+
+        flushToDisk(feat);
     }
 }
 
@@ -113,6 +141,15 @@ void SessionLogger::endSession()
     // (m_sessionMeta already has start/floor/mapId)
     m_sessionMeta[QStringLiteral("summary")] = summary;
 
+    // Update the current session entry in all feature's session array
+    for (auto it = m_categorySessions.begin(); it != m_categorySessions.end(); ++it) {
+        QJsonArray sessions = it.value();
+        if (!sessions.isEmpty()) {
+            sessions.replace(sessions.size() - 1, m_sessionMeta);
+            *it = sessions;
+        }
+    }
+
     for (auto it = m_categoryEvents.begin(); it != m_categoryEvents.end(); ++it) {
         flushToDisk(it.key());
     }
@@ -123,7 +160,9 @@ void SessionLogger::endSession()
 //  General event
 // ═══════════════════════════════════════════════════════════════════
 
-void SessionLogger::logEvent(const QString& category,
+// Feature-aware overload: feature drives the filename
+void SessionLogger::logEvent(const QString& feature,
+                              const QString& category,
                               const QString& event,
                               const QVariantMap& payload)
 {
@@ -133,19 +172,20 @@ void SessionLogger::logEvent(const QString& category,
         return;
 
     QJsonObject entry{
-        { QStringLiteral("t"),       QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs) },
-        { QStringLiteral("cat"),     category },
-        { QStringLiteral("event"),   event },
-        { QStringLiteral("cpu_pct"), qRound(m_lastCpuPct * 10) / 10.0 },
-        { QStringLiteral("ram_pct"), qRound(m_lastRamPct * 10) / 10.0 }
+        { QStringLiteral("t"),        QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs) },
+        { QStringLiteral("feature"),  feature  },
+        { QStringLiteral("cat"),      category },
+        { QStringLiteral("event"),    event    },
+        { QStringLiteral("cpu_pct"),  qRound(m_lastCpuPct * 10) / 10.0 },
+        { QStringLiteral("ram_pct"),  qRound(m_lastRamPct * 10) / 10.0 }
     };
 
     for (auto it = payload.cbegin(); it != payload.cend(); ++it)
         entry[it.key()] = QJsonValue::fromVariant(it.value());
 
-    appendEvent(category, entry);
+    appendEvent(feature, entry);
 
-    // Update summary counters
+    // Update summary counters (same logic, category-driven)
     if (category == QLatin1String("navigation")) {
         if (event == QLatin1String("checkpoint_arrived")) {
             ++m_checkpointCount;
@@ -160,6 +200,14 @@ void SessionLogger::logEvent(const QString& category,
             ++m_resets;
         }
     }
+}
+
+// Backward-compatible overload: category used as both category and feature
+void SessionLogger::logEvent(const QString& category,
+                              const QString& event,
+                              const QVariantMap& payload)
+{
+    logEvent(category, category, event, payload);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -179,31 +227,32 @@ void SessionLogger::logPerformanceSample(double cpu, double ram,
         return;
 
     QJsonObject entry{
-        { QStringLiteral("t"),        QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs) },
-        { QStringLiteral("cat"),      QStringLiteral("perf") },
-        { QStringLiteral("cpu_pct"),  qRound(cpu  * 10) / 10.0 },
-        { QStringLiteral("ram_pct"),  qRound(ram  * 10) / 10.0 },
-        { QStringLiteral("net_rx_kbps"), qRound(netRxKBps * 10) / 10.0 },
-        { QStringLiteral("net_tx_kbps"), qRound(netTxKBps * 10) / 10.0 },
-        { QStringLiteral("fps"),      fps }
+        { QStringLiteral("t"),           QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs) },
+        { QStringLiteral("feature"),      QStringLiteral("control_center") },
+        { QStringLiteral("cat"),          QStringLiteral("perf") },
+        { QStringLiteral("event"),        QStringLiteral("perf_sample") },
+        { QStringLiteral("cpu_pct"),      qRound(cpu  * 10) / 10.0 },
+        { QStringLiteral("ram_pct"),      qRound(ram  * 10) / 10.0 },
+        { QStringLiteral("net_rx_kbps"),  qRound(netRxKBps * 10) / 10.0 },
+        { QStringLiteral("net_tx_kbps"),  qRound(netTxKBps * 10) / 10.0 },
+        { QStringLiteral("fps"),          fps }
     };
 
-    appendEvent(QStringLiteral("perf"), entry);
+    appendEvent(QStringLiteral("control_center"), entry);
 }
 
 // ═══════════════════════════════════════════════════════════════════
 //  UI latency
 // ═══════════════════════════════════════════════════════════════════
 
-void SessionLogger::logInteractionStart(const QString& actionId)
+void SessionLogger::logInteractionStart(const QString& actionId, const QString& feature)
 {
     QMutexLocker lock(&m_mutex);
 
     if (!m_active)
         return;
 
-    // Record high-resolution monotonic timestamp (nanoseconds)
-    m_interactionStartNs[actionId] = m_elapsedTimer.nsecsElapsed();
+    m_interactionStartNs[actionId] = { m_elapsedTimer.nsecsElapsed(), feature };
 }
 
 void SessionLogger::logInteractionEnd(const QString& actionId,
@@ -221,20 +270,25 @@ void SessionLogger::logInteractionEnd(const QString& actionId,
     }
 
     const qint64 endNs     = m_elapsedTimer.nsecsElapsed();
-    const qint64 elapsedNs = endNs - it.value();
+    const qint64 elapsedNs = endNs - it->startNs;
     const double elapsedMs = double(elapsedNs) / 1'000'000.0;
+    const QString feature  = it->feature.isEmpty() ? QStringLiteral("ui") : it->feature;
     m_interactionStartNs.erase(it);
 
     QJsonObject entry{
-        { QStringLiteral("t"),           QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs) },
-        { QStringLiteral("cat"),         QStringLiteral("ui_latency") },
-        { QStringLiteral("action"),      actionId },
-        { QStringLiteral("elapsed_ms"),  elapsedMs }
+        { QStringLiteral("t"),          QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs) },
+        { QStringLiteral("feature"),    feature },
+        { QStringLiteral("cat"),        QStringLiteral("ui_latency") },
+        { QStringLiteral("event"),      QStringLiteral("interaction") },
+        { QStringLiteral("action"),     actionId },
+        { QStringLiteral("elapsed_ms"), elapsedMs },
+        { QStringLiteral("cpu_pct"),    qRound(m_lastCpuPct * 10) / 10.0 },
+        { QStringLiteral("ram_pct"),    qRound(m_lastRamPct * 10) / 10.0 }
     };
     if (!description.isEmpty())
         entry[QStringLiteral("desc")] = description;
 
-    appendEvent(QStringLiteral("ui_latency"), entry);
+    appendEvent(feature, entry);
 
     qDebug() << "[SessionLogger] UI latency [" << actionId << "] ="
              << QString::number(elapsedMs, 'f', 2) << "ms";
@@ -261,8 +315,9 @@ void SessionLogger::flushToDisk(const QString& category)
         return;
 
     QJsonObject root;
-    root[QStringLiteral("session")] = m_sessionMeta;
-    root[QStringLiteral("events")]  = m_categoryEvents.value(category);
+    root[QStringLiteral("session")]  = m_sessionMeta; // backward compatibility
+    root[QStringLiteral("sessions")] = m_categorySessions.value(category);
+    root[QStringLiteral("events")]   = m_categoryEvents.value(category);
 
     QJsonDocument doc(root);
 

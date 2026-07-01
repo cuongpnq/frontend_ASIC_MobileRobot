@@ -51,6 +51,22 @@ public:
     bool isSessionActive() const { return m_active; }
 
     // ── General event ─────────────────────────────────────────────────
+    /**
+     * Log an event tagged to a specific feature.
+     * @param feature   Determines the output file (e.g. "boot", "direction_view").
+     * @param category  Logical category stored as a field in the JSON event.
+     * @param event     Event name.
+     * @param payload   Extra key/value pairs merged into the JSON entry.
+     */
+    void logEvent(const QString& feature,
+                  const QString& category,
+                  const QString& event,
+                  const QVariantMap& payload = {});
+
+    /**
+     * Backward-compatible overload: uses @p category as both category and feature
+     * (routes the event to <category>.json).
+     */
     void logEvent(const QString& category,
                   const QString& event,
                   const QVariantMap& payload = {});
@@ -65,7 +81,8 @@ public:
      * Call from QML right before invoking a ViewModel method.
      * @param actionId  Unique label matching the paired logInteractionEnd call.
      */
-    Q_INVOKABLE void logInteractionStart(const QString& actionId);
+    Q_INVOKABLE void logInteractionStart(const QString& actionId,
+                                         const QString& feature = {});
 
     /**
      * Call from C++ or QML. Records elapsed_ms since logInteractionStart.
@@ -86,6 +103,7 @@ private:
     QString      m_mapId;
     QString      m_sessionTimestamp;
     QHash<QString, QJsonArray> m_categoryEvents; // category -> event array
+    QHash<QString, QJsonArray> m_categorySessions; // category -> session array
     QJsonObject  m_sessionMeta;
 
     // Session-level summary counters
@@ -95,8 +113,9 @@ private:
     QStringList  m_visitedCps;
 
     // UI latency tracking
-    QHash<QString, qint64>  m_interactionStartNs; // actionId → start ns
-    QElapsedTimer            m_elapsedTimer;       // monotonic clock
+    struct InteractionEntry { qint64 startNs; QString feature; };
+    QHash<QString, InteractionEntry> m_interactionStartNs; // actionId → {startNs, feature}
+    QElapsedTimer                    m_elapsedTimer;
 
     // Last known system performance metrics
     double       m_lastCpuPct       = 0.0;

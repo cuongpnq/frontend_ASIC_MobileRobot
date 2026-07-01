@@ -128,6 +128,7 @@ void AppStateMachine::updateState()
 
         // ── Telemetry: record UI view transition ────────────────────────
         SessionLogger::instance().logEvent(QStringLiteral("ui"),
+                                           QStringLiteral("ui"),
                                            QStringLiteral("state_transition"),
                                            { { QStringLiteral("from"), previousState },
                                              { QStringLiteral("to"),   m_currentState } });

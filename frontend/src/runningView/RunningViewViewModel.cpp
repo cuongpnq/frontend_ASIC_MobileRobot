@@ -47,7 +47,8 @@ void RunningViewViewModel::resetToDirectionView() {
     qDebug() << "RunningViewViewModel: Resetting and returning to DirectionView";
     SessionLogger::instance().logInteractionEnd(
         QStringLiteral("reset_direction"), QStringLiteral("Reset button pressed"));
-    SessionLogger::instance().logEvent(QStringLiteral("navigation"),
+    SessionLogger::instance().logEvent(QStringLiteral("running_view"),
+                                       QStringLiteral("navigation"),
                                        QStringLiteral("reset_requested"));
 
     auto navModule = ROSManager::instance().getModule<NavigationModule>("NavigationModule");
@@ -70,7 +71,8 @@ void RunningViewViewModel::stopRobot() {
     if (navModule) {
         navModule->sendEmergencyStop(true);
     }
-    SessionLogger::instance().logEvent(QStringLiteral("navigation"),
+    SessionLogger::instance().logEvent(QStringLiteral("running_view"),
+                                       QStringLiteral("navigation"),
                                        QStringLiteral("emergency_stop"),
                                        { { QStringLiteral("active"), true } });
 }
@@ -82,7 +84,8 @@ void RunningViewViewModel::resumeRobot() {
     if (navModule) {
         navModule->sendEmergencyStop(false);
     }
-    SessionLogger::instance().logEvent(QStringLiteral("navigation"),
+    SessionLogger::instance().logEvent(QStringLiteral("running_view"),
+                                       QStringLiteral("navigation"),
                                        QStringLiteral("emergency_stop"),
                                        { { QStringLiteral("active"), false } });
 }
@@ -102,7 +105,8 @@ void RunningViewViewModel::onRobotStateChanged(const QString& state) {
         emit robotStateChanged();
 
         // ── Telemetry ──────────────────────────────────────────
-        SessionLogger::instance().logEvent(QStringLiteral("navigation"),
+        SessionLogger::instance().logEvent(QStringLiteral("running_view"),
+                                           QStringLiteral("navigation"),
                                            QStringLiteral("state_changed"),
                                            { { QStringLiteral("from"), previousState },
                                              { QStringLiteral("to"),   m_robotState   } });
@@ -125,7 +129,8 @@ void RunningViewViewModel::onStatusMessageReceived(const QString& message) {
         emit statusMessageChanged();
 
         // ── Telemetry ──────────────────────────────────────────
-        SessionLogger::instance().logEvent(QStringLiteral("navigation"),
+        SessionLogger::instance().logEvent(QStringLiteral("running_view"),
+                                           QStringLiteral("navigation"),
                                            QStringLiteral("status"),
                                            { { QStringLiteral("message"), m_statusMessage } });
 
@@ -154,7 +159,8 @@ void RunningViewViewModel::onCheckpointChanged(int cpId) {
         }
 
         // ── Telemetry ──────────────────────────────────────────
-        SessionLogger::instance().logEvent(QStringLiteral("navigation"),
+        SessionLogger::instance().logEvent(QStringLiteral("running_view"),
+                                           QStringLiteral("navigation"),
                                            QStringLiteral("checkpoint_arrived"),
                                            { { QStringLiteral("id"),   m_currentCheckpoint      },
                                              { QStringLiteral("name"), m_currentCheckpointName  } });
